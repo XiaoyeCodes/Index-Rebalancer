@@ -1,0 +1,35 @@
+# Refreshes the price data every week on GitHub's servers, so nothing has to be running locally.
+# Downloads from Yahoo Finance, rebuilds the weekly data and app/heng.html, then commits and pushes
+# only those two files (see app/scripts/update.mjs --git). Can also be started by hand from the Actions tab.
+name: Weekly data update
+
+on:
+  schedule:
+    - cron: '0 1 * * 6'   # every Saturday 01:00 UTC = 09:00 Beijing, after the US Friday close
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-data-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure commit identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Update data, rebuild page, commit and push
+        run: node app/scripts/update.mjs --git
