@@ -43,6 +43,9 @@ node app/scripts/update.mjs
 # 只用已下载的数据重新打包
 node app/scripts/update.mjs --skip-fetch
 
+# 更新后只提交数据和页面并推送到 GitHub（每周定时任务使用）
+node app/scripts/update.mjs --git
+
 # 本地预览，打开 http://localhost:5178
 node app/scripts/serve.mjs
 ```
