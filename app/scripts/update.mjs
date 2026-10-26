@@ -3,6 +3,7 @@
 //   2. rebuild the weekly price file (process.mjs) and check it before replacing the old one
 //   3. inline it into app/heng.html (build.mjs)
 // Pass --skip-fetch to rebuild from the raw files already on disk.
+// Pass --git to also commit the new data and page and push them to the tracked remote branch.
 // Exits non-zero, leaving the previous data and page untouched, if any step or check fails.
 import fs from 'fs';
 import { execFileSync } from 'child_process';
@@ -52,6 +53,28 @@ function main() {
 
   console.log(`完成：数据从截至 ${prevEnd} 更新到 ${next.asOf}（共 ${next.n} 周）。`);
   console.log(`UPDATED_TO=${next.asOf}`);
+  if (process.argv.includes('--git')) commitAndPush(next.asOf);
+}
+
+// --git: commit only the regenerated data and page, then push. Never touches other changes in the working tree.
+function commitAndPush(asOf) {
+  const root = fileURLToPath(new URL('../..', import.meta.url));
+  const files = ['app/data/prices-weekly.json', 'app/heng.html'];
+  // never let git or the credential manager stop to ask for input during an unattended run
+  const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' };
+  const git = (...args) => execFileSync('git', args, { cwd: root, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  console.log('4/4 提交并推送到 GitHub…');
+  if (!git('status', '--porcelain', '--', ...files)) { console.log('数据没有变化，无需提交。'); console.log('GIT=unchanged'); return; }
+  git('add', '--', ...files);
+  git('commit', '-m', `Weekly data update to ${asOf}`, '-m', 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>', '--', ...files);
+  const sha = git('rev-parse', '--short', 'HEAD');
+  try { git('push'); }
+  catch (e) {
+    console.log(`GIT=committed ${sha}`);
+    throw new Error(`已在本地提交 ${sha}，但推送失败（数据和页面已更新）：${String(e.stderr || e.message).trim().split('\n').slice(-2).join(' ')}`);
+  }
+  console.log(`已提交并推送 ${sha}。`);
+  console.log(`GIT=pushed ${sha}`);
 }
 
 try { main(); } catch (e) { console.error(e.message); process.exit(1); }
