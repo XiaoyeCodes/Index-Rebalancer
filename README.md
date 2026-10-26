@@ -52,6 +52,10 @@ node app/scripts/serve.mjs
 
 页面是一个独立的 HTML 文件，图表库从 CDN 加载。AI 功能需要在 claude.ai 中打开页面时才能使用；在其他环境里会自动改用规则推荐。
 
+## 自动更新
+
+仓库里的 GitHub Actions 工作流 [`.github/workflows/weekly-update.yml`](.github/workflows/weekly-update.yml) 每周六北京时间 9:00 在 GitHub 的服务器上运行 `node app/scripts/update.mjs --git`：下载最新行情、校验、重新打包页面，然后提交并推送 `app/data/prices-weekly.json` 与 `app/heng.html`。数据没有变化时不提交；下载或校验失败时不改动任何文件。也可以在仓库的 Actions 页面选择 "Weekly data update" → "Run workflow" 手动运行。
+
 ## 数据说明
 
 - 价格来自 Yahoo Finance 日线（含分红与拆股调整的复权价），合成为周线；不同市场按交易所当地日期分周。
