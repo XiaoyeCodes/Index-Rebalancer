@@ -1,0 +1,11 @@
+# raw daily downloads from Yahoo Finance (~18 MB); app/scripts/update.mjs fetches them again
+app/data/raw/
+app/data/raw-staging/
+
+# local editor / agent settings
+.claude/
+.vscode/
+
+node_modules/
+.DS_Store
+Thumbs.db

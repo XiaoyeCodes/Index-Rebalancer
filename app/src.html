@@ -1,0 +1,1860 @@
+<title>衡 · 定投再平衡</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@400;500;600&display=swap">
+<style>
+/* Layout: a paper notebook. Fixed left sidebar (brand, four views, risk layers, a quiet note), a thin top bar with breadcrumb,
+   then each view opens with an editorial hero — tracked eyebrow, light serif headline with one terracotta phrase, and a hand-drawn
+   line illustration on the right — followed by calm, ruled data. One accent (terracotta) carries action; price moves use
+   terracotta for up and sage for down (红涨绿跌). Deliberately single-theme: warm paper on every host. */
+:root{
+  color-scheme:light;
+  --bg:#F7F5F0; --sidebar:#EEECE5; --surface:#FCFBF8; --sunken:#EFECE4; --band:#EAE7DC;
+  --ink:#2B2B25; --ink-2:#5F5B51; --ink-3:#8E897D; --line:#DFDDD5; --line-2:#CFCBC0; --stroke:#413F35;
+  --accent:#BF6B50; --accent-dark:#A6523A; --accent-ink:#FFFFFF; --accent-soft:#F3E7DF;
+  --brass:#8F8A5C; --brass-soft:#EEEADC;
+  --up:#BF5A42; --down:#6E8F72; --warn:#B07A35; --warn-soft:#F4ECDD; --bad:#AF4936; --bad-soft:#F3E3DC; --good:#5E8466; --good-soft:#E5ECE2;
+  --f-display:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --f-body:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  --f-mono:Inter,-apple-system,"Segoe UI",sans-serif;
+  --f-latin:Georgia,"Times New Roman",serif;
+  --r:12px; --r-lg:20px; --shadow:0 1px 2px rgba(60,48,36,.04),0 10px 30px rgba(60,48,36,.06);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg)}
+body{margin:0}
+body{color:var(--ink);font-family:var(--f-body);font-size:13px;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+.num{font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+.muted{color:var(--ink-3)} .sub{color:var(--ink-2)} .small{font-size:11px}
+
+/* ---------- sidebar ---------- */
+.sidebar{position:fixed;inset:0 auto 0 0;width:236px;background:var(--sidebar);border-right:1px solid var(--line);padding:calc(28px + env(safe-area-inset-top,0px)) 18px calc(16px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;z-index:20;overflow-y:auto}
+.sidebar>*{flex-shrink:0}
+.sidebar{scrollbar-width:none}.sidebar::-webkit-scrollbar{display:none}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink);padding:0 4px}
+.brand svg{color:var(--accent);flex:none}
+.brand b{font-family:var(--f-display);font-weight:500;font-size:23px;letter-spacing:.06em;line-height:1.1}
+.brand small{display:block;font-size:10px;letter-spacing:.3em;color:#77746C;margin-top:6px;font-weight:400}
+.ws{appearance:none;width:auto;max-width:100%;align-self:flex-start;text-align:left;display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;margin:24px 0 22px;border:1px solid #DEDBD1;border-radius:999px;background:#F4F2ED;font-size:12px;color:var(--ink);cursor:pointer;transition:background .18s,border-color .18s,box-shadow .18s}
+.ws:hover{background:#EFECE4;border-color:#D3CDC0}
+.ws[aria-current="page"]{background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.ws .av{width:26px;height:26px;border-radius:50%;background:var(--surface);border:1px solid #E3DED3;display:grid;place-items:center;flex:none;color:var(--ink);transition:border-color .18s,box-shadow .18s}
+.ws .av svg{width:16px;height:16px}
+.ws[aria-current="page"] .av{border-color:#E6CFC3;box-shadow:0 1px 4px rgba(191,107,80,.15)}
+.ws .ws-t{min-width:0;flex:1}
+.ws .ws-t b{display:block;font-weight:600;font-size:12px;letter-spacing:.02em;white-space:nowrap}
+.ws small{display:block;font-size:10px;color:var(--ink-3);margin-top:2px;letter-spacing:.02em;line-height:1.5}
+.ws .dot-live{width:7px;height:7px;border-radius:50%;background:#899176;margin-left:auto;flex:none}
+.ws .dot-live.warn{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.cap{font-size:10px;color:#969187;letter-spacing:.14em;padding:0 12px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.nav-item{appearance:none;border:0;background:none;width:100%;display:flex;gap:11px;align-items:center;padding:10px 12px;border-radius:12px;text-align:left;font-size:12px;margin-bottom:3px;color:#6E6B62;cursor:pointer;transition:background .18s,color .18s}
+.nav-item:hover{background:#E6E2D8}
+.nav-item[aria-current="page"]{background:#E4DED2;color:#514B40;font-weight:600}
+.nav-item[aria-current="page"] svg{color:var(--accent)}
+.nav-item svg{width:17px;height:17px;flex:none}
+.nav-item .cnt{margin-left:auto;font-size:10px;font-weight:400;color:#787368;font-variant-numeric:tabular-nums}
+.nav-item .sq{width:7px;height:7px;border-radius:2px;margin:0 5px;flex:none}
+.layers{margin-top:26px}
+.side-bottom{margin-top:auto;padding-top:28px}
+.side-note{border-top:1px solid #DED9CE;display:flex;gap:10px;padding:20px 10px 16px}
+.side-note svg{color:#AAA18B;flex:none;margin-top:2px}
+.side-note p{font-family:var(--f-display);font-size:12px;margin:0;line-height:1.7;color:var(--ink-2)}
+.side-note small{display:block;font-family:var(--f-body);font-size:10px;color:var(--ink-3);line-height:1.9;margin-top:8px}
+.side-foot{border-top:1px solid var(--line);padding:14px 10px 0;display:flex;justify-content:space-between;font-size:8px;letter-spacing:.14em;color:#979185}
+.scrim{position:fixed;inset:0;background:rgba(43,41,36,.33);z-index:19}
+
+/* ---------- main frame ---------- */
+main{margin-left:236px;min-width:0}
+.topbar{height:68px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 0 48px}
+.crumb{display:flex;align-items:center;gap:14px;font-size:11px;color:var(--ink-3)}
+.crumb strong{font-weight:500;color:var(--ink)}
+.crumb .sl{color:#BCB8AD}
+.top-actions{display:flex;align-items:center;gap:20px}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--surface)}
+.status i{width:6px;height:6px;border-radius:50%;background:#899176}
+#menuBtn{display:none}
+.page{max-width:1320px;margin:0 auto;padding:0 48px 0 52px;padding-right:max(48px,env(safe-area-inset-right,0px))}
+
+/* ---------- hero ---------- */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:330px;padding:36px 0 32px;border-bottom:1px solid var(--line)}
+.hero-copy{min-width:0;max-width:560px}
+.eyebrow{font-size:9px;letter-spacing:.24em;color:#8D8779;display:flex;align-items:center;gap:10px;text-transform:uppercase}
+.eyebrow::before{content:"";width:16px;height:1px;background:var(--accent)}
+.hero h1{font-weight:400;font-size:40px;letter-spacing:.04em;line-height:1.5;margin:16px 0 12px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{font-size:12.5px;color:#7C786D;margin:0 0 22px;letter-spacing:.02em;max-width:52ch}
+.hero-art{width:44%;max-width:460px;flex:none;background:linear-gradient(180deg,#F2EFE7 0%,#ECE8DD 100%);border:1px solid #E5E0D4;border-radius:28px;padding:14px 16px 6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.hero-art svg{width:100%;height:auto;display:block}
+.hero-meta{display:flex;gap:28px;flex-wrap:wrap;margin-top:6px}
+.hero-meta div{display:flex;flex-direction:column}
+.hero-meta span{font-size:10px;color:var(--ink-3);letter-spacing:.06em}
+.hero-meta b{font:400 22px/1.4 var(--f-latin);color:var(--ink)}
+.hero-sub{font:400 17px/1.6 var(--f-display);color:var(--ink);margin:0 0 6px}
+.formats{font-size:10px;color:#A0998D;margin-top:12px}
+
+/* ---------- sections ---------- */
+.section{padding:30px 0 10px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.sec-title{display:flex;align-items:center;gap:13px}
+.sec-title h2{font-size:21px;font-weight:500}
+.sec-title>span{border-left:1px solid #D5D1C5;padding-left:13px;font-size:11px;color:var(--ink-3)}
+.tagline{font-size:9px;letter-spacing:.2em;color:#A49D90;text-transform:uppercase}
+.grid{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+.panel,.callout{min-width:0}
+.panel{background:var(--surface);border:1px solid #E3DED3;border-radius:var(--r-lg);box-shadow:0 1px 2px rgba(60,48,36,.03);overflow:hidden}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 22px;border-bottom:1px solid #EFEBE3;flex-wrap:wrap}
+.panel-h h2{font-size:16px;font-weight:500}
+.panel-h h2 .small{font-family:var(--f-body);font-weight:400;color:var(--ink-3);margin-left:8px}
+.panel-b{padding:20px 22px}
+.note{font-size:11px;color:var(--ink-3);background:#F2EFE8;border-radius:14px;padding:12px 16px;line-height:1.9;max-width:110ch}
+.callout{border:1px solid #E5E0D4;border-radius:var(--r-lg);background:#F2EFE7;padding:20px 24px;position:relative}
+.callout h3{font-size:15px;font-weight:500;margin-bottom:8px;display:flex;gap:10px;align-items:center}
+.callout h3 svg{color:var(--accent);flex:none}
+.prose{color:var(--ink-2);max-width:78ch}
+.prose p{margin:0 0 8px}
+.prose b{color:var(--ink);font-weight:600}
+
+/* ---------- controls ---------- */
+.btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 20px;border-radius:999px;font-size:12px;white-space:nowrap;border:1px solid #CFCBC0;background:transparent;cursor:pointer;transition:background .18s,border-color .18s}
+.btn:hover{background:#EAE6DC}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn.ghost{border-color:transparent;color:var(--ink-2)}
+.btn.sm{min-height:32px;padding:5px 14px;font-size:11px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn svg{width:15px;height:15px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;background:var(--surface)}
+.seg button{appearance:none;border:0;background:none;padding:4px 12px;border-radius:999px;cursor:pointer;color:#8A8375;font-size:11px}
+.seg button:hover{background:#EAE5DA;color:var(--ink)}
+.seg button[aria-pressed="true"]{background:#E9E5DC;color:#514E44;font-weight:500}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:1px 9px;border-radius:999px;border:1px solid #E8E3D8;background:#F0EDE6;color:#8B8271;white-space:nowrap;font-weight:400}
+.chip.mine{border-color:#E6CFC3;background:var(--accent-soft);color:var(--accent-dark)}
+.dot{width:7px;height:7px;border-radius:2px;flex:none;display:inline-block}
+.risk{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.risk i{display:inline-flex;gap:2px}
+.risk i b{width:5px;height:11px;border-radius:3px;background:#E2DED4}
+.risk i b.on{background:#9B958A}
+.risk.r4 i b.on{background:var(--warn)}
+.risk.r5 i b.on{background:var(--accent)}
+.risk em{font-style:normal;font-size:11px;color:var(--ink-2)}
+input[type=number],input[type=text],input[type=month],select,textarea{background:var(--surface);border:1px solid #DDD7CB;border-radius:12px;padding:9px 13px;min-width:0;width:100%;font-size:12px;color:var(--ink)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
+textarea{resize:vertical;min-height:64px;line-height:1.8}
+#addAsset{width:auto;max-width:100%}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label,.field .lab{font-size:11px;font-weight:500;color:var(--ink-2)}
+.field .hint{font-size:10px;color:#9C9282}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 18px}
+.form .full{grid-column:1/-1}
+.checks{display:flex;flex-wrap:wrap;gap:7px}
+.checks label{display:inline-flex;align-items:center;gap:6px;border:1px solid #DDD7CB;border-radius:999px;padding:5px 13px;font-size:11px;cursor:pointer;color:#8A8376;background:var(--surface);font-weight:400}
+.checks input{accent-color:var(--accent);margin:0}
+.checks label:has(input:checked){border-color:#DFD0C2;color:#6B5845;background:var(--accent-soft)}
+
+/* ---------- asset table ---------- */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th{font-weight:400;color:#9C9686;text-align:left;font-size:10px;letter-spacing:.06em;padding:12px 18px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:14px 18px;border-bottom:1px solid #EFEBE3;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+tbody tr.row{cursor:pointer;transition:background .15s}
+tbody tr.row:hover td{background:#F4F1EA}
+tr.group td{background:#F6F3EC;font-size:10px;color:#968F80;padding:9px 18px;letter-spacing:.16em;border-bottom:1px solid #ECE8DF}
+.tk{display:flex;align-items:center;gap:11px;min-width:190px}
+.tk b{font:500 13px var(--f-latin);letter-spacing:.02em}
+.tk span{display:block;font-size:11px;color:var(--ink-3);line-height:1.4}
+.pos{color:var(--up)} .neg{color:var(--down)}
+.add{appearance:none;width:30px;height:30px;border-radius:50%;border:1px solid #DAD4C8;background:var(--surface);cursor:pointer;display:grid;place-items:center;color:#9A927F;transition:all .18s}
+.add:hover{border-color:var(--accent);color:var(--accent)}
+.add[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ---------- drawer ---------- */
+.dscrim{position:fixed;inset:0;background:rgba(43,41,36,.33);backdrop-filter:blur(2px);z-index:30}
+.drawer{position:fixed;top:10px;right:10px;bottom:10px;width:min(780px,calc(100% - 20px));background:var(--bg);z-index:31;border:1px solid #DED8CB;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:-20px 0 80px rgba(36,29,24,.16);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.drawer-h{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:26px 32px 20px;border-bottom:1px solid var(--line)}
+.drawer-h h2{font-weight:400;font-size:28px;line-height:1.5;margin-top:4px}
+.drawer-h h2 small{font-family:var(--f-body);font-size:14px;color:var(--ink-2);margin-left:8px}
+.drawer-b{overflow-y:auto;padding:22px 32px 32px;display:grid;gap:24px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stats>div{background:var(--surface);padding:13px 16px;border:1px solid #E5E0D4;border-radius:16px}
+.stats .l{font-size:10px;color:var(--ink-3);letter-spacing:.04em}
+.stats .v{font:400 20px/1.5 var(--f-latin);font-variant-numeric:tabular-nums}
+.chart{height:340px;width:100%}
+.chart.tall{height:430px}
+.chart.short{height:240px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.h3s{font-size:15px;font-weight:500;margin-bottom:8px}
+.dclose{appearance:none;border:0;background:none;width:34px;height:34px;border-radius:999px;color:#8A8375;cursor:pointer;display:grid;place-items:center}
+.dclose:hover{background:#EAE5DA;color:var(--ink)}
+
+/* ---------- strategy ---------- */
+.presets{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+@media (max-width:1440px){.presets{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.preset{appearance:none;text-align:left;border:1px solid #E3DED3;background:#FDFCF9;border-radius:22px;padding:0;cursor:pointer;display:flex;flex-direction:column;min-width:0;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s}
+.preset:hover{transform:translateY(-3px);border-color:#CFC6B6;box-shadow:var(--shadow)}
+.preset[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.p-art{height:122px;background:var(--band);margin:8px 8px 0;border-radius:16px;position:relative;display:flex;align-items:center;justify-content:center}
+.p-art svg{height:96px;width:170px;max-width:80%}
+.p-art .no{position:absolute;left:16px;top:11px;font:10px var(--f-latin);letter-spacing:.1em;color:#918979}
+.p-art .cap2{position:absolute;right:13px;bottom:9px;font-size:7px;letter-spacing:.2em;color:#96917F}
+.p-art .sel{position:absolute;right:12px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:none;place-items:center}
+.preset[aria-pressed="true"] .sel{display:grid}
+.p-art .sel svg{width:12px;height:12px;max-width:none}
+.p-body{padding:16px 18px 0;display:flex;flex-direction:column;gap:9px;flex:1}
+.p-body h3{font-size:19px;font-weight:500}
+.p-body .eb{font-size:9px;letter-spacing:.06em;color:#8E826E;display:flex;align-items:center;gap:6px}
+.p-body .eb::before{content:"";width:5px;height:5px;border-radius:1px;background:#B69A78}
+.p-body .d{font-size:11px;color:#868074;line-height:1.85;min-height:60px}
+.bar{display:flex;height:6px;border-radius:999px;overflow:hidden;background:var(--sunken);gap:2px}
+.bar span{display:block;height:100%;border-radius:999px}
+.pstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border-top:1px solid #EAE6DD;padding:11px 0 14px;margin-top:auto}
+.pstats .l{font-size:9px;color:#9B9385;letter-spacing:.04em}
+.pstats .v{font:400 15px/1.5 var(--f-latin);font-variant-numeric:tabular-nums}
+.cols{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:20px;align-items:start}
+.wrow{display:grid;grid-template-columns:minmax(130px,1.2fr) minmax(0,2fr) 72px 30px;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid #ECE8DF}
+.wrow:last-child{border-bottom:0}
+.wrow input[type=range]{width:100%;accent-color:var(--accent)}
+.wrow input[type=number]{text-align:right}
+.sum{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 0 0;border-top:1px solid var(--line);margin-top:4px}
+.sum .num{font:400 22px var(--f-latin)}
+.sum.bad .num{color:var(--bad)}
+.tiers{display:grid;gap:10px}
+.tier{display:grid;grid-template-columns:60px minmax(0,1fr) 44px;gap:12px;align-items:center;font-size:11px}
+.tier .bar{height:5px}
+
+/* ---------- ai ---------- */
+.ai-out{min-height:300px;display:grid;gap:16px;align-content:start}
+.ai-empty{display:grid;place-items:center;text-align:center;color:#B6AC98;padding:36px 16px;gap:6px;border:1px dashed #D7D1C5;border-radius:18px;min-height:300px;background:#F5F2EA}
+.ai-empty svg{width:96px;height:auto;opacity:.75;margin-bottom:8px}
+.ai-empty p{font:15px/2 var(--f-display);margin:0;color:#9F9481}
+.ai-empty small{font-size:9px;letter-spacing:.2em}
+.thinking{display:flex;align-items:center;gap:10px;color:var(--ink-2);font-family:var(--f-display)}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:p 1.2s ease-in-out infinite}
+@keyframes p{0%,100%{opacity:.25}50%{opacity:1}}
+ul.clean{margin:0;padding-left:18px;color:var(--ink-2)}
+ul.clean li{margin:4px 0}
+.flag{display:flex;gap:10px;align-items:flex-start;padding:11px 15px;border-radius:14px;font-size:12px;border:1px solid transparent}
+.flag.warn{background:var(--warn-soft);border-color:#EADBC2}
+.flag.bad{background:var(--bad-soft);border-color:#E9CFC5}
+.flag.good{background:var(--good-soft);border-color:#D3DECF}
+.flag b{flex:none;font-weight:600}
+.flag.bad b{color:var(--bad)} .flag.good b{color:var(--good)} .flag.warn b{color:var(--warn)}
+
+/* ---------- backtest ---------- */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.kpis>div{background:var(--surface);padding:16px 18px;min-width:0;border:1px solid #E3DED3;border-radius:18px}
+.kpis .l{font-size:10px;color:var(--ink-3);letter-spacing:.06em}
+.kpis .v{font:400 26px/1.35 var(--f-latin);font-variant-numeric:tabular-nums;margin-top:2px}
+.kpis .c{font-size:10px;color:#A0998C}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink-2);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:2px;display:inline-block}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{appearance:none;border:1px solid transparent;background:none;border-radius:999px;padding:4px 12px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#8A8376}
+.chips button:hover{background:#EAE6DC}
+.chips button[aria-pressed="true"]{color:#6B5845;background:#EAE4D9;border-color:#DFD6C8}
+.chips .chip-act{color:var(--accent);border:1px dashed #E2D3C8}
+.chips .chip-act:hover{background:var(--accent-soft)}
+.cmp-legend{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:12px;font-size:12px;color:var(--ink-2)}
+.cmp-legend .cmp-item{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.cmp-legend .cmp-item b{font-weight:600;font-variant-numeric:tabular-nums}
+.cmp-legend .is-strat{padding:2px 10px;border-radius:999px;background:#EFECE4}
+.ctip{position:absolute;z-index:3;pointer-events:none;min-width:170px;background:rgba(252,251,248,.97);border:1px solid #E3DED3;border-radius:14px;padding:10px 14px;box-shadow:0 8px 24px rgba(60,48,36,.10);font-size:12px;display:grid;gap:4px}
+.ctip-d{font:500 12px var(--f-display);color:var(--ink);margin-bottom:2px}
+.ctip-r{display:flex;align-items:center;gap:7px;color:var(--ink-2);white-space:nowrap}
+.ctip-r i{width:8px;height:8px;border-radius:50%;flex:none}
+.ctip-r b{margin-left:auto;padding-left:14px;font:500 13px var(--f-latin);font-variant-numeric:tabular-nums;color:var(--ink)}
+.ctip-r b.pos{color:var(--up)} .ctip-r b.neg{color:var(--down)}
+.ctip-sep{border-top:1px solid #EFEBE3;padding-top:5px;margin-top:2px}
+.yr td{padding:7px 12px}
+.yr .barcell{width:40%}
+.ybar{position:relative;height:8px;background:var(--sunken);border-radius:999px}
+.ybar span{position:absolute;top:0;bottom:0;border-radius:999px}
+.ybar .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--line-2)}
+.log td{font-size:11px}
+/* panels sharing a row take the same height; the rebalance log scrolls inside the yearly panel's height */
+.cols.eq{align-items:stretch}
+.cols.half{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:1180px){.cols.half{grid-template-columns:minmax(0,1fr)}}
+.cols.eq>.panel{display:flex;flex-direction:column}
+.cols.eq>.panel>.panel-b{flex:1}
+/* the chart fills the stretched panel; positioned absolutely so its own size never feeds back into the row height */
+.cols.eq>.panel>.panel-b:has(>.chart){position:relative;min-height:280px}
+.cols.eq .panel-b>.chart{position:absolute;inset:20px 22px;width:auto;height:auto}
+.log td:last-child{min-width:150px}
+.log-body{position:relative;min-height:360px;padding:0}
+.log-scroll{position:absolute;inset:0;overflow:auto;padding:0 22px 12px;scrollbar-width:thin;scrollbar-color:#D9D3C7 transparent}
+.log-scroll::-webkit-scrollbar{width:8px}
+.log-scroll::-webkit-scrollbar-thumb{background:#D9D3C7;border-radius:999px}
+.log-scroll::-webkit-scrollbar-track{background:transparent}
+.log thead th{position:sticky;top:0;z-index:1;background:var(--surface);padding-top:16px}
+.cmp-body{display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.cmp-note{margin:0;font-size:12px;color:var(--ink-2);line-height:1.8;background:#F5F2EB;border-radius:14px;padding:12px 16px}
+.cmp-note b{color:var(--ink);font-weight:600}
+.log td:first-child,#cmpTable td:first-child{white-space:nowrap}
+#cmpTable td,#cmpTable th{padding-left:10px;padding-right:10px}
+.stack svg{display:block;width:100%;height:auto}
+.foot{border-top:1px solid var(--line);margin-top:34px;padding:22px 0 calc(28px + env(safe-area-inset-bottom,0px));color:#AAA191;display:flex;justify-content:space-between;gap:16px;font-size:10px;flex-wrap:wrap}
+.foot .sig{font-size:8px;letter-spacing:.18em}
+
+/* ---------- responsive ---------- */
+@media (min-width:1500px){.hero h1{font-size:44px}.hero{min-height:370px}}
+/* ---------- rebalance (home) ---------- */
+.linkbtn{appearance:none;border:0;background:none;padding:0;color:var(--accent);cursor:pointer;font-size:inherit;text-decoration:underline;text-underline-offset:2px}
+.hero.compact{min-height:0;padding:30px 0 26px}
+.hero.compact .hero-art{width:34%;max-width:340px}
+.hero.compact h1{font-size:36px;margin:12px 0 10px}
+.model-strip{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;padding:18px 22px}
+.model-strip .ms-name{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.model-strip .ms-name h3{font-size:18px;font-weight:500}
+.model-strip .ms-rule{font-size:11px;color:var(--ink-3);margin-top:10px}
+.model-strip .ms-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--ink-2)}
+.model-strip .ms-legend span{display:inline-flex;align-items:center;gap:5px}
+.ms-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.ops-controls{display:flex;gap:16px 22px;flex-wrap:wrap;align-items:flex-end;padding:18px 22px;border-bottom:1px solid #EFEBE3;background:#FAF8F3}
+.ops-controls .field{min-width:150px}
+.money{display:flex;align-items:center;gap:8px}
+.money input{width:140px}
+.money .unit{font-size:11px;color:var(--ink-3);white-space:nowrap}
+.ops-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:18px 22px 4px}
+.ops-sum>div{border:1px solid #E8E3D8;border-radius:16px;padding:12px 16px;background:#FCFBF8}
+.ops-sum .l{font-size:10px;color:var(--ink-3);letter-spacing:.04em}
+.ops-sum .v{font:400 22px/1.4 var(--f-latin);font-variant-numeric:tabular-nums}
+.ops-sum .c{font-size:10px;color:#A0998C}
+.op{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.op.buy{background:var(--accent-soft);color:var(--accent-dark)}
+.op.sell{background:var(--good-soft);color:#4E7357}
+.op.hold{background:#F0EDE6;color:#8B8271;font-weight:500}
+.amt{font:400 15px var(--f-latin);font-variant-numeric:tabular-nums;white-space:nowrap}
+.why{font-size:11px;color:var(--ink-3);min-width:200px;line-height:1.6}
+.wto{font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.wto b{font-weight:600;color:var(--ink)}
+.ops-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:16px 22px 20px}
+.ops-flag{margin:16px 22px 0}
+.dual{position:relative;height:10px;background:var(--sunken);border-radius:999px;min-width:150px}
+.dual .band{position:absolute;top:-3px;bottom:-3px;background:rgba(143,138,92,.16);border-radius:999px}
+.dual .cur{position:absolute;left:0;top:2px;bottom:2px;border-radius:999px}
+.dual .tgt{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);border-radius:2px}
+.hold-in{width:110px;text-align:right}
+.dev.ok{color:var(--ink-2)} .dev.hi{color:var(--up)} .dev.lo{color:var(--down)}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:11px;white-space:nowrap}
+.st i{width:6px;height:6px;border-radius:50%}
+.example-note{display:flex;gap:12px;align-items:flex-start;margin:16px 22px 0;padding:12px 16px;border-radius:14px;background:var(--brass-soft);font-size:12px;color:var(--ink-2)}
+.example-note b{color:var(--ink)}
+.read-top{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:20px;padding:20px 22px}
+.read-top .prose p{margin:0 0 10px}
+.mini{display:grid;gap:10px}
+.mini>div{border:1px solid #E8E3D8;border-radius:14px;padding:11px 14px;background:#FCFBF8}
+.mini .l{font-size:10px;color:var(--ink-3)}
+.mini .v{font:400 16px/1.5 var(--f-latin)}
+.reads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 22px 22px}
+.read{border:1px solid #E8E3D8;border-radius:18px;padding:14px 16px;background:#FCFBF8;display:grid;gap:8px;min-width:0}
+.read-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.read-h .tk{min-width:0}
+.trend{font-size:10px;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.trend.up{background:var(--accent-soft);color:var(--accent-dark)}
+.trend.down{background:var(--good-soft);color:#4E7357}
+.trend.flat{background:#F0EDE6;color:#8B8271}
+.metrics{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink-3)}
+.metrics b{font-weight:500;font-variant-numeric:tabular-nums}
+.read p{margin:0;font-size:12px;color:var(--ink-2);line-height:1.8}
+.read .exp{font-size:11px;color:var(--ink-3)}
+.ai-read{margin:0 22px 22px;padding:16px 18px;border-radius:18px;border:1px dashed #D7D1C5;background:#F7F4EC;display:grid;gap:10px}
+.ai-read h3{font-size:15px;font-weight:500}
+.ai-read p{margin:0;color:var(--ink-2)}
+.copy-area{position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:0}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#34372E;color:#FAF8F2;padding:10px 18px;border-radius:999px;font-size:12px;z-index:40;box-shadow:0 6px 24px rgba(45,39,25,.2)}
+@media (max-width:980px){.read-top{grid-template-columns:1fr}.reads{grid-template-columns:1fr}.model-strip{grid-template-columns:1fr}.ms-actions{justify-content:flex-start}}
+@media (max-width:520px){.ops-sum{gap:8px}.ops-sum>div{padding:10px 12px}.ops-sum .v{font-size:16px}.ops-sum .v span{display:none}.money input{width:110px}.ops-controls{gap:12px 16px}}
+@media (max-width:1180px){.sidebar{width:210px}main{margin-left:210px}.page{padding-left:32px;padding-right:max(32px,env(safe-area-inset-right,0px))}.topbar{padding-left:32px}.presets{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.hero h1{font-size:34px}.cols{grid-template-columns:1fr}}
+@media (max-width:820px){
+  .sidebar{width:236px;transform:translateX(-100%);visibility:hidden;transition:transform .2s,visibility .2s;box-shadow:10px 0 50px rgba(41,33,18,.13)}
+  .sidebar.open{transform:none;visibility:visible}
+  main{margin-left:0}
+  #menuBtn{display:inline-grid}
+  .topbar{height:60px;padding-left:max(16px,env(safe-area-inset-left,0px))}
+  .page{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .hero{position:relative;overflow:hidden;min-height:280px;padding:28px 0}
+  .hero-copy{position:relative;z-index:1}
+  .hero-art{position:absolute;width:190px;right:-40px;bottom:12px;opacity:.35;z-index:0;background:none;border:0;box-shadow:none;padding:0}
+  .drawer{top:0;right:0;bottom:0;width:100%;border-radius:0;border:0}
+  .hero h1{font-size:28px}
+  .status{display:none}
+  .form{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .drawer-h,.drawer-b{padding-left:20px;padding-right:20px}
+  .wrow{grid-template-columns:minmax(0,1fr) 64px 30px}
+  .wrow input[type=range]{grid-column:1/-1;grid-row:2}
+}
+@media (max-width:520px){.hero-art{display:none}.hero{min-height:0}.presets{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis .v{font-size:22px}.tagline{display:none}}
+</style>
+
+<!-- shared line-art icon set -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-shelf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 20V6h3v14M8 20V9h3v11M13.5 7.5l2.9-.8 3.4 12.6-2.9.8z"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M8 20h8M4 8h16M4 8l-2.5 6h5zM20 8l-2.5 6h5z"/><circle cx="12" cy="4" r="1"/></symbol>
+    <symbol id="i-quill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-7 1-11 5-13 12l-2 4M7 16c4 0 8-2 10-6M14 3.5l.6 1.8M19 9l1.8.5M17.4 5.7l1.2-1.2"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 16V9M6 7V5M11 17v-4M11 11V8M16 15V7M16 5V3.5M19.5 12V9"/></symbol>
+    <symbol id="i-cycle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-13.7 5.6M4 12a8 8 0 0 1 13.7-5.6"/><path d="M18 3v4h-4M6 21v-4h4"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></symbol>
+    <symbol id="i-mark" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 5v24M11 29h12M6 11h22M6 11l-3.5 8h7zM28 11l-3.5 8h7z"/><circle cx="17" cy="5" r="1.6" fill="currentColor" stroke="none"/></symbol>
+  </defs>
+</svg>
+
+<aside class="sidebar" id="sidebar" aria-label="导航">
+  <a class="brand" href="#rebalance" aria-label="衡 · 定投再平衡"><svg width="34" height="34"><use href="#i-mark"/></svg><span><b>衡</b><small>定投 · 再平衡</small></span></a>
+  <button class="ws" type="button" data-tab="rebalance" id="wsCard" title="打开我的动态再平衡计划"><span class="av"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18" stroke="currentColor" stroke-width=".8" opacity=".22"/><path d="M4 12.6a6 6 0 0 1 12 0" stroke="var(--accent)" stroke-width="1.6"/><path d="M20 11.4a6 6 0 0 1-12 0" stroke="currentColor" stroke-width="1.6"/><circle cx="4" cy="12.6" r="1.25" fill="var(--accent)"/><circle cx="20" cy="11.4" r="1.25" fill="currentColor"/></svg></span><span class="ws-t"><b>我的动态再平衡计划</b></span></button>
+  <div class="cap">研究与配置</div>
+  <nav aria-label="视图">
+    <button class="nav-item" data-tab="assets" type="button"><svg><use href="#i-shelf"/></svg>标的库<span class="cnt" id="cntAssets">19</span></button>
+    <button class="nav-item" data-tab="strategy" type="button"><svg><use href="#i-scale"/></svg>定投模型<span class="cnt" id="cntStrategy"></span></button>
+    <button class="nav-item" data-tab="ai" type="button"><svg><use href="#i-quill"/></svg>AI 方案</button>
+    <button class="nav-item" data-tab="backtest" type="button"><svg><use href="#i-chart"/></svg>回测<span class="cnt" id="cntBacktest"></span></button>
+  </nav>
+  <div class="cap layers">按风险分层浏览</div>
+  <nav aria-label="风险分层" id="layerNav"></nav>
+  <div class="side-bottom">
+    <div class="side-note"><svg width="22" height="22"><use href="#i-star"/></svg><p>慢一点，稳一点，<br>时间会站在你这边。<small>每月定投，偏离再平衡<br>把纪律交给规则。</small></p></div>
+    <div class="side-foot"><span>STEADY BY DESIGN</span><span>v0.6</span></div>
+  </div>
+</aside>
+<div class="scrim" id="sideScrim" hidden></div>
+
+<main>
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0">
+      <button class="dclose" id="menuBtn" type="button" aria-label="打开导航"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+      <div class="crumb"><span>衡</span><span class="sl">/</span><strong id="crumb">标的库</strong></div>
+    </div>
+    <div class="top-actions"><span class="status"><i></i><span id="dataAsOf"></span></span></div>
+  </header>
+
+  <div class="page">
+  <!-- ============ 00 动态再平衡（主页） ============ -->
+  <section data-view="rebalance" id="rebalance" hidden>
+    <div class="hero compact">
+      <div class="hero-copy">
+        <div class="eyebrow">This month's rebalance</div>
+        <h1>这个月的钱，<br>该<em>怎么分</em>。</h1>
+        <p>对照你的定投模型和当前持仓，算出本月该买什么、各买多少；有资产偏离超过阈值时，也告诉你该卖什么。</p>
+        <div class="hero-meta"><div><span>当前模型</span><b id="rbModel">—</b></div><div><span>持仓市值</span><b id="rbValue">—</b></div><div><span>本月操作</span><b id="rbOps">—</b></div></div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 440 290" fill="none">
+          <g stroke="var(--stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="64" y="64" width="150" height="160" rx="18"/>
+            <path d="M64 104h150M98 52v24M180 52v24"/>
+            <path d="M88 130h14M118 130h14M148 130h14M178 130h14M88 158h14M118 158h14M178 158h14M88 186h14M118 186h14M148 186h14" stroke-width="1.4"/>
+            <path d="M232 150c28-6 46-6 66 4" stroke-dasharray="3 6" stroke-width="1.3"/>
+            <path d="M292 146l8 8-10 5"/>
+            <path d="M330 92v130M306 228h48M276 112h108"/><circle cx="330" cy="92" r="5"/>
+            <path d="M288 112l-14 40M288 112l14 40M268 152h40c0 9-9 15-20 15s-20-6-20-15zM372 112l-14 40M372 112l14 40M352 152h40c0 9-9 15-20 15s-20-6-20-15z"/>
+            <rect x="278" y="138" width="20" height="14" rx="4"/><rect x="362" y="140" width="20" height="12" rx="4" fill="#E3E0D0"/>
+          </g>
+          <circle cx="155" cy="158" r="12" fill="#C87457" stroke="var(--stroke)" stroke-width="1.8"/>
+          <g stroke="#C16B50" stroke-width="2.4" stroke-linecap="round"><path d="M392 46v22M381 57h22M384 49l16 16M384 65l16-16"/></g>
+          <circle cx="44" cy="96" r="3" fill="#918B74"/><path d="m240 64-4 8 8 4 4-8z" stroke="#918B74"/>
+          <text x="150" y="268" fill="#8B8679" font-size="10" letter-spacing="3" font-family="Georgia,serif">EVERY PAYDAY, REBALANCED.</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="panel model-strip" id="modelStrip"></div>
+
+      <div class="panel" id="opsPanel">
+        <div class="panel-h"><h2>本月操作清单<span class="small" id="opsAsOf"></span></h2><span class="tagline">Buy what's light. Trim what's heavy.</span></div>
+        <div class="ops-controls">
+          <div class="field"><label for="rbContrib">本月新增定投（美元）</label><div class="money"><input type="number" id="rbContrib" min="0" step="10"><span class="unit" id="rbCny"></span></div><span class="hint" id="contribHint"></span></div>
+          <div class="field"><label for="rbFx">美元兑人民币汇率</label><span class="hint" style="order:3">默认取最新市场汇率；人民币资产按此折算</span><input type="number" id="rbFx" min="1" max="20" step="0.01" style="width:110px"></div>
+          <div class="field"><span class="lab">超出阈值时</span><div class="seg" id="rbSell"><button type="button" data-v="1" aria-pressed="true">按模型规则卖出</button><button type="button" data-v="0" aria-pressed="false">只买不卖</button></div></div>
+          <div class="field"><span class="lab">股数</span><div class="seg" id="rbWhole"><button type="button" data-v="0" aria-pressed="true">允许碎股</button><button type="button" data-v="1" aria-pressed="false">只买整数股 / 整手</button></div></div>
+          <div class="field"><label for="rbLast">上次再平衡日期</label><input type="date" id="rbLast" style="width:160px"><span class="hint" id="rbLastHint"></span></div>
+        </div>
+        <div id="opsFlag"></div>
+        <div class="ops-sum" id="opsSum"></div>
+        <div class="tbl-wrap"><table id="opsTable"></table></div>
+        <div class="ops-actions">
+          <button class="btn primary" type="button" id="opsCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>复制操作清单</button>
+          <button class="btn" type="button" id="opsApply">我已下单，按清单更新持仓</button>
+          <button class="btn ghost" type="button" id="opsUndo" hidden>撤销更新</button>
+          <span class="small muted" id="opsNote"></span>
+        </div>
+      </div>
+
+      <div class="panel" id="holdPanel">
+        <div class="panel-h"><h2>我的持仓<span class="small">按最新收盘价计算，单位美元</span></h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" type="button" id="holdExample">填入示例持仓</button><button class="btn sm ghost" type="button" id="holdClear">清空</button></div></div>
+        <div id="exampleNote"></div>
+        <div class="tbl-wrap" style="margin-top:8px"><table id="holdTable"></table></div>
+        <div id="outsideNote"></div>
+      </div>
+
+      <div class="panel" id="readPanel">
+        <div class="panel-h"><h2>持仓解读<span class="small">结合近期走势与历史波动</span></h2><div style="display:flex;gap:8px;align-items:center"><span class="small muted" id="readHint"></span><button class="btn sm" type="button" id="readAI"><svg><use href="#i-quill"/></svg>让 AI 解读</button><button class="btn sm ghost" type="button" id="readStop" hidden>停止</button></div></div>
+        <div class="read-top"><div class="prose" id="readSummary"></div><div class="mini" id="readMini"></div></div>
+        <div id="readAIOut"></div>
+        <div class="reads" id="readCards"></div>
+      </div>
+      <p class="note">操作清单按本页内嵌的最新周收盘价计算（每周六自动更新），实际下单以券商报价为准；券商不支持碎股时，把「股数」切到「只买整数股」，余下的钱留到下个月。按清单更新持仓且包含卖出时，会记下当天为上次再平衡日期，之后 4 周默认只买不卖；也可以手动填写或清除。持仓只保存在这台设备的浏览器里。本工具用于学习定投与再平衡方法，不构成投资建议。</p>
+    </div>
+  </section>
+
+  <!-- ============ 01 标的库 ============ -->
+  <section data-view="assets" id="assets">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">Know what you own</div>
+        <h1>看懂每一个标的，<br>再决定<em>放多少</em>。</h1>
+        <p>美股、债券、黄金、比特币，加上 A 股和港股，共十九个适合长期定投的标的，按角色分成防守、分散、核心、卫星和中国五层。点开任意一个，看它的 K 线、持仓和在组合里的角色；标有「你的候选」的，是你最初提出的五个。</p>
+        <div class="hero-meta"><div><span>已选入组合</span><b id="selCount">0</b></div><div><span>数据区间</span><b id="dataSpan">—</b></div><div><span>标的数</span><b>19</b></div></div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 440 290" fill="none">
+          <g transform="rotate(-12 220 138)" stroke="var(--stroke)" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="220" cy="138" rx="160" ry="74" stroke-width="1.2" stroke-dasharray="3 6"/>
+            <ellipse cx="220" cy="138" rx="100" ry="46" stroke-width="1.6"/>
+            <circle cx="126" cy="122" r="11" fill="#FCFBF8" stroke-width="1.8"/><path d="M120 119h12M120 125h8" stroke-width="1.4"/>
+            <circle cx="270" cy="178" r="5" fill="#FCFBF8" stroke-width="1.6"/>
+            <circle cx="165" cy="69" r="7" fill="#FCFBF8" stroke-width="1.6"/>
+            <circle cx="370" cy="163" r="13" fill="#C87457" stroke-width="1.8"/>
+          </g>
+          <g stroke="var(--stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="220" cy="138" r="44" fill="#E3E0D0"/>
+            <circle cx="220" cy="138" r="33"/>
+            <path d="M206 132h28M206 141h20M206 150h24" stroke-width="1.4"/>
+            <path d="M74 236h46M80 236v-10a4 4 0 0 1 4-4h26a4 4 0 0 1 4 4v10M84 222v-8a4 4 0 0 1 4-4h18a4 4 0 0 1 4 4v8M90 210v-7a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v7" stroke-width="1.5"/>
+          </g>
+          <g stroke="#C16B50" stroke-width="2.4" stroke-linecap="round"><path d="M372 44v24M360 56h24M363.5 47.5l17 17M363.5 64.5l17-17"/></g>
+          <circle cx="62" cy="82" r="3" fill="#918B74"/><path d="m392 214-4 8 8 4 4-8z" stroke="#918B74"/>
+          <text x="152" y="272" fill="#8B8679" font-size="10" letter-spacing="3" font-family="Georgia,serif">KNOW WHAT YOU OWN.</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="callout" id="verdictBox">
+        <h3><svg width="16" height="16"><use href="#i-star"/></svg>你提出的五个标的，适合做定投再平衡吗</h3>
+        <div class="prose" id="verdictText"></div>
+      </div>
+      <div class="sec-head" style="margin:8px 0 0">
+        <div class="sec-title"><h2>标的一览</h2><span id="assetCountTxt">19 个标的 · 2000 年起复权数据</span></div>
+        <div style="display:flex;gap:16px;align-items:center"><span class="tagline">Diversify. Hold. Rebalance.</span>
+          <div class="seg" role="group" aria-label="排序" id="sortSeg">
+            <button aria-pressed="true" data-sort="layer" type="button">按风险分层</button>
+            <button aria-pressed="false" data-sort="cagr" type="button">按 20 年年化</button>
+            <button aria-pressed="false" data-sort="vol" type="button">按波动</button>
+          </div></div>
+      </div>
+      <div class="panel">
+        <div class="tbl-wrap">
+          <table id="assetTable">
+            <thead><tr>
+              <th>标的</th><th>风险</th><th>走势（对数）</th><th class="r">20 年年化</th><th class="r">年化波动</th><th class="r">最大回撤</th><th class="r">与标普相关</th><th class="r">费率</th><th>持仓概要</th><th class="r">组合</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="note">20 年年化 = 最近 20 年（<span id="from20"></span> 至今）复权价格的年复合增长率；成立不足 20 年的标的按其可得历史计算，并在数值旁标注起始年份。年化波动由周收益率计算。部分标的在成立前用同指数或同类资产的数据接续，详见各标的的「数据说明」。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 策略配置 ============ -->
+  <section data-view="strategy" id="strategy" hidden>
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">Balance, month after month</div>
+        <h1>每月一点点，<br>让组合回到<em>平衡</em>。</h1>
+        <p>发薪后定投，新钱优先补给低于目标比例的资产；偏离超过阈值，或到了定期检查日，再把整个组合调回目标。从一个模板开始，再按自己的情况调整。</p>
+        <div style="display:flex;gap:11px;flex-wrap:wrap"><button class="btn primary" type="button" id="heroRun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 16V9M11 17v-4M16 15V7"/></svg>运行回测</button><button class="btn" type="button" id="heroAI"><svg><use href="#i-quill"/></svg>让 AI 帮我配</button></div>
+        <div class="formats">模板卡片上的数字：2000 年起、每月 3000 元的历史回测</div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 440 290" fill="none">
+          <g stroke="var(--stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M220 58v178M176 246h88M186 236h68v10h-68z"/>
+            <path d="M108 92h224"/><circle cx="220" cy="58" r="6"/>
+            <path d="M120 92l-34 74M120 92l34 74M80 166h80c0 16-18 26-40 26s-40-10-40-26z"/>
+            <path d="M320 92l-34 74M320 92l34 74M280 166h80c0 16-18 26-40 26s-40-10-40-26z"/>
+            <path d="M98 166v-10h44v10M104 156v-9h32v9M110 147v-8h20v8"/>
+            <path fill="#E3E0D0" d="M300 166v-12c0-4 4-8 8-8h24c4 0 8 4 8 8v12z"/>
+          </g>
+          <path fill="#C87457" stroke="var(--stroke)" stroke-width="1.8" stroke-linejoin="round" d="M306 146l6-22h16l6 22z"/>
+          <g stroke="#C16B50" stroke-width="2.4" stroke-linecap="round"><path d="M372 44v24M360 56h24M363.5 47.5l17 17M363.5 64.5l17-17"/></g>
+          <circle cx="70" cy="60" r="3" fill="#918B74"/><path d="m392 120-4 8 8 4 4-8z" stroke="#918B74"/>
+          <g stroke="#918B74" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="2 5"><path d="M120 200c30 18 70 18 100 0M220 200c30 18 70 18 100 0"/></g>
+          <text x="138" y="276" fill="#8B8679" font-size="10" letter-spacing="3" font-family="Georgia,serif">KEEP THE SCALE STEADY.</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <div class="sec-head"><div class="sec-title"><h2>选择模板</h2><span>示例配置，不构成投资建议</span></div><span class="tagline">Choose. Adjust. Review.</span></div>
+      <div class="presets" id="presets"></div>
+      <div class="cols" style="margin-top:8px">
+        <div class="panel">
+          <div class="panel-h"><h2>目标权重</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <select id="addAsset" aria-label="添加标的"></select>
+              <button class="btn sm" id="normBtn" type="button">按比例凑满 100%</button>
+            </div>
+          </div>
+          <div class="panel-b">
+            <div id="weightRows"></div>
+            <div class="sum" id="sumBox"><span class="sub">合计</span><span class="num" id="sumVal">0%</span></div>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-h"><h2>风险分层</h2><span class="small muted">按标的风险等级汇总</span></div>
+            <div class="panel-b"><div class="tiers" id="tiers"></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h2>定投与再平衡规则</h2></div>
+            <div class="panel-b">
+              <form class="form" id="ruleForm" onsubmit="return false">
+                <div class="field"><label for="pMonthly">每月定投金额（元）</label><input type="number" id="pMonthly" min="0" step="100" value="3000"><span class="hint">动态再平衡页按汇率换算成美元</span></div>
+                <div class="field"><label for="pInitial">初始投入（元）</label><input type="number" id="pInitial" min="0" step="1000" value="0"></div>
+                <div class="field"><label for="pStart">回测起点</label><input type="month" id="pStart" min="2000-01" value="2000-01"></div>
+                <div class="field"><label for="pMode">再平衡触发</label>
+                  <select id="pMode"><option value="hybrid">阈值 + 定期兜底</option><option value="threshold">仅阈值</option><option value="calendar">仅定期</option><option value="none">不再平衡（只定投）</option></select></div>
+                <div class="field"><label for="pAbs">绝对偏离阈值（百分点）</label><input type="number" id="pAbs" min="1" max="30" step="0.5" value="5"></div>
+                <div class="field"><label for="pRel">相对偏离阈值（%）</label><input type="number" id="pRel" min="5" max="100" step="5" value="30"></div>
+                <div class="field"><label for="pPeriod">定期检查</label><select id="pPeriod"><option value="Y">每年 1 月</option><option value="Q">每季度首月</option></select></div>
+                <div class="field"><label for="pFee">单边交易成本（%）</label><input type="number" id="pFee" min="0" max="1" step="0.01" value="0.05"></div>
+                <div class="field full"><div class="checks"><label><input type="checkbox" id="pCash" checked> 新投入的钱优先补给低配资产</label></div>
+                  <span class="hint">偏离判定：任一资产的当前权重与目标相差 ≥ 绝对阈值，或相差幅度 ≥ 目标权重 × 相对阈值。触发后整个组合调回目标，之后 4 周内不再因阈值触发。</span></div>
+              </form>
+              <div style="display:flex;gap:12px;margin-top:18px;flex-wrap:wrap;align-items:center">
+                <button class="btn primary" id="runBtn" type="button">运行回测</button>
+                <span class="small muted" id="quickStat"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 AI 方案 ============ -->
+  <section data-view="ai" id="ai" hidden>
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">A plan, drawn for you</div>
+        <h1>说说你的情况，<br>得到一份<em>量身草案</em>。</h1>
+        <p>AI 只在标的库的十九个标的里挑选，给出目标权重、每月投入和再平衡规则，并写明理由与风险。生成后立刻用历史数据回测，看它是否在你能承受的回撤之内。这是学习参考，不是投资建议。</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 440 290" fill="none">
+          <g stroke="var(--stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M70 230c50-14 100-14 150 0 50-14 100-14 150 0V92c-50-14-100-14-150 0-50-14-100-14-150 0z"/>
+            <path d="M220 92v138"/>
+            <path d="M92 118c34-7 68-7 104 0M92 136c34-7 68-7 104 0M92 154c22-5 44-6 66-3M92 190c34-7 68-7 104 0"/>
+            <path d="M244 118c34-7 68-7 104 0M244 136c20-4 40-5 60-3"/>
+            <path d="M250 196l18-24 16 12 22-30 20 18 20-26"/>
+            <path d="M120 92V60M120 60c-20 0-30-14-28-30 18 0 28 14 28 30zM120 72c14-2 24-14 24-28-16 2-24 14-24 28z"/>
+          </g>
+          <path fill="#C87457" stroke="var(--stroke)" stroke-width="1.8" stroke-linejoin="round" d="M330 40l40 12-58 104-14 8 2-16z"/>
+          <path d="M298 164l6-11" stroke="var(--stroke)" stroke-width="1.8" stroke-linecap="round"/>
+          <g stroke="#C16B50" stroke-width="2.4" stroke-linecap="round"><path d="M392 108v22M381 119h22M384 111l16 16M384 127l16-16"/></g>
+          <circle cx="56" cy="70" r="3" fill="#918B74"/><path d="m200 40-4 8 8 4 4-8z" stroke="#918B74"/>
+          <text x="128" y="276" fill="#8B8679" font-size="10" letter-spacing="3" font-family="Georgia,serif">THOUGHTFUL, NOT HURRIED.</text>
+        </svg>
+      </div>
+    </div>
+    <div class="section">
+      <div class="cols">
+        <div class="panel">
+          <div class="panel-h"><h2>你的情况</h2><span class="small muted">示例已预填，可直接修改</span></div>
+          <div class="panel-b">
+            <form class="form" id="aiForm" onsubmit="return false">
+              <div class="field"><label for="fAge">年龄</label><input type="number" id="fAge" min="18" max="80" value="30"></div>
+              <div class="field"><label for="fFamily">家庭情况</label>
+                <select id="fFamily"><option>单身</option><option selected>已婚，无子女</option><option>已婚，有子女</option><option>需要赡养父母</option><option>有子女且需赡养父母</option></select></div>
+              <div class="field"><label for="fSalary">税后月收入（元）</label><input type="number" id="fSalary" min="0" step="500" value="20000"></div>
+              <div class="field"><label for="fSpend">每月固定支出（元）</label><input type="number" id="fSpend" min="0" step="500" value="11000"><span class="hint">房租房贷、生活费等</span></div>
+              <div class="field"><label for="fEmerg">应急金</label>
+                <select id="fEmerg"><option value="yes">已备足 6 个月支出</option><option value="part">有一些，不足 6 个月</option><option value="no">还没有</option></select></div>
+              <div class="field"><label for="fHorizon">这笔钱多久不用</label>
+                <select id="fHorizon"><option value="3">3 年以内</option><option value="5">3–5 年</option><option value="10" selected>5–10 年</option><option value="20">10 年以上</option></select></div>
+              <div class="field"><label for="fReturn">期望年化回报</label>
+                <select id="fReturn"><option value="4">4% 左右，跑赢存款就好</option><option value="6">6% 左右</option><option value="8" selected>8% 左右</option><option value="10">10% 左右</option><option value="12">12% 以上</option></select></div>
+              <div class="field"><label for="fDD">最多能接受的账面下跌</label>
+                <select id="fDD"><option value="10">-10%</option><option value="20">-20%</option><option value="30" selected>-30%</option><option value="40">-40%</option><option value="50">-50% 也能拿住</option></select></div>
+              <div class="field full"><span class="lab">偏好（可多选）</span>
+                <div class="checks" id="fPrefs">
+                  <label><input type="checkbox" value="科技成长" checked>科技成长</label>
+                  <label><input type="checkbox" value="分红现金流">分红现金流</label>
+                  <label><input type="checkbox" value="黄金避险" checked>黄金避险</label>
+                  <label><input type="checkbox" value="比特币">比特币</label>
+                  <label><input type="checkbox" value="国际分散">国际分散</label>
+                  <label><input type="checkbox" value="房地产">房地产</label>
+                  <label><input type="checkbox" value="越简单越好">越简单越好</label>
+                </div></div>
+              <div class="field full"><label for="fNote">其他说明（选填）</label><textarea id="fNote" placeholder="例如：两年后可能要付首付；不想持有比特币"></textarea></div>
+            </form>
+            <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center">
+              <button class="btn primary" id="aiBtn" type="button"><svg><use href="#i-quill"/></svg>生成方案</button>
+              <button class="btn" id="aiStop" type="button" hidden>停止</button>
+              <span class="small muted" id="aiHint"></span>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>配置草案</h2><span class="small muted" id="aiSrc"></span></div>
+          <div class="panel-b ai-out" id="aiOut">
+            <div class="ai-empty">
+              <svg viewBox="0 0 120 80" fill="none" aria-hidden="true"><g stroke="#B4A990" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 66c16-5 32-5 50 0 18-5 34-5 50 0V18c-16-5-32-5-50 0-18-5-34-5-50 0z"/><path d="M60 18v48M20 30c10-2 20-2 30 0M20 40c10-2 20-2 30 0M70 30c10-2 20-2 30 0"/></g><path d="M100 6v12M94 12h12M96 8l8 8M96 16l8-8" stroke="#C16B50" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <p>填好左侧信息，点「生成方案」</p><small>A PLAN WILL APPEAR HERE</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 回测 ============ -->
+  <section data-view="backtest" id="backtest" hidden>
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">A long look back</div>
+        <h1>回看<span id="btYears">二十六</span>年，<br>看它<em>怎样走过来</em>。</h1>
+        <p class="hero-sub" id="btTitle">策略回测</p>
+        <p id="btDesc"></p>
+        <div style="display:flex;gap:11px;flex-wrap:wrap"><button class="btn" type="button" id="toStrategy"><svg><use href="#i-scale"/></svg>调整定投模型</button></div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 440 290" fill="none">
+          <g stroke="var(--stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M60 240h330"/>
+            <path d="M84 70h236v170H84z"/><path d="M84 70l10-12h236l-10 12M330 58v170l-10 12"/>
+            <path d="M104 210h196M104 170h196M104 130h196" stroke-dasharray="2 6" stroke-width="1.2"/>
+            <path d="M118 196v-22M118 186h0M140 190v-30M162 176v-24M184 168v-28M206 150v-26M228 156v-20M250 134v-30M272 126v-22M294 110v-26"/>
+            <path d="M114 192h8v-12h-8zM136 184h8v-16h-8zM158 172h8v-12h-8zM180 162h8v-14h-8zM202 146h8v-14h-8zM246 128h8v-16h-8zM290 104h8v-14h-8z"/>
+            <path d="M118 200c30-12 60-18 90-36s60-34 96-62" stroke-width="1.4"/>
+            <path d="M352 150h36M352 228h36M356 150c0 26 28 26 28 39s-28 13-28 39M384 150c0 26-28 26-28 39s28 13 28 39"/>
+            <path d="M362 222c4-8 12-8 16 0z"/>
+          </g>
+          <path fill="#C87457" stroke="var(--stroke)" stroke-width="1.8" d="M224 150h8v-14h-8zM268 122h8v-14h-8z"/>
+          <g stroke="#C16B50" stroke-width="2.4" stroke-linecap="round"><path d="M372 52v24M360 64h24M363.5 55.5l17 17M363.5 72.5l17-17"/></g>
+          <circle cx="54" cy="96" r="3" fill="#918B74"/><path d="m50 160-4 8 8 4 4-8z" stroke="#918B74"/>
+          <text x="148" y="276" fill="#8B8679" font-size="10" letter-spacing="3" font-family="Georgia,serif">TIME IS THE TEST.</text>
+        </svg>
+      </div>
+    </div>
+    <div class="section grid">
+      <div class="kpis" id="kpis"></div>
+      <p class="note" id="kpiHelp" style="margin-top:-6px"></p>
+      <div class="panel">
+        <div class="panel-h"><h2>策略净值 K 线<span class="small">月线 · 单位净值起点 1.00</span></h2>
+          <div class="toolbar">
+            <div class="legend"><span><i style="background:var(--up)"></i>涨</span><span><i style="background:var(--down)"></i>跌</span><span><i style="background:#A39D90"></i>同额定投标普 500</span><span><i style="background:var(--brass)"></i>只定投不再平衡</span><span style="color:var(--ink-3)">▼ 再平衡</span></div>
+            <div class="seg" id="navScale"><button aria-pressed="true" data-v="1" type="button">对数</button><button aria-pressed="false" data-v="0" type="button">线性</button></div>
+          </div>
+        </div>
+        <div class="panel-b"><div class="chart tall" id="navChart"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2><span id="cmpTitle">走势对比</span><span class="small" id="cmpSub"></span></h2>
+          <div class="seg" id="cmpScale"><button type="button" data-v="1" aria-pressed="true">对数</button><button type="button" data-v="0" aria-pressed="false">线性</button></div>
+          <div class="chips" id="assetChips" style="flex-basis:100%"></div>
+        </div>
+        <div class="panel-b"><div class="chart" id="assetChart"></div><div class="cmp-legend" id="cmpLegend"></div></div>
+      </div>
+      <div class="cols eq half">
+        <div class="panel">
+          <div class="panel-h"><h2>市值与累计投入</h2><div class="legend"><span><i style="background:var(--accent)"></i>组合市值</span><span><i style="background:#A39D90"></i>累计投入</span></div></div>
+          <div class="panel-b"><div class="chart short" id="valChart"></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>与基准对比</h2></div>
+          <div class="panel-b cmp-body"><div class="tbl-wrap"><table id="cmpTable"></table></div><p class="cmp-note" id="cmpNote"></p></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>实际权重随时间的变化</h2><span class="small muted">每月月末，交易后</span></div>
+        <div class="panel-b stack" id="stack"></div>
+      </div>
+      <div class="cols eq half">
+        <div class="panel">
+          <div class="panel-h"><h2>逐年收益</h2><div class="legend"><span><i style="background:var(--accent)"></i>策略</span><span><i style="background:#A39D90"></i>标普 500 定投</span></div></div>
+          <div class="panel-b tbl-wrap"><table class="yr" id="yrTable"></table></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>再平衡记录</h2><span class="small muted" id="logCount"></span></div>
+          <div class="panel-b log-body"><div class="log-scroll"><table class="log" id="logTable"></table></div></div>
+        </div>
+      </div>
+      <p class="note">回测假设：每周最后一个交易日按收盘价成交；人民币、港币资产按当周汇率折算成美元（含汇率变动）；允许买卖零碎份额；分红自动再投资；不计税。成立较晚的标的（比特币 2014-09、SCHD 2011-10）在此之前不可用，其目标权重按比例分给组合内其他标的，可用后由新投入资金和再平衡逐步建仓。K 线的高低点由持仓与各标的周最高、最低价近似计算。历史表现不代表未来。</p>
+    </div>
+  </section>
+
+  <footer class="foot"><span>数据：Yahoo Finance 日线（含分红复权），本页内嵌，截至 <span id="asOf2"></span>。本工具用于学习定投与再平衡方法，不构成投资建议。</span><span class="sig">STEADY BY DESIGN · 衡</span></footer>
+  </div>
+</main>
+
+<div class="dscrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="drawer-h">
+    <div style="min-width:0"><div class="eyebrow" id="dEyebrow"></div><h2 id="dTitle"></h2><div class="small muted" id="dSub"></div></div>
+    <div style="display:flex;gap:8px;align-items:center"><button class="btn sm" type="button" id="dAdd"></button><button class="dclose" type="button" id="dClose" aria-label="关闭"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  </div>
+  <div class="drawer-b">
+    <div class="stats" id="dStats"></div>
+    <div>
+      <div class="toolbar" style="margin-bottom:10px">
+        <div class="seg" id="dRange"><button data-y="5" aria-pressed="false" type="button">5 年</button><button data-y="10" aria-pressed="false" type="button">10 年</button><button data-y="20" aria-pressed="false" type="button">20 年</button><button data-y="0" aria-pressed="true" type="button">全部</button></div>
+        <div style="display:flex;gap:8px">
+          <div class="seg" id="dFreq"><button data-f="W" aria-pressed="false" type="button">周线</button><button data-f="M" aria-pressed="true" type="button">月线</button></div>
+          <div class="seg" id="dScale"><button data-v="1" aria-pressed="true" type="button">对数</button><button data-v="0" aria-pressed="false" type="button">线性</button></div>
+        </div>
+      </div>
+      <div class="chart" id="dChart"></div>
+    </div>
+    <div class="grid" style="gap:16px">
+      <div><h3 class="h3s">持仓说明</h3><div class="prose" id="dHold"></div></div>
+      <div class="callout"><h3><svg width="14" height="14"><use href="#i-star"/></svg>在定投再平衡组合中的角色</h3><div class="prose" id="dRole"></div></div>
+      <div><h3 class="h3s">历年表现</h3><div class="tbl-wrap"><table id="dYears"></table></div></div>
+      <div class="note" id="dData"></div>
+    </div>
+  </div>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<script id="pricedata" type="application/json">__DATA__</script>
+<script>
+"use strict";
+const D = JSON.parse(document.getElementById('pricedata').textContent);
+const N = D.n, W0 = Date.parse(D.start + 'T00:00:00Z'), WK = 7 * 864e5;
+const wDate = i => new Date(W0 + i * WK);
+const ymd = d => d.toISOString().slice(0, 10);
+const ym = i => ymd(wDate(i)).slice(0, 7);
+const fmtPct = (x, d = 1, sign = false) => x == null || !isFinite(x) ? '—' : (sign && x > 0 ? '+' : '') + (x * 100).toFixed(d) + '%';
+const fmtMoney = x => x >= 1e8 ? (x / 1e8).toFixed(2) + ' 亿' : x >= 1e4 ? (x / 1e4).toFixed(x >= 1e6 ? 0 : 1) + ' 万' : Math.round(x).toLocaleString('zh-CN');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const $ = s => document.querySelector(s);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+/* ---------------- asset catalogue ---------------- */
+const RISK = { 1: '极低', 2: '低', 3: '中', 4: '中高', 5: '高', 6: '极高' };
+const LAYERS = [
+  { key: 'def', name: '防守层 · 债券与现金', ids: ['SHY', 'BND', 'TLT'], color: '#8299A8' },
+  { key: 'div', name: '分散层 · 黄金与红利', ids: ['GLD', 'SCHD'], color: '#C8A85E' },
+  { key: 'core', name: '核心层 · 宽基股票', ids: ['SPY', 'VTI', 'VXUS'], color: '#5F7A68' },
+  { key: 'sat', name: '卫星层 · 高波动增强', ids: ['QQQM', 'VWO', 'VNQ', 'IBIT'], color: '#B8654A' },
+  { key: 'cn', name: '中国层 · A股与港股', ids: ['A500', 'SSE', 'SOEDIV', 'BANK', 'CHINEXT', 'HSI', 'HSTECH'], color: '#A0473F' },
+];
+const A = {
+  QQQM: { cn: '纳斯达克 100', cls: '美股 · 大盘成长', risk: 5, fee: 0.15, color: '#B8654A', mine: true,
+    hold: '跟踪纳斯达克 100 指数：在纳斯达克上市、市值最大的 100 家非金融公司。信息技术、通信服务、可选消费合计占大头，前十大持仓（英伟达、微软、苹果、亚马逊、博通、Meta、Alphabet 等）约占一半权重。与 QQQ 同指数，费率更低，适合长期持有。',
+    role: '适合作为高风险层的成长主力，但它和标普 500 的大公司高度重合，同时重仓两者等于加倍押注美国大型科技股，而不是分散。2000 年科网泡沫后最大回撤 -83%，直到 2015 年才回到前高；定投加再平衡能在下跌中自动多买，但比例宜控制。' },
+  IBIT: { cn: '比特币现货', cls: '加密资产', risk: 6, fee: 0.25, color: '#D0A04C', mine: true,
+    hold: 'iShares 比特币信托，直接托管比特币现货，基金净值跟随比特币价格，没有分红。2024 年 1 月上市，可在普通美股账户中交易，省去交易所和钱包的托管问题。',
+    role: '过去 {years:IBIT} 年复合增长最高，但年化波动约 {vol:IBIT}，经历过多次 -75% 以上的下跌，且与股票相关性低。这类资产最适合「小比例 + 阈值再平衡」：涨多了自动卖出锁定一部分收益，跌深了用定投补回。比例通常控制在个位数，并接受它让组合更颠簸。' },
+  SPY: { cn: '标普 500', cls: '美股 · 大盘', risk: 4, fee: 0.0945, color: '#5F7A68', mine: true,
+    hold: '跟踪标普 500 指数：美国约 500 家大型上市公司，按市值加权，覆盖全部 11 个行业，信息技术约占三成。SPY 流动性最好；同指数的 VOO、IVV 费率约 0.03%，长期定投可优先考虑。',
+    role: '最适合做组合的核心底仓，长期回报稳健、规则透明。它和 VTI 几乎完全同步（相关 0.99），两者选一即可。' },
+  VTI: { cn: '美国全市场', cls: '美股 · 全市场', risk: 4, fee: 0.03, color: '#93A88E',
+    hold: '跟踪 CRSP 美国全市场指数，约 3500 只股票，覆盖大、中、小盘，前十大与标普 500 基本一致。费率 0.03%。',
+    role: '可替代标普 500 作为核心底仓，多覆盖了中小盘，长期表现与标普 500 非常接近。' },
+  VXUS: { cn: '美国以外全球', cls: '国际股票', risk: 4, fee: 0.05, color: '#6F7F94',
+    hold: '跟踪富时全球（除美国）全市场指数，8000 多只股票，涵盖欧洲、日本、英国、加拿大等发达市场和中国、印度、台湾等新兴市场。',
+    role: '用来降低对单一国家的依赖。过去 20 年明显跑输美股，但历史上也有国际股票长期领先的时期；适合希望全球分散的人做中等比例配置。' },
+  VWO: { cn: '新兴市场', cls: '国际股票', risk: 4, fee: 0.07, color: '#9C7A90',
+    hold: '跟踪富时新兴市场指数，主要是中国、印度、台湾、巴西、沙特等市场的大中盘股票。',
+    role: '波动大、过去 20 年回报偏低，2008 年后用了近 10 年才回到前高。若已持有 VXUS（已含新兴市场），通常不必再单独配置。' },
+  SCHD: { cn: '美国红利 100', cls: '美股 · 价值红利', risk: 3, fee: 0.06, color: '#A28B5D', mine: true,
+    hold: '跟踪道琼斯美国红利 100 指数：先筛选连续 10 年以上派息的公司，再按现金流负债比、净资产收益率、股息率和股息增长率综合打分选出 100 只。金融、能源、必需消费、医疗、工业权重较高。2011 年 10 月成立。',
+    role: '它是股票基金，不属于低风险资产：与标普 500 相关性约 0.87，2020 年也跌了约 30%。它的价值在于价值与红利风格，与 QQQM 的成长风格互补；积累期分红自动再投资即可。' },
+  VNQ: { cn: '美国房地产信托', cls: 'REITs', risk: 4, fee: 0.13, color: '#8C6C58',
+    hold: '跟踪 MSCI 美国可投资市场房地产指数，主要持有各类 REITs：数据中心、通信塔、仓储物流、住宅、医疗地产等。分红率较高。',
+    role: '对利率敏感，2008 年最大回撤 -72%，2022 年加息时也大跌。它和股票同涨同跌的程度较高，分散作用有限，可作小比例卫星仓。' },
+  GLD: { cn: '黄金', cls: '大宗商品', risk: 3, fee: 0.40, color: '#C8A85E', mine: true,
+    hold: 'SPDR 黄金信托，在伦敦金库托管实物金条，净值跟随金价，没有利息和分红。同类低费率产品：GLDM（0.10%）、IAUM（约 0.09%），长期定投更合适。',
+    role: '组合里最有效的分散工具之一：与美股相关性接近 0，2008 年金融危机时上涨。但它不是低风险：2011–2015 年最大回撤 -45%，到 2020 年才回到前高。适合 10%–15% 左右的分散仓位。' },
+  BND: { cn: '美国综合债', cls: '债券', risk: 2, fee: 0.03, color: '#8299A8',
+    hold: '跟踪彭博美国综合债券指数（浮动调整版）：美国国债、政府机构房贷抵押证券、投资级公司债，约 1 万多只债券，久期约 6 年。按月付息。',
+    role: '真正的低风险层主力：波动约 5%，股市大跌时往往持平或上涨，用来降低组合回撤，也给再平衡提供「低位买股」的弹药。2022 年加息时罕见地下跌 13%。' },
+  TLT: { cn: '20 年以上美国国债', cls: '债券 · 长久期', risk: 3, fee: 0.15, color: '#55667A',
+    hold: '持有剩余期限 20 年以上的美国国债，久期约 16–17 年，对利率变化极其敏感。',
+    role: '在股灾中经常大涨（2008 年 +29%），是强力的对冲工具；但利率上行时跌幅堪比股票（2020–2023 年最大回撤 -48%）。不适合当作「低风险」，适合懂利率风险的人小比例配置。' },
+  SHY: { cn: '1–3 年美国国债', cls: '短债 · 类现金', risk: 1, fee: 0.15, color: '#B8B2A5',
+    hold: '持有剩余期限 1–3 年的美国国债，久期约 2 年，价格波动很小。同类的 SGOV（0–3 个月国债，0.09%）更接近现金。',
+    role: '组合的「现金垫」：几乎不亏，收益接近短期利率。适合离用钱时间较近、或回撤承受力很低的人，也可以作为稳健组合的缓冲。' },
+  SSE: { lot: 100, cn: '上证指数', code: '000001', cls: 'A股 · 宽基指数', cur: 'CNY', risk: 4, fee: null, color: '#A0473F',
+    hold: '上证综合指数：上海证券交易所全部上市股票按市值加权，金融、工业、能源等传统行业权重较高。这是价格指数，不含分红；指数本身不能直接买，可通过上证指数 ETF 等跟踪。',
+    role: '最常被引用的 A 股「温度计」，但不太适合直接拿来定投：它不含分红，长期年化只有 {cagr:SSE}，最大回撤 {mdd:SSE}。想配 A 股宽基，更推荐中证 A500 或沪深 300 这类 ETF。' },
+  A500: { lot: 100, cn: '中证 A500', code: '512050', cls: 'A股 · 宽基', cur: 'CNY', risk: 4, fee: null, color: '#C47A5A',
+    hold: '华夏中证 A500 ETF（512050），跟踪中证 A500 指数：从各行业选取约 500 只市值较大、流动性较好的 A 股，行业分布比沪深 300 更均衡，金融占比更低、新兴行业占比更高。指数 2024 年推出，ETF 2024 年 11 月上市。',
+    role: '配置 A 股的核心宽基首选。人民币资产与美股相关性低（相关系数 {corr:A500}），能分散美元资产的风险；但 A 股波动大、牛短熊长，最大回撤 {mdd:A500}，正适合定投加再平衡「跌了多买」。比例建议适中。' },
+  BANK: { lot: 100, cn: '华宝银行 ETF', code: '512800', cls: 'A股 · 行业', cur: 'CNY', risk: 4, fee: null, color: '#6B7F5E',
+    hold: '华宝中证银行 ETF（512800），跟踪中证银行指数，持有 A 股上市银行，大型国有银行和股份制银行权重最高。估值低、股息率较高，与经济周期和利率政策关系紧密。2017 年 7 月上市，此前无数据。',
+    role: '单一行业，集中度高。偏价值与高股息，可作小比例卫星仓；自上市以来最大回撤 {mdd:BANK}，不宜作为核心。注意：这只 ETF 在 Yahoo 的分红数据不完整，历史收益可能被低估。' },
+  SOEDIV: { lot: 100, cn: '央企红利 ETF', code: '561580', cls: 'A股 · 红利', cur: 'CNY', risk: 4, fee: null, color: '#9A6B3E',
+    hold: '华泰柏瑞中证央企红利 ETF（561580），跟踪中证央企红利指数：从央企控股上市公司中选取股息率高、分红稳定的股票，能源、金融、交通运输、公用事业占比较高。2023 年上市。',
+    role: '可以看作「中国版的 SCHD」，红利风格、现金流稳定，和成长类资产互补。但它仍是股票，2008 年这样的熊市一样大跌（最大回撤 {mdd:SOEDIV}）。适合中低比例。' },
+  CHINEXT: { lot: 100, cn: '创业板', code: '159915', cls: 'A股 · 成长', cur: 'CNY', risk: 5, fee: null, color: '#7D6A9E',
+    hold: '易方达创业板 ETF（159915），跟踪创业板指数：创业板中市值大、流动性好的 100 只股票，新能源、医药、电子等成长行业为主。2011 年 9 月上市。',
+    role: 'A 股里的高成长、高波动板块，2015 年和 2021 年都经历过大起大落，最大回撤 {mdd:CHINEXT}，年化波动约 {vol:CHINEXT}。适合小比例卫星仓，靠阈值再平衡在大涨后止盈。' },
+  HSI: { lot: 500, cn: '恒生指数', code: '2800', cls: '港股 · 宽基', cur: 'HKD', risk: 4, fee: null, color: '#4F7C8A',
+    hold: '盈富基金（2800），跟踪恒生指数：香港上市的大型公司，金融、互联网科技、地产、能源等。',
+    role: '港股核心宽基，估值长期偏低，同时受中国经济和美元利率影响。过去 20 年年化 {cagr:HSI}，明显低于美股；可作地域分散的一部分，比例宜适中。' },
+  HSTECH: { lot: 200, cn: '恒生科技', code: '3033', cls: '港股 · 科技', cur: 'HKD', risk: 5, fee: null, color: '#8AA0B8',
+    hold: '南方东英恒生科技指数 ETF（3033），跟踪恒生科技指数：在港上市市值最大的 30 家科技公司，如腾讯、阿里巴巴、美团、小米等。2020 年 8 月上市。',
+    role: '中国科技龙头的集中仓位，波动极大：2021–2022 年最大回撤 {mdd:HSTECH}，年化波动约 {vol:HSTECH}。属于高风险卫星，只适合小比例，并接受它让组合更颠簸。' },
+};
+// where each extra asset's history comes from before the fund itself existed (shown in the detail drawer)
+const ORIGIN = {
+  SSE: '上证综合指数（价格指数，不含分红）',
+  A500: '2024-12 之前用沪深 300 ETF（510300），2012-05 之前再用上证指数接续',
+  BANK: '仅有 2017-07 上市以来的数据',
+  SOEDIV: '2023-06 之前用上证红利 ETF（510880）接续',
+  CHINEXT: '仅有 2011-09 上市以来的数据',
+  HSI: '2008-01 之前用恒生价格指数（不含分红）接续',
+  HSTECH: '2020-09 之前用 KWEB（美国上市的中国互联网 ETF，以美元计）接续，成分相近但不完全相同',
+};
+const IDS = Object.keys(A);
+const MINE = IDS.filter(id => A[id].mine);
+
+/* ---------------- price helpers ---------------- */
+const CUR = id => (A[id] && A[id].cur) || 'USD';
+const fxAt = (cur, i) => cur === 'USD' || !D.fx || !D.fx[cur] ? 1 : D.fx[cur][Math.min(i, D.fx[cur].length - 1)];
+// P() = price in US dollars (what the backtest and rebalance use); Pl() = price in the asset's own currency
+const Pl = (id, i, k = 3) => { const a = D.assets[id]; const j = i - a.first; if (j < 0) return null; return [a.o, a.h, a.l, a.c][k][j]; };
+const P = (id, i, k = 3) => { const v = Pl(id, i, k); return v == null ? null : v / fxAt(CUR(id), i); };
+const CUR_SYM = { USD: '$', CNY: '¥', HKD: 'HK$' };
+function monthly(id, from = 0) {
+  const a = D.assets[id]; const out = []; let cur = null;
+  for (let i = Math.max(a.first, from); i < N; i++) {
+    const m = ym(i), j = i - a.first;
+    if (!cur || cur.m !== m) { if (cur) out.push(cur); cur = { m, time: m + '-01', open: a.o[j], high: a.h[j], low: a.l[j], close: a.c[j] }; }
+    else { cur.high = Math.max(cur.high, a.h[j]); cur.low = Math.min(cur.low, a.l[j]); cur.close = a.c[j]; }
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+// monthly closes in US dollars, used where assets are compared with the (dollar-based) strategy
+function monthlyUSD(id, from = 0) { const a = D.assets[id]; const out = []; let lm = null; for (let i = Math.max(a.first, from); i < N; i++) { const m = ym(i); const v = P(id, i); if (m !== lm) { out.push({ time: m + '-01', value: v }); lm = m; } else out[out.length - 1].value = v; } return out; }
+function weekly(id) { const a = D.assets[id]; const out = []; for (let i = a.first; i < N; i++) { const j = i - a.first; out.push({ time: ymd(wDate(i)), open: a.o[j], high: a.h[j], low: a.l[j], close: a.c[j] }); } return out; }
+
+/* ---------------- asset statistics ---------------- */
+const W20 = Math.round(20 * 52.1775);
+const ST = {};
+(function () {
+  const spyR = [];
+  for (let i = 1; i < N; i++) { const a = P('SPY', i - 1), b = P('SPY', i); spyR[i] = a && b ? Math.log(b / a) : null; }
+  for (const id of IDS) {
+    const a = D.assets[id], c = a.c, last = N - 1;
+    const i20 = Math.max(a.first, last - W20), yrs = (last - i20) / 52.1775;
+    const cagr = Math.pow(c[last - a.first] / c[i20 - a.first], 1 / yrs) - 1;
+    const r = []; for (let j = 1; j < c.length; j++) r.push(Math.log(c[j] / c[j - 1]));
+    const mu = r.reduce((x, y) => x + y, 0) / r.length; const vol = Math.sqrt(r.reduce((x, y) => x + (y - mu) ** 2, 0) / r.length * 52.1775);
+    let pk = 0, mdd = 0; for (const x of c) { pk = Math.max(pk, x); mdd = Math.min(mdd, x / pk - 1); }
+    let sa = 0, ss = 0, n = 0; const ra = [], rs = [];
+    for (let i = a.first + 1; i < N; i++) { if (spyR[i] == null) continue; ra.push(Math.log(c[i - a.first] / c[i - a.first - 1])); rs.push(spyR[i]); }
+    n = ra.length; sa = ra.reduce((x, y) => x + y, 0) / n; ss = rs.reduce((x, y) => x + y, 0) / n;
+    let cov = 0, va = 0, vs = 0; for (let k = 0; k < n; k++) { cov += (ra[k] - sa) * (rs[k] - ss); va += (ra[k] - sa) ** 2; vs += (rs[k] - ss) ** 2; }
+    const years = {}; let prevY = null, prevC = null;
+    for (let i = a.first; i < N; i++) { const y = +ym(i).slice(0, 4); if (prevY !== null && y !== prevY) { if (years[prevY] && years[prevY].s != null) years[prevY].r = prevC / years[prevY].s - 1; } if (!years[y]) years[y] = { s: i > a.first ? c[i - a.first - 1] : null }; prevY = y; prevC = c[i - a.first]; }
+    years[prevY].r = years[prevY].s != null ? prevC / years[prevY].s - 1 : null; years[prevY].ytd = true;
+    ST[id] = { cagr, full: last - W20 >= a.first, fromYear: ymd(wDate(a.first)).slice(0, 4), vol, mdd, corr: cov / Math.sqrt(va * vs), years };
+  }
+})();
+
+/* ---------------- line art ---------------- */
+function drawArt(cv) {
+  const seed = +cv.dataset.art; const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+  cv.width = w * dpr; cv.height = h * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, w, h);
+  const col = css('--art'); g.strokeStyle = col; g.lineWidth = 0.7;
+  const lines = 26, x0 = w * 0.42;
+  for (let k = 0; k < lines; k++) {
+    g.globalAlpha = 0.05 + 0.10 * (1 - Math.abs(k - lines / 2) / (lines / 2));
+    g.beginPath();
+    for (let x = x0; x <= w + 4; x += 6) {
+      const t = (x - x0) / (w - x0);
+      const y = h * (0.12 + 0.8 * k / lines) + Math.sin(t * 5.2 + k * 0.33 + seed) * 14 * t + Math.sin(t * 13 + seed * 2 + k * 0.11) * 4 * t + (t * t) * (k - lines / 2) * 3.2;
+      x === x0 ? g.moveTo(x, y) : g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+  g.globalAlpha = 0.18; g.fillStyle = col;
+  for (let x = x0 - 120; x < w; x += 24) for (let y = 12; y < h; y += 24) { if (x < x0 && (x - (x0 - 120)) / 120 < Math.random()) continue; g.fillRect(x, y, 1, 1); }
+  g.globalAlpha = 1;
+}
+const drawAllArt = () => document.querySelectorAll('canvas[data-art]').forEach(drawArt);
+
+/* ---------------- charts ---------------- */
+const charts = [];
+function chartOpts(log) {
+  return {
+    autoSize: true,
+    layout: { background: { type: 'solid', color: 'transparent' }, textColor: css('--ink-3'), fontFamily: 'Inter, Segoe UI, sans-serif', fontSize: 11 },
+    grid: { vertLines: { color: css('--line'), style: 1 }, horzLines: { color: css('--line'), style: 1 } },
+    rightPriceScale: { borderColor: css('--line'), mode: log ? 1 : 0, scaleMargins: { top: 0.08, bottom: 0.06 } },
+    timeScale: { borderColor: css('--line'), rightOffset: 2, tickMarkFormatter: (t, type) => { const d = typeof t === 'object' ? t : (typeof t === 'string' ? { year: +t.slice(0, 4), month: +t.slice(5, 7), day: +t.slice(8, 10) } : null); if (!d) return ''; return type === 0 ? String(d.year) : type === 1 ? d.month + '月' : d.month + '/' + d.day; } },
+    crosshair: { mode: 0, vertLine: { color: css('--line-2'), labelBackgroundColor: css('--ink-2') }, horzLine: { color: css('--line-2'), labelBackgroundColor: css('--ink-2') } },
+    localization: { locale: 'zh-CN', timeFormatter: t => typeof t === 'object' ? `${t.year}-${String(t.month).padStart(2, '0')}-${String(t.day).padStart(2, '0')}` : String(t), priceFormatter: p => p >= 1000 ? p.toFixed(0) : p >= 10 ? p.toFixed(2) : p.toFixed(3) },
+  };
+}
+const candleOpts = () => ({ upColor: css('--up'), downColor: css('--down'), borderUpColor: css('--up'), borderDownColor: css('--down'), wickUpColor: css('--up'), wickDownColor: css('--down'), priceLineVisible: false });
+function makeChart(el, log = true) { const c = LightweightCharts.createChart(el, chartOpts(log)); charts.push(c); return c; }
+function rethemeCharts() { for (const c of charts) { try { const log = c.priceScale('right').options().mode === 1; c.applyOptions(chartOpts(log)); } catch (e) { } } refreshSeriesColors.forEach(f => f()); }
+const refreshSeriesColors = [];
+
+/* ---------------- sparkline ---------------- */
+function spark(id) {
+  const m = monthly(id); const w = 120, h = 30; const vals = m.map(x => Math.log(x.close)); const mn = Math.min(...vals), mx = Math.max(...vals);
+  const off = (D.assets[id].first) / N; const x0 = off * w;
+  const pts = vals.map((v, k) => [x0 + (w - x0) * k / (vals.length - 1), h - 3 - (h - 6) * (v - mn) / (mx - mn || 1)]);
+  const d = pts.map((p, k) => (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="M0 ${h - 0.5}H${w}" stroke="var(--line)" stroke-width="1"/><path d="${d}" fill="none" stroke="${A[id].color}" stroke-width="1.3"/><circle cx="${pts.at(-1)[0]}" cy="${pts.at(-1)[1]}" r="2" fill="${A[id].color}"/></svg>`;
+}
+const riskHtml = r => `<span class="risk ${r >= 5 ? 'r5' : r === 4 ? 'r4' : ''}"><i>${[1, 2, 3, 4, 5].map(k => `<b class="${k <= Math.min(r, 5) ? 'on' : ''}"></b>`).join('')}</i><em>R${Math.min(r, 5)}${r > 5 ? '+' : ''} ${RISK[r]}</em></span>`;
+const cagrHtml = id => `${fmtPct(ST[id].cagr)}${ST[id].full ? '' : `<sup class="muted" style="font-size:10px"> 自${ST[id].fromYear}</sup>`}`;
+
+/* ---------------- state ---------------- */
+const PRESETS = [
+  { key: 'steady', cap: 'SLOW AND STEADY', name: '稳健', d: '债券与短债过半，股票以宽基和红利为主，黄金分散。适合回撤承受力低、或 5 年内可能用钱的人。', w: { SPY: 20, SCHD: 10, VXUS: 5, GLD: 15, BND: 35, SHY: 15 }, rule: { mode: 'hybrid', abs: 5, rel: 25, period: 'Y' } },
+  { key: 'balanced', cap: 'KEEP IT LEVEL', name: '均衡', d: '股票约七成、债券与黄金约三成，少量比特币。适合 5–10 年不用这笔钱、能接受 -30% 左右下跌的人。', w: { SPY: 30, QQQM: 10, SCHD: 10, VXUS: 10, GLD: 15, BND: 22, IBIT: 3 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Y' } },
+  { key: 'cnus', cap: 'TWO MARKETS, ONE PLAN', name: '中美均衡', d: '在均衡的基础上，把约四分之一的股票换成 A 股和港股、去掉比特币。人民币资产与美股相关性低，但 A 股和港股长期回报低于美股。适合资产和生活都在国内、想两边都配一些的人。', w: { SPY: 25, QQQM: 10, A500: 15, HSI: 5, SOEDIV: 5, GLD: 15, BND: 25 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Y' } },
+  { key: 'bold', cap: 'AIM HIGHER', name: '激进', d: '成长股为主，比特币一成，债券仅作缓冲。适合 10 年以上不用钱、能承受腰斩的人。', w: { QQQM: 30, SPY: 25, VXUS: 10, SCHD: 5, VWO: 5, GLD: 10, IBIT: 10, BND: 5 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Q' } },
+  { key: 'mine', cap: 'WHERE IT BEGAN', name: '我的初始想法', d: '你最初提出的五个标的：QQQM、比特币、标普 500、黄金、SCHD。没有债券，「低风险层」实际仍是股票和黄金。', w: { QQQM: 25, IBIT: 10, SPY: 30, GLD: 15, SCHD: 20 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Q' } },
+];
+// card illustrations: one ink weight, one terracotta element, one pale fill, a few loose marks
+const ART = (body, accent) => `<svg viewBox="0 0 190 119" fill="none" aria-hidden="true"><g stroke="#413F35" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${body}</g>${accent}<circle cx="34" cy="30" r="2.2" fill="#918B74"/><path d="m160 84-3 6 6 3 3-6z" stroke="#918B74"/></svg>`;
+const SPARK = (x, y) => `<g stroke="#C16B50" stroke-width="2" stroke-linecap="round"><path d="M${x} ${y - 9}v18M${x - 9} ${y}h18M${x - 6.4} ${y - 6.4}l12.8 12.8M${x - 6.4} ${y + 6.4}l12.8-12.8"/></g>`;
+const PRESET_ART = {
+  steady: ART('<path d="M40 104h110"/><path fill="#E3E0D0" d="M62 104c0-10 14-16 33-16s33 6 33 16z"/><path d="M72 88c0-8 10-13 23-13s23 5 23 13"/><path d="M80 75c0-7 7-11 15-11s15 4 15 11"/><path d="M88 64c0-5 3-9 7-9s7 4 7 9"/>', `<path fill="#C87457" stroke="#413F35" stroke-width="1.6" d="M88 64c0-5 3-9 7-9s7 4 7 9z"/>${SPARK(146, 34)}`),
+  balanced: ART('<path d="M95 26v76M78 104h34M50 42h90"/><circle cx="95" cy="26" r="3.5"/><path d="M56 42l-14 32M56 42l14 32M38 74h36c0 7-8 12-18 12s-18-5-18-12zM134 42l-14 32M134 42l14 32M116 74h36c0 7-8 12-18 12s-18-5-18-12z"/>', `<path fill="#C87457" stroke="#413F35" stroke-width="1.6" d="M48 74v-8h16v8zM126 74v-8h16v8z"/>${SPARK(160, 26)}`),
+  bold: ART('<path d="M30 104h132M40 104l38-58 22 30 14-18 34 46"/><path d="M78 46V22M78 22l18 6-18 6"/><path d="M64 70l14-4 10 10" stroke-width="1.2"/>', `<path fill="#C87457" stroke="#413F35" stroke-width="1.6" stroke-linejoin="round" d="M78 22l18 6-18 6z"/>${SPARK(150, 30)}`),
+  cnus: ART('<circle cx="78" cy="62" r="28"/><circle cx="112" cy="62" r="28"/><path d="M40 104h110M66 52h24M66 62h18M100 52h24M106 62h18" stroke-width="1.3"/>', `<path fill="#C87457" stroke="#413F35" stroke-width="1.6" d="M95 39.6a28 28 0 0 1 0 44.8 28 28 0 0 1 0-44.8z"/>${SPARK(158, 28)}`),
+  mine: ART('<path d="M38 96c19-6 38-6 57 0 19-6 38-6 57 0V40c-19-6-38-6-57 0-19-6-38-6-57 0z"/><path d="M95 40v56M50 54c12-2 24-2 36 0M50 64c12-2 24-2 36 0M50 74c8-1.5 16-1.5 24 0M104 54c12-2 24-2 36 0M104 64c12-2 24-2 36 0"/>', `<path fill="#C87457" stroke="#413F35" stroke-width="1.6" stroke-linejoin="round" d="M120 36v24l6-5 6 5V36z"/>${SPARK(160, 26)}`),
+};
+let S = { weights: { ...PRESETS[1].w }, preset: 'balanced', monthly: 3000, initial: 0, start: '2000-01', mode: 'hybrid', abs: 5, rel: 30, period: 'Y', fee: 0.05, cashflow: true, label: '均衡' };
+try { const saved = JSON.parse(localStorage.getItem('heng.state') || 'null'); if (saved && saved.weights) S = { ...S, ...saved }; } catch (e) { }
+const save = () => { try { localStorage.setItem('heng.state', JSON.stringify(S)); } catch (e) { } };
+
+/* ---------------- backtest engine ---------------- */
+function startIndex(ymStr) { for (let i = 0; i < N; i++) if (ym(i) >= ymStr) return i; return 0; }
+function xirr(flows) {
+  const t0 = flows[0][0]; const f = r => flows.reduce((s, [t, v]) => s + v / Math.pow(1 + r, (t - t0) / 365.25 / 864e5), 0);
+  let lo = -0.99, hi = 5, flo = f(lo), fhi = f(hi); if (flo * fhi > 0) return null;
+  for (let k = 0; k < 200; k++) { const mid = (lo + hi) / 2, fm = f(mid); if (Math.abs(fm) < 1e-7) return mid; if (flo * fm < 0) { hi = mid; fhi = fm; } else { lo = mid; flo = fm; } }
+  return (lo + hi) / 2;
+}
+function backtest(cfg) {
+  const ids = Object.keys(cfg.weights).filter(id => cfg.weights[id] > 0);
+  const s0 = startIndex(cfg.start); const fee = (cfg.fee || 0) / 100;
+  const sh = Object.fromEntries(ids.map(id => [id, 0]));
+  let units = 0, invested = 0, lastReb = -99;
+  const nav = [], val = [], inv = [], flows = [], log = [], wHist = [], marks = [];
+  const target = i => { const av = ids.filter(id => D.assets[id].first <= i); const tot = av.reduce((s, id) => s + cfg.weights[id], 0); return Object.fromEntries(av.map(id => [id, cfg.weights[id] / tot])); };
+  const value = (i, k) => ids.reduce((s, id) => s + (sh[id] ? sh[id] * P(id, i, k) : 0), 0);
+  let rebCount = 0, turnSum = 0;
+  for (let i = s0; i < N; i++) {
+    const newMonth = i === s0 || ym(i) !== ym(i - 1);
+    const tw = target(i);
+    const pre = { o: value(i, 0), h: value(i, 1), l: value(i, 2), c: value(i, 3) };
+    const uB = units;
+    let contrib = 0; if (i === s0) contrib += cfg.initial || 0; if (newMonth) contrib += cfg.monthly || 0;
+    if (contrib > 0) {
+      const navB = units > 0 ? pre.c / units : 1; units += contrib / navB; invested += contrib; flows.push([wDate(i).getTime(), -contrib]);
+      const v = Object.fromEntries(ids.map(id => [id, sh[id] * (P(id, i) || 0)])); const T = pre.c + contrib;
+      let alloc = {};
+      if (cfg.cashflow) {
+        const gaps = Object.fromEntries(Object.keys(tw).map(id => [id, Math.max(0, tw[id] * T - v[id])])); const gs = Object.values(gaps).reduce((a, b) => a + b, 0);
+        if (gs >= contrib) for (const id in gaps) alloc[id] = contrib * gaps[id] / gs;
+        else for (const id in tw) alloc[id] = gaps[id] + (contrib - gs) * tw[id];
+      } else for (const id in tw) alloc[id] = contrib * tw[id];
+      for (const id in alloc) sh[id] += alloc[id] * (1 - fee) / P(id, i);
+    }
+    // rebalance check
+    let Vc = value(i, 3);
+    const cur = Object.fromEntries(ids.map(id => [id, Vc > 0 ? sh[id] * (P(id, i) || 0) / Vc : 0]));
+    let worst = null, wd = 0;
+    for (const id in tw) { const ab = Math.abs(cur[id] - tw[id]), rel = ab / tw[id]; const hit = ab * 100 >= cfg.abs || rel * 100 >= cfg.rel; if (hit && ab > wd) { wd = ab; worst = id; } }
+    const thrHit = worst && i - lastReb >= 4 && Vc > 0;
+    const m = +ym(i).slice(5, 7);
+    const calHit = newMonth && i > s0 && (cfg.period === 'Q' ? [1, 4, 7, 10].includes(m) : m === 1) && Vc > 0;
+    const doReb = (cfg.mode === 'threshold' && thrHit) || (cfg.mode === 'calendar' && calHit) || (cfg.mode === 'hybrid' && (thrHit || calHit));
+    if (doReb) {
+      const trades = []; let gross = 0;
+      for (const id of ids) { const tgtV = (tw[id] || 0) * Vc, curV = sh[id] * (P(id, i) || 0); const dlt = tgtV - curV; if (Math.abs(dlt) > 0.5) { trades.push([id, dlt]); gross += Math.abs(dlt); } }
+      if (gross / Vc > 0.002) {
+        const cost = gross * fee; const V2 = Vc - cost;
+        for (const id of ids) sh[id] = (tw[id] || 0) * V2 / (P(id, i) || 1);
+        rebCount++; turnSum += gross / 2 / Vc; lastReb = i;
+        const reason = thrHit ? `${worst} 偏离 ${(cur[worst] * 100).toFixed(1)}% → 目标 ${(tw[worst] * 100).toFixed(1)}%` : (cfg.period === 'Q' ? '季度定期检查' : '年度定期检查');
+        log.push({ i, reason, turn: gross / 2 / Vc, trades: trades.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])) });
+        marks.push(i);
+        Vc = V2;
+      }
+    }
+    const post = value(i, 3);
+    if (units > 0) {
+      // the week's open/high/low come from holdings carried into the week (units before this week's contribution);
+      // the close is after contributions and trades, so fees show up as a small drop
+      const c = post / units;
+      if (uB > 0 && pre.c > 0) { const o = pre.o / uB; nav.push({ i, o, h: Math.max(o, c, pre.h / uB), l: Math.min(o, c, pre.l / uB), c }); }
+      else nav.push({ i, o: c, h: c, l: c, c });
+    }
+    val.push([i, post]); inv.push([i, invested]);
+    const nextNew = i === N - 1 || ym(i + 1) !== ym(i);
+    if (nextNew) wHist.push({ i, w: Object.fromEntries(ids.map(id => [id, post > 0 ? sh[id] * (P(id, i) || 0) / post : 0])) });
+  }
+  const final = val.at(-1)[1];
+  const xr = xirr([...flows, [wDate(N - 1).getTime(), final]]);
+  const yrs = (N - 1 - s0) / 52.1775; const twr = Math.pow(nav.at(-1).c / nav[0].c, 1 / yrs) - 1;
+  let pk = 0, mdd = 0, mddAt = null; for (const p of nav) { if (p.c > pk) pk = p.c; const d = p.c / pk - 1; if (d < mdd) { mdd = d; mddAt = p.i; } }
+  const r = []; for (let k = 1; k < nav.length; k++) r.push(Math.log(nav[k].c / nav[k - 1].c));
+  const mu = r.reduce((a, b) => a + b, 0) / r.length; const vol = Math.sqrt(r.reduce((a, b) => a + (b - mu) ** 2, 0) / r.length * 52.1775);
+  const years = {}; let prev = null;
+  for (const p of nav) { const y = ym(p.i).slice(0, 4); if (!years[y]) years[y] = { s: prev ? prev.c : p.o }; years[y].e = p.c; prev = p; }
+  return { cfg, s0, ids, nav, val, inv, log, wHist, marks, final, invested, xirr: xr, twr, mdd, mddAt, vol, rebCount, turnYear: turnSum / yrs, years };
+}
+
+/* ---------------- 01 assets view ---------------- */
+let sortKey = 'layer';
+function renderAssets() {
+  const tb = $('#assetTable tbody'); let rows = '';
+  const row = id => { const st = ST[id], a = A[id], on = S.weights[id] != null;
+    return `<tr class="row" data-id="${id}" tabindex="0"><td><div class="tk"><span class="dot" style="background:${a.color}"></span><div><b>${id}</b>${a.mine ? ' <span class="chip mine">你的候选</span>' : ''}${a.cur ? ` <span class="chip">${a.cur === 'CNY' ? '人民币' : '港币'}</span>` : ''}<span>${a.cn}${a.code ? ' · ' + a.code : ''} · ${a.cls}</span></div></div></td>
+      <td>${riskHtml(a.risk)}</td><td>${spark(id)}</td>
+      <td class="r num ${st.cagr >= 0 ? 'pos' : 'neg'}">${cagrHtml(id)}</td><td class="r num">${fmtPct(st.vol)}</td><td class="r num neg">${fmtPct(st.mdd)}</td><td class="r num">${st.corr.toFixed(2)}</td><td class="r num">${a.fee == null ? '<span class="muted">见公告</span>' : a.fee.toFixed(a.fee < 0.1 ? 4 : 2).replace(/0+$/, '').replace(/\.$/, '') + '%'}</td>
+      <td class="sub" style="min-width:220px;max-width:320px;font-size:12px;line-height:1.5">${esc(a.hold.split('。')[0])}。</td>
+      <td class="r"><button class="add" type="button" data-add="${id}" aria-pressed="${on}" aria-label="${on ? '移出组合' : '加入组合'} ${id}">${on ? '✓' : '+'}</button></td></tr>`; };
+  if (sortKey === 'layer') for (const L of LAYERS) { rows += `<tr class="group" data-layer="${L.key}"><td colspan="10"><span class="dot" style="background:${L.color};margin-right:8px"></span>${L.name}</td></tr>`; rows += L.ids.map(row).join(''); }
+  else rows = [...IDS].sort((a, b) => sortKey === 'cagr' ? ST[b].cagr - ST[a].cagr : ST[b].vol - ST[a].vol).map(row).join('');
+  tb.innerHTML = rows;
+  $('#selCount').textContent = Object.keys(S.weights).length;
+}
+function renderVerdict() {
+  const s = ST;
+  $('#verdictText').innerHTML = `
+    <p><b>总体可以，但缺一块真正的低风险资产。</b>五个标的里，QQQM、标普 500、SCHD 都是美股，与标普 500 的相关系数都在 ${(Math.floor(Math.min(s.QQQM.corr, s.SCHD.corr) * 100) / 100).toFixed(2)} 以上；黄金和 SCHD 也并不「低风险」，黄金历史最大回撤 ${fmtPct(s.GLD.mdd, 0)}，SCHD 是股票基金，2020 年也跌了约 30%。按这五个标的的一种配比（「我的初始想法」模板）从 2000 年起回测，最大回撤为 <span class="num" id="mineMdd">—</span>。</p>
+    <p><b>建议补充：</b>美国综合债 BND 或短债 SHY/SGOV 作为防守层，它们在股市大跌时通常持平或上涨，也是再平衡时「低位买股」的资金来源；想做全球分散可加 VXUS。标普 500 与 VTI 二选一即可，QQQM 与标普 500 大量重叠，比例不宜都高。比特币适合个位数比例，靠阈值再平衡定期止盈。</p>`;
+}
+function bindAssets() {
+  $('#assetTable').addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (b) { e.stopPropagation(); toggleAsset(b.dataset.add); return; } const r = e.target.closest('tr.row'); if (r) openDrawer(r.dataset.id); });
+  $('#assetTable').addEventListener('keydown', e => { if (e.key === 'Enter') { const r = e.target.closest('tr.row'); if (r) openDrawer(r.dataset.id); } });
+  $('#sortSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; sortKey = b.dataset.sort; [...$('#sortSeg').children].forEach(x => x.setAttribute('aria-pressed', x === b)); renderAssets(); });
+}
+function toggleAsset(id) {
+  if (S.weights[id] != null) delete S.weights[id]; else S.weights[id] = 0;
+  S.preset = null; S.label = '自定义'; save(); renderAssets(); renderStrategy();
+  if (!$('#drawer').hidden && dState.id === id) setAddBtn();
+}
+
+/* drawer */
+const dState = { id: null, freq: 'M', log: true, range: 0, chart: null, series: null };
+function setAddBtn() { const on = S.weights[dState.id] != null; $('#dAdd').textContent = on ? '已在组合中 · 移出' : '加入组合'; $('#dAdd').className = on ? 'btn' : 'btn primary'; }
+function openDrawer(id) {
+  dState.id = id; const a = A[id], st = ST[id], m = D.assets[id];
+  $('#dEyebrow').textContent = `${a.cls} · ${RISK[a.risk]}风险`;
+  $('#dTitle').innerHTML = `${id}<small>${a.cn}</small>`;
+  $('#dSub').textContent = m.name || '';
+  $('#dStats').innerHTML = [
+    ['20 年年化', cagrHtml(id)], ['年化波动', fmtPct(st.vol)], ['最大回撤', fmtPct(st.mdd)], ['与标普 500 相关', st.corr.toFixed(2)]
+  ].map(([l, v]) => `<div><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+  $('#dHold').innerHTML = `<p>${esc(a.hold)}</p><p class="small muted">${a.fee == null ? '管理费与托管费以基金公司最新公告为准。' : `费率约 ${a.fee}% / 年，以基金官网最新公告为准。`}${a.cur ? ` 以${a.cur === 'CNY' ? '人民币' : '港币'}计价；本页统计按${a.cur === 'CNY' ? '人民币' : '港币'}计算，回测和再平衡时按每周汇率折算成美元。` : ''}</p>`;
+  $('#dRole').innerHTML = `<p>${esc(fillFacts(a.role))}</p>`;
+  const ys = Object.entries(st.years).filter(([, v]) => v.r != null).slice(-12);
+  $('#dYears').innerHTML = `<thead><tr>${ys.map(([y, v]) => `<th class="r">${y}${v.ytd ? '<sup>至今</sup>' : ''}</th>`).join('')}</tr></thead><tbody><tr>${ys.map(([, v]) => `<td class="r num ${v.r >= 0 ? 'pos' : 'neg'}">${fmtPct(v.r, 1, true)}</td>`).join('')}</tr></tbody>`;
+  $('#dData').innerHTML = ORIGIN[id] ? `数据说明：${id}（${a.cn}${a.code ? ' ' + a.code : ''}）${ORIGIN[id]}。` : m.proxy ? `数据说明：${id} 于 ${m.actualFirst} 成立，${m.spliceWeek} 之前使用 ${m.proxy}（${proxyDesc(m.proxy)}）的复权数据按比例接续，换算到 ${id} 的价格水平。` : `数据说明：${id} 于 ${m.actualFirst} 成立，图表从 ${ymd(wDate(m.first))} 起为其自身复权数据。`;
+  setAddBtn();
+  $('#scrim').hidden = false; $('#drawer').hidden = false; document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => { if (!dState.chart) { dState.chart = makeChart($('#dChart'), dState.log); dState.series = dState.chart.addCandlestickSeries(candleOpts()); refreshSeriesColors.push(() => dState.series && dState.series.applyOptions(candleOpts())); } drawDrawerChart(); });
+  $('#dClose').focus();
+}
+// role texts may cite figures that move with new data, e.g. {years:IBIT} or {vol:IBIT}
+function fillFacts(t) { return t.replace(/\{(years|vol|mdd|cagr|corr):(\w+)\}/g, (m, k, id) => k === 'years' ? String(Math.floor((N - 1 - D.assets[id].first) / 52.1775)) : k === 'corr' ? ST[id].corr.toFixed(2) : fmtPct(ST[id][k], k === 'cagr' ? 1 : 0)); }
+const cnNum = n => { const d = '零一二三四五六七八九'; if (n < 10) return d[n]; if (n < 20) return '十' + (n % 10 ? d[n % 10] : ''); return d[Math.floor(n / 10)] + '十' + (n % 10 ? d[n % 10] : ''); };
+function proxyDesc(p) { return ({ QQQ: '同一指数的老牌 ETF', 'BTC-USD': '比特币美元价格', VTSMX: '先锋全市场指数基金', VGTSX: '先锋国际股票指数基金', VEIEX: '先锋新兴市场指数基金', VGSIX: '先锋房地产指数基金', 'GC=F': 'COMEX 黄金期货价格', VBMFX: '先锋综合债指数基金', VUSTX: '先锋长期国债基金', VFISX: '先锋短期国债基金' })[p] || '同类资产'; }
+function drawDrawerChart() {
+  const id = dState.id; const data = dState.freq === 'M' ? monthly(id).map(({ time, open, high, low, close }) => ({ time, open, high, low, close })) : weekly(id);
+  dState.series.setData(data); dState.chart.applyOptions({ rightPriceScale: { mode: dState.log ? 1 : 0 } });
+  const ts = dState.chart.timeScale();
+  if (dState.range) { const end = new Date(W0 + (N - 1) * WK); const st = new Date(end); st.setUTCFullYear(end.getUTCFullYear() - dState.range); ts.setVisibleRange({ from: ymd(st), to: ymd(end) }); } else ts.fitContent();
+}
+function closeDrawer() { $('#scrim').hidden = true; $('#drawer').hidden = true; document.body.style.overflow = ''; const r = document.querySelector(`tr.row[data-id="${dState.id}"]`); if (r) r.focus(); }
+function segBind(sel, fn) { $(sel).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; [...$(sel).children].forEach(x => x.setAttribute('aria-pressed', x === b)); fn(b); }); }
+function bindDrawer() {
+  $('#dClose').onclick = closeDrawer; $('#scrim').onclick = closeDrawer;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#drawer').hidden) closeDrawer(); });
+  $('#dAdd').onclick = () => toggleAsset(dState.id);
+  segBind('#dFreq', b => { dState.freq = b.dataset.f; drawDrawerChart(); });
+  segBind('#dScale', b => { dState.log = b.dataset.v === '1'; drawDrawerChart(); });
+  segBind('#dRange', b => { dState.range = +b.dataset.y; drawDrawerChart(); });
+}
+
+/* ---------------- 02 strategy view ---------------- */
+let presetStats = {};
+function computePresetStats() { for (const p of PRESETS) presetStats[p.key] = backtest({ weights: p.w, start: '2000-01', monthly: 3000, initial: 0, mode: p.rule.mode, abs: p.rule.abs, rel: p.rule.rel, period: p.rule.period, fee: 0.05, cashflow: true }); }
+function allocBar(w) { const tot = Object.values(w).reduce((a, b) => a + b, 0) || 1; return `<div class="bar">${Object.entries(w).filter(([, v]) => v > 0).map(([id, v]) => `<span title="${id} ${v}%" style="width:${v / tot * 100}%;background:${A[id].color}"></span>`).join('')}</div>`; }
+function renderPresets() {
+  $('#presets').innerHTML = PRESETS.map((p, n) => { const r = presetStats[p.key];
+    return `<button class="preset" type="button" data-p="${p.key}" aria-pressed="${S.preset === p.key}">
+      <div class="p-art"><span class="no">NO. ${String(n + 1).padStart(2, '0')}</span>${PRESET_ART[p.key]}<span class="cap2">${p.cap}</span><span class="sel"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div>
+      <div class="p-body"><div class="eb">${Object.keys(p.w).length} 个标的</div><h3>${p.name}</h3>${allocBar(p.w)}<div class="d">${p.d}</div>
+      <div class="pstats"><div><div class="l">定投年化</div><div class="v">${fmtPct(r.xirr)}</div></div><div><div class="l">最大回撤</div><div class="v neg">${fmtPct(r.mdd, 0)}</div></div><div><div class="l">期末市值</div><div class="v">${fmtMoney(r.final)}</div></div></div></div></button>`; }).join('');
+  const mm = $('#mineMdd'); if (mm) mm.textContent = fmtPct(presetStats.mine.mdd, 0) + `（同期均衡模板为 ${fmtPct(presetStats.balanced.mdd, 0)}）`;
+}
+function renderStrategy() {
+  const ids = Object.keys(S.weights);
+  $('#weightRows').innerHTML = ids.length ? ids.map(id => `<div class="wrow" data-id="${id}"><div class="tk" style="min-width:0"><span class="dot" style="background:${A[id].color}"></span><div><b>${id}</b><span>${A[id].cn}</span></div></div>
+    <input type="range" min="0" max="100" step="1" value="${S.weights[id]}" aria-label="${id} 目标权重" id="r-${id}">
+    <input type="number" min="0" max="100" step="1" value="${S.weights[id]}" aria-label="${id} 目标权重（%）" id="n-${id}">
+    <button class="btn ghost" type="button" data-rm="${id}" aria-label="移出 ${id}" style="padding:4px 6px">✕</button></div>`).join('')
+    : `<div class="muted" style="padding:24px 0;text-align:center">还没有标的。选择一个模板，或在右上角添加标的。</div>`;
+  $('#addAsset').innerHTML = `<option value="">＋ 添加标的</option>` + IDS.filter(id => S.weights[id] == null).map(id => `<option value="${id}">${id} · ${A[id].cn}</option>`).join('');
+  updateSum(); renderTiers(); $('#cntStrategy').textContent = ids.length;
+  $('#pMonthly').value = S.monthly; $('#pInitial').value = S.initial; $('#pStart').value = S.start; $('#pMode').value = S.mode; $('#pAbs').value = S.abs; $('#pRel').value = S.rel; $('#pPeriod').value = S.period; $('#pFee').value = S.fee; $('#pCash').checked = S.cashflow;
+  [...document.querySelectorAll('.preset')].forEach(b => b.setAttribute('aria-pressed', S.preset === b.dataset.p));
+}
+function sumW() { return Object.values(S.weights).reduce((a, b) => a + (+b || 0), 0); }
+function updateSum() { const s = sumW(); $('#sumVal').textContent = s + '%'; $('#sumBox').classList.toggle('bad', s !== 100); $('#sumVal').title = s === 100 ? '' : '合计须为 100% 才能回测'; $('#runBtn').disabled = s !== 100; $('#quickStat').textContent = s === 100 ? '' : `合计须为 100%，当前 ${s}%`; }
+function renderTiers() {
+  const groups = [['低', [1, 2]], ['中', [3]], ['中高', [4]], ['高', [5, 6]]]; const s = sumW() || 1;
+  $('#tiers').innerHTML = groups.map(([n, rs]) => { const v = Object.entries(S.weights).filter(([id]) => rs.includes(A[id].risk)).reduce((a, [, w]) => a + w, 0);
+    return `<div class="tier"><span class="sub">${n}风险</span><div class="bar"><span style="width:${v / s * 100}%;background:${n === '低' ? 'var(--down)' : n === '中' ? 'var(--accent)' : n === '中高' ? 'var(--warn)' : 'var(--up)'}"></span></div><span class="num r" style="text-align:right">${v}%</span></div>`; }).join('');
+}
+function bindStrategy() {
+  $('#presets').addEventListener('click', e => { const b = e.target.closest('.preset'); if (!b) return; const p = PRESETS.find(x => x.key === b.dataset.p); S.weights = { ...p.w }; S.preset = p.key; S.label = p.name; S.mode = p.rule.mode; S.abs = p.rule.abs; S.rel = p.rule.rel; S.period = p.rule.period; save(); renderStrategy(); renderAssets(); });
+  $('#weightRows').addEventListener('input', e => { const row = e.target.closest('.wrow'); if (!row) return; const id = row.dataset.id; let v = Math.max(0, Math.min(100, Math.round(+e.target.value || 0))); S.weights[id] = v; S.preset = null; S.label = '自定义'; if (e.target.type === 'range') $('#n-' + id).value = v; else $('#r-' + id).value = v; updateSum(); renderTiers(); save(); [...document.querySelectorAll('.preset')].forEach(b => b.setAttribute('aria-pressed', 'false')); });
+  $('#weightRows').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) toggleAsset(b.dataset.rm); });
+  $('#addAsset').addEventListener('change', e => { if (e.target.value) toggleAsset(e.target.value); });
+  $('#normBtn').onclick = () => { const s = sumW(); const ids = Object.keys(S.weights); if (!ids.length) return; if (!s) ids.forEach(id => S.weights[id] = Math.floor(100 / ids.length)); else ids.forEach(id => S.weights[id] = Math.round(S.weights[id] * 100 / s)); let d = 100 - sumW(); const big = ids.sort((a, b) => S.weights[b] - S.weights[a])[0]; S.weights[big] += d; S.preset = null; S.label = '自定义'; save(); renderStrategy(); };
+  const map = { pMonthly: 'monthly', pInitial: 'initial', pStart: 'start', pMode: 'mode', pAbs: 'abs', pRel: 'rel', pPeriod: 'period', pFee: 'fee' };
+  $('#ruleForm').addEventListener('input', e => { const k = map[e.target.id]; if (k) S[k] = ['start', 'mode', 'period'].includes(k) ? e.target.value : +e.target.value; if (e.target.id === 'pCash') S.cashflow = e.target.checked; save(); });
+  $('#runBtn').onclick = () => { if (sumW() !== 100) return; go('backtest'); };
+  $('#toStrategy').onclick = () => go('strategy');
+}
+
+/* ---------------- 03 AI view ---------------- */
+let aiCtl = null, sampleFn = null, aiPlan = null;
+function profile() {
+  const prefs = [...document.querySelectorAll('#fPrefs input:checked')].map(x => x.value);
+  return { age: +$('#fAge').value, family: $('#fFamily').value, salary: +$('#fSalary').value, spend: +$('#fSpend').value, emergency: $('#fEmerg').selectedOptions[0].text, emergencyKey: $('#fEmerg').value, horizon: $('#fHorizon').selectedOptions[0].text, horizonY: +$('#fHorizon').value, ret: +$('#fReturn').value, retText: $('#fReturn').selectedOptions[0].text, dd: +$('#fDD').value, prefs, note: $('#fNote').value.trim() };
+}
+function aiPrompt(p) {
+  const table = IDS.map(id => `${id} | ${A[id].cn} | ${A[id].cls} | 风险R${Math.min(A[id].risk, 5)}${A[id].risk > 5 ? '+' : ''} | 年化${(ST[id].cagr * 100).toFixed(1)}%${ST[id].full ? '(20年)' : '(自' + ST[id].fromYear + ')'} | 波动${(ST[id].vol * 100).toFixed(0)}% | 最大回撤${(ST[id].mdd * 100).toFixed(0)}% | 与标普相关${ST[id].corr.toFixed(2)}`).join('\n');
+  return `你是一位讲解资产配置方法的理财教育助手，为一位上班族设计一份「每月定投 + 动态再平衡」的长期配置草案。这是学习参考，不是个性化投资建议，用语要克制、清楚。
+
+可选标的（只能从中选择，代码必须完全一致）：
+代码 | 名称 | 类别 | 风险 | 历史年化 | 年化波动 | 最大回撤 | 与标普500相关
+${table}
+
+用户情况：
+- 年龄：${p.age}
+- 家庭：${p.family}
+- 税后月收入：${p.salary} 元；每月固定支出：${p.spend} 元；可结余约 ${Math.max(0, p.salary - p.spend)} 元
+- 应急金：${p.emergency}
+- 资金可闲置时间：${p.horizon}
+- 期望年化回报：${p.retText}
+- 最多能接受的账面下跌：-${p.dd}%
+- 偏好：${p.prefs.join('、') || '无'}
+- 其他说明：${p.note || '无'}
+
+设计要求：
+1. 选 3–8 个标的，权重为整数且合计 100。IBIT（比特币）不超过 10，用户未勾选「比特币」时为 0。期限 3 年以内或回撤承受 ≤20% 时，债券与短债（BND、SHY、TLT）合计不少于 40。
+2. 组合的历史最大回撤应尽量不超过用户可接受的下跌；若用户期望回报与承受能力矛盾（例如期望 12% 但只能接受 -10%），在 warnings 中直说，并以承受能力为准。
+3. 每月定投金额：先保证应急金（不足时建议先把一部分结余补应急金），一般为可结余的 30%–70%，取整到百元。
+4. 再平衡规则：mode 取 hybrid/threshold/calendar 之一；bandAbs 为绝对偏离百分点（3–8），bandRel 为相对偏离百分比（20–40），period 为 Y 或 Q。
+5. reasons 3–5 条，每条一句话，说明为什么这样配；warnings 1–4 条，说明主要风险或需要注意的地方。
+
+只输出一个 JSON 对象，不要其他文字，格式：
+{"title":"不超过 12 个字的方案名","base":"稳健|均衡|激进","summary":"两三句话概括","weights":{"SPY":40,"BND":30,"GLD":15,"QQQM":15},"monthly":5000,"emergencyAdvice":"一句话","rebalance":{"mode":"hybrid","bandAbs":5,"bandRel":30,"period":"Y"},"reasons":["..."],"warnings":["..."]}`;
+}
+function ruleEngine(p) {
+  // deterministic fallback, used when AI is unavailable in this view
+  const surplus = Math.max(0, p.salary - p.spend);
+  let score = 0; score += p.age < 30 ? 2 : p.age < 40 ? 1.5 : p.age < 50 ? 0.5 : p.age < 60 ? -0.5 : -1.5;
+  score += { 3: -2, 5: -1, 10: 0.5, 20: 1.5 }[p.horizonY]; score += { 10: -2.5, 20: -1.2, 30: 0, 40: 1, 50: 2 }[p.dd];
+  score += /有子女|赡养/.test(p.family) ? -0.5 : 0; score += p.emergencyKey === 'no' ? -1 : p.emergencyKey === 'part' ? -0.5 : 0;
+  // the drawdown the person can stomach is a hard cap: never pick a template whose historical drawdown exceeds it
+  const byScore = score <= -1.5 ? 0 : score <= 1.5 ? 1 : 2;
+  let byDD = 0; ['steady', 'balanced', 'bold'].forEach((k, n) => { if (-presetStats[k].mdd * 100 <= p.dd + 0.5) byDD = n; });
+  const base = Math.min(byScore, byDD);
+  const pr = PRESETS.find(x => x.key === ['steady', 'balanced', 'bold'][base]); const w = { ...pr.w };
+  if (!p.prefs.includes('比特币')) { const b = w.IBIT || 0; delete w.IBIT; if (b) w.SPY = (w.SPY || 0) + b; } else if (!w.IBIT) { w.IBIT = 3; w.SPY -= 3; }
+  if (p.prefs.includes('越简单越好')) { const keep = Object.entries(w).sort((a, b) => b[1] - a[1]).slice(0, 4); const s = keep.reduce((a, [, v]) => a + v, 0); for (const k in w) delete w[k]; keep.forEach(([k, v]) => w[k] = Math.round(v * 100 / s)); }
+  if (p.prefs.includes('房地产') && !w.VNQ) { w.VNQ = 5; const k = w.SPY ? 'SPY' : Object.keys(w)[0]; w[k] -= 5; }
+  if (p.prefs.includes('分红现金流')) { w.SCHD = (w.SCHD || 0) + 5; const k = w.QQQM ? 'QQQM' : 'SPY'; w[k] = (w[k] || 0) - 5; }
+  const fix = Object.values(w).reduce((a, b) => a + b, 0) - 100; if (fix) { const k = Object.entries(w).sort((a, b) => b[1] - a[1])[0][0]; w[k] -= fix; }
+  for (const k in w) if (w[k] <= 0) delete w[k];
+  const rate = p.emergencyKey === 'yes' ? 0.6 : p.emergencyKey === 'part' ? 0.45 : 0.3;
+  return { title: `${pr.name}型定投方案`, base: pr.name, summary: `根据年龄、资金可闲置时间和可接受的下跌幅度，匹配到「${pr.name}」模板，并按偏好做了微调。`, weights: w, monthly: Math.max(100, Math.round(surplus * rate / 100) * 100),
+    emergencyAdvice: p.emergencyKey === 'yes' ? '应急金已备足，结余可以按计划定投。' : '建议先把每月结余的一部分存入短债或货币基金，补足 6 个月支出的应急金。',
+    rebalance: pr.rule.mode ? { mode: pr.rule.mode, bandAbs: pr.rule.abs, bandRel: pr.rule.rel, period: pr.rule.period } : null,
+    reasons: ['资金可闲置时间和回撤承受力决定了股票与债券的大致比例。', '宽基指数作为核心，成本低、规则透明，适合长期定投。', '黄金与股票相关性接近 0，用来分散；债券提供再平衡时加仓股票的资金。'],
+    warnings: ['这是基于规则的匹配结果，没有考虑你的全部财务状况。', '历史回测不代表未来表现。'] };
+}
+function sanitizePlan(raw) {
+  const w = {}; for (const [k, v] of Object.entries(raw.weights || {})) { const id = String(k).toUpperCase().trim(); if (A[id] && +v > 0) w[id] = Math.round(+v); }
+  if (w.IBIT > 10) { const ex = w.IBIT - 10; w.IBIT = 10; w.SPY = (w.SPY || 0) + ex; }
+  let s = Object.values(w).reduce((a, b) => a + b, 0); if (!s) return null;
+  if (s !== 100) { for (const k in w) w[k] = Math.round(w[k] * 100 / s); s = Object.values(w).reduce((a, b) => a + b, 0); const big = Object.entries(w).sort((a, b) => b[1] - a[1])[0][0]; w[big] += 100 - s; }
+  const rb = raw.rebalance || {}; const mode = ['hybrid', 'threshold', 'calendar'].includes(rb.mode) ? rb.mode : 'hybrid';
+  return { title: String(raw.title || '定投方案').slice(0, 20), base: String(raw.base || ''), summary: String(raw.summary || ''), weights: w, monthly: Math.max(0, Math.round((+raw.monthly || 0) / 100) * 100),
+    emergencyAdvice: String(raw.emergencyAdvice || ''), rebalance: { mode, bandAbs: Math.min(15, Math.max(1, +rb.bandAbs || 5)), bandRel: Math.min(80, Math.max(5, +rb.bandRel || 30)), period: rb.period === 'Q' ? 'Q' : 'Y' },
+    reasons: (raw.reasons || []).slice(0, 6).map(String), warnings: (raw.warnings || []).slice(0, 5).map(String) };
+}
+function renderPlan(plan, p, src) {
+  aiPlan = plan;
+  const r = backtest({ weights: plan.weights, start: '2000-01', monthly: plan.monthly || 3000, initial: 0, mode: plan.rebalance.mode, abs: plan.rebalance.bandAbs, rel: plan.rebalance.bandRel, period: plan.rebalance.period, fee: 0.05, cashflow: true });
+  const ddOk = -r.mdd * 100 <= p.dd + 0.5; const retOk = r.xirr * 100 >= p.ret - 0.5;
+  const modeTxt = { hybrid: '阈值 + 定期兜底', threshold: '仅阈值', calendar: '仅定期' }[plan.rebalance.mode];
+  $('#aiSrc').textContent = src;
+  $('#aiOut').innerHTML = `
+    <div><div class="eyebrow">${esc(plan.base)}</div><h3 style="font-size:20px;margin-top:4px">${esc(plan.title)}</h3><p class="sub" style="margin:6px 0 0">${esc(plan.summary)}</p></div>
+    ${allocBar(plan.weights)}
+    <div class="tbl-wrap"><table><tbody>${Object.entries(plan.weights).sort((a, b) => b[1] - a[1]).map(([id, v]) => `<tr><td><div class="tk" style="min-width:0"><span class="dot" style="background:${A[id].color}"></span><div><b>${id}</b><span>${A[id].cn}</span></div></div></td><td>${riskHtml(A[id].risk)}</td><td class="r num" style="font-size:15px">${v}%</td></tr>`).join('')}</tbody></table></div>
+    <div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><div class="l">建议每月定投</div><div class="v">${plan.monthly.toLocaleString('zh-CN')} 元</div></div><div><div class="l">回测定投年化</div><div class="v ${retOk ? '' : 'neg'}">${fmtPct(r.xirr)}</div></div><div><div class="l">回测最大回撤</div><div class="v ${ddOk ? '' : 'neg'}">${fmtPct(r.mdd, 0)}</div></div></div>
+    <div class="flag ${ddOk ? 'good' : 'bad'}"><b>${ddOk ? '✓' : '!'}</b><span>${ddOk ? `2000 年以来的最大回撤 ${fmtPct(r.mdd, 0)}，在你可接受的 -${p.dd}% 以内。` : `2000 年以来的最大回撤 ${fmtPct(r.mdd, 0)}，超过了你可接受的 -${p.dd}%。可以提高债券比例，或在策略配置里调整后再回测。`}</span></div>
+    ${retOk ? '' : `<div class="flag warn"><b>!</b><span>回测年化 ${fmtPct(r.xirr)} 低于你期望的 ${p.ret}%。在你的回撤承受范围内，更高的期望回报在历史上较难兼得。</span></div>`}
+    <div class="small sub">再平衡：${modeTxt}；偏离 ≥ ${plan.rebalance.bandAbs} 个百分点或 ≥ ${plan.rebalance.bandRel}% 时调回目标${plan.rebalance.mode !== 'threshold' ? `；${plan.rebalance.period === 'Q' ? '每季度' : '每年'}检查一次` : ''}。</div>
+    ${plan.emergencyAdvice ? `<div class="callout"><h3>应急金</h3><div class="sub">${esc(plan.emergencyAdvice)}</div></div>` : ''}
+    <div><h3 style="font-size:14px;margin-bottom:6px">为什么这样配</h3><ul class="clean">${plan.reasons.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    <div><h3 style="font-size:14px;margin-bottom:6px">需要注意</h3><ul class="clean">${plan.warnings.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" type="button" id="aiRebal">用这个方案生成本月操作</button><button class="btn" type="button" id="aiApply">先看历史回测</button><button class="btn ghost" type="button" id="aiEdit">带入定投模型再调整</button></div>
+    <p class="note">AI 生成的草案仅供学习参考，不构成投资建议；投入真金白银前请结合自身完整财务状况判断。</p>`;
+  const apply = () => { S.weights = { ...plan.weights }; S.preset = null; S.label = plan.title; S.mode = plan.rebalance.mode; S.abs = plan.rebalance.bandAbs; S.rel = plan.rebalance.bandRel; S.period = plan.rebalance.period; if (plan.monthly) S.monthly = plan.monthly; save(); renderStrategy(); renderAssets(); };
+  $('#aiRebal').onclick = () => { apply(); go('rebalance'); };
+  $('#aiApply').onclick = () => { apply(); go('backtest'); };
+  $('#aiEdit').onclick = () => { apply(); go('strategy'); };
+}
+async function runAI() {
+  const p = profile();
+  if (!(p.salary > 0) || !(p.age >= 18)) { $('#aiHint').textContent = '请填写年龄（18 岁以上）和税后月收入。'; return; }
+  $('#aiHint').textContent = '';
+  if (!sampleFn) { renderPlan(ruleEngine(p), p, '规则推荐 · 当前环境无法调用 AI'); return; }
+  aiCtl = new AbortController(); $('#aiBtn').disabled = true; $('#aiStop').hidden = false;
+  $('#aiOut').innerHTML = `<div class="thinking"><span class="pulse"></span>正在根据你的情况设计方案，通常需要 20–60 秒…</div>`;
+  try {
+    const raw = await sampleFn.json(aiPrompt(p), { signal: aiCtl.signal, cache: false });
+    const plan = sanitizePlan(raw || {});
+    if (!plan) throw { code: 'invalid_json' };
+    renderPlan(plan, p, 'AI 生成 · 已按规则校验');
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'cancelled') { $('#aiOut').innerHTML = `<div class="ai-empty"><div>已停止。</div></div>`; }
+    else if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(code)) { sampleFn = null; renderPlan(ruleEngine(p), p, '规则推荐 · AI 未授权'); }
+    else { renderPlan(ruleEngine(p), p, '规则推荐 · AI 本次失败'); $('#aiOut').insertAdjacentHTML('afterbegin', `<div class="flag warn"><b>!</b><span>${code === 'rate_limited' ? 'AI 调用过于频繁或已达用量上限，请稍后再试。' : code === 'invalid_json' ? 'AI 返回的结果无法解析，请再试一次。' : 'AI 暂时没有响应，请稍后再试。'}下面先给出规则推荐的版本。</span></div>`); }
+  } finally { $('#aiBtn').disabled = false; $('#aiStop').hidden = true; }
+}
+function bindAI() { $('#aiBtn').onclick = runAI; $('#aiStop').onclick = () => aiCtl && aiCtl.abort(); }
+
+/* ---------------- 04 backtest view ---------------- */
+let bt = { nav: null, navS: null, b1: null, b2: null, asset: null, assetS: null, val: null, valS: null, invS: null, sel: null, syncing: false };
+function navMonthly(r) { const out = []; let cur = null; for (const p of r.nav) { const m = ym(p.i); if (!cur || cur.m !== m) { if (cur) out.push(cur); cur = { m, time: m + '-01', open: p.o, high: p.h, low: p.l, close: p.c }; } else { cur.high = Math.max(cur.high, p.h); cur.low = Math.min(cur.low, p.l); cur.close = p.c; } } if (cur) out.push(cur); return out.map(({ time, open, high, low, close }) => ({ time, open, high, low, close })); }
+function navLine(r) { const out = []; let lastM = null; for (const p of r.nav) { const m = ym(p.i); if (m !== lastM) { out.push({ time: m + '-01', value: p.c }); lastM = m; } else out[out.length - 1].value = p.c; } return out; }
+const KPI_HELP = { '定投年化（XIRR）': '按每笔投入的日期和金额计算的年化收益，也就是你实际体验到的收益率', '净值年化': '单位净值的年化增长，不受每月投入多少影响，用来衡量策略本身', '最大回撤': '历史上从最高点跌到最低点的最大幅度', '再平衡次数': '回测期间实际触发再平衡的次数' };
+function renderBacktest() {
+  if (sumW() !== 100) { $('#btTitle').textContent = '权重合计不是 100%'; $('#btDesc').textContent = '请先在策略配置中把目标权重调整到合计 100%。'; return; }
+  const cfg = { weights: { ...S.weights }, start: S.start, monthly: S.monthly, initial: S.initial, mode: S.mode, abs: S.abs, rel: S.rel, period: S.period, fee: S.fee, cashflow: S.cashflow };
+  const r = backtest(cfg);
+  const b1 = backtest({ ...cfg, weights: { SPY: 100 }, mode: 'none', cashflow: false });
+  const b2 = backtest({ ...cfg, mode: 'none', cashflow: false });
+  const modeTxt = { hybrid: `阈值（${S.abs} 个百分点 / ${S.rel}%）+ ${S.period === 'Q' ? '季度' : '年度'}兜底`, threshold: `仅阈值（${S.abs} 个百分点 / ${S.rel}%）`, calendar: `${S.period === 'Q' ? '每季度' : '每年'}定期`, none: '不再平衡' }[S.mode];
+  $('#btTitle').textContent = `${S.label || '自定义'}组合 · ${ymd(wDate(r.s0)).slice(0, 7)} 至今`;
+  $('#btDesc').innerHTML = `${Object.entries(S.weights).filter(([, v]) => v > 0).map(([id, v]) => `${id} ${v}%`).join(' · ')}<br>每月定投 ${S.monthly.toLocaleString('zh-CN')} 元${S.initial ? `，初始 ${S.initial.toLocaleString('zh-CN')} 元` : ''}；再平衡：${modeTxt}${S.cashflow ? '；新钱优先补低配' : ''}。`;
+  const yrs = (N - 1 - r.s0) / 52.1775;
+  $('#kpis').innerHTML = [
+    ['累计投入', fmtMoney(r.invested), `${Math.round(yrs * 12)} 个月`],
+    ['期末市值', fmtMoney(r.final), `收益 ${fmtMoney(r.final - r.invested)}`],
+    ['定投年化（XIRR）', fmtPct(r.xirr), `标普 500 定投 ${fmtPct(b1.xirr)}`],
+    ['净值年化', fmtPct(r.twr), `年化波动 ${fmtPct(r.vol)}`],
+    ['最大回撤', fmtPct(r.mdd), r.mddAt != null ? `谷底 ${ym(r.mddAt)}` : ''],
+    ['再平衡次数', String(r.rebCount), `年均换手 ${fmtPct(r.turnYear, 1)}`],
+  ].map(([l, v, c]) => `<div title="${esc(KPI_HELP[l] || '')}"><div class="l">${l}</div><div class="v">${v}</div><div class="c">${c}</div></div>`).join('');
+  $('#kpiHelp').innerHTML = `<b>怎么读：</b>定投年化把每笔钱投入的时间算进去，是你实际体验到的年化收益；净值年化不受投入节奏影响，衡量策略本身；最大回撤是历史上从高点到低点最深的一次下跌。`;
+  const dx = r.xirr - b2.xirr, dm = r.mdd - b2.mdd, ds = r.xirr - b1.xirr;
+  $('#cmpNote').innerHTML = `<b>怎么读：</b>和「只定投不再平衡」相比，再平衡让定投年化${dx >= 0 ? '提高' : '降低'} ${Math.abs(dx * 100).toFixed(1)} 个百分点，最大回撤${dm >= 0 ? '减少' : '加深'} ${Math.abs(dm * 100).toFixed(1)} 个百分点；和同额定投标普 500 相比，年化${ds >= 0 ? '高' : '低'} ${Math.abs(ds * 100).toFixed(1)} 个百分点。再平衡的主要作用是把风险控制在目标附近，不一定提高收益。`;
+  $('#cmpTable').innerHTML = `<thead><tr><th></th><th class="r">定投年化</th><th class="r">期末市值</th><th class="r">最大回撤</th><th class="r">年化波动</th></tr></thead><tbody>${[['本策略', r, 'var(--accent)'], ['只定投不再平衡', b2, 'var(--brass)'], ['同额定投标普 500', b1, 'var(--ink-3)']].map(([n, x, c]) => `<tr><td><span class="dot" style="background:${c};margin-right:8px"></span>${n}</td><td class="r num">${fmtPct(x.xirr)}</td><td class="r num">${fmtMoney(x.final)}</td><td class="r num neg">${fmtPct(x.mdd)}</td><td class="r num">${fmtPct(x.vol)}</td></tr>`).join('')}</tbody>`;
+
+  // charts
+  if (!bt.nav) {
+    bt.nav = makeChart($('#navChart'), true);
+    bt.navS = bt.nav.addCandlestickSeries(candleOpts());
+    bt.b1 = bt.nav.addLineSeries({ color: '#A39D90', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    bt.b2 = bt.nav.addLineSeries({ color: css('--brass'), lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    bt.asset = makeChart($('#assetChart'), true); bt.assetS = bt.asset.addCandlestickSeries(candleOpts());
+    bt.val = makeChart($('#valChart'), false);
+    bt.valS = bt.val.addAreaSeries({ lineColor: css('--accent'), topColor: css('--accent') + '33', bottomColor: css('--accent') + '05', lineWidth: 1.5, priceLineVisible: false });
+    bt.invS = bt.val.addLineSeries({ color: css('--ink-3'), lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false });
+    bt.val.applyOptions({ localization: { locale: 'zh-CN', priceFormatter: p => fmtMoney(p) } });
+    refreshSeriesColors.push(() => { bt.navS.applyOptions(candleOpts()); bt.assetS.applyOptions(candleOpts()); bt.b1.applyOptions({ color: '#A39D90' }); bt.b2.applyOptions({ color: css('--brass') }); bt.valS.applyOptions({ lineColor: css('--accent'), topColor: css('--accent') + '33', bottomColor: css('--accent') + '05' }); bt.invS.applyOptions({ color: css('--ink-3') }); bt.val.applyOptions({ localization: { locale: 'zh-CN', priceFormatter: p => fmtMoney(p) } }); setMarkers(); });
+    // charts built while the page is hidden get a zero width; fit them once they are actually laid out
+    if (window.ResizeObserver) new ResizeObserver(() => { if ($('#valChart').clientWidth > 0) bt.val.timeScale().fitContent(); if (!bt.navFitted && $('#navChart').clientWidth > 0) { bt.navFitted = true; bt.nav.timeScale().fitContent(); } }).observe($('#backtest'));
+    attachTip(bt.val, $('#valChart'), param => {
+      const v = param.seriesData.get(bt.valS), iv = param.seriesData.get(bt.invS); if (!v || !iv) return null;
+      const gain = v.value - iv.value;
+      return `<div class="ctip-d">${tipDate(param.time)}</div><div class="ctip-r"><i style="background:var(--accent)"></i>组合市值<b>${fmtMoney(v.value)}</b></div><div class="ctip-r"><i style="background:#A39D90"></i>累计投入<b>${fmtMoney(iv.value)}</b></div><div class="ctip-r ctip-sep">收益<b class="${gain >= 0 ? 'pos' : 'neg'}">${gain >= 0 ? '+' : '-'}${fmtMoney(Math.abs(gain))}（${fmtPct(iv.value > 0 ? gain / iv.value : 0, 1, true)}）</b></div>`;
+    });
+    attachTip(bt.asset, $('#assetChart'), param => {
+      if (bt.cmpMode === 'candle') { const c = param.seriesData.get(bt.assetS); return c ? `<div class="ctip-d">${tipDate(param.time)}</div><div class="ctip-r">开<b>${c.open.toFixed(2)}</b></div><div class="ctip-r">高<b>${c.high.toFixed(2)}</b></div><div class="ctip-r">低<b>${c.low.toFixed(2)}</b></div><div class="ctip-r">收<b>${c.close.toFixed(2)}</b></div>` : null; }
+      // percentage mode feeds raw prices, so compute each line's change from the first visible month here
+      const lo = visLo(); const rows = [];
+      for (const [k, s] of bt.cmp) { const p = param.seriesData.get(s); if (!p) continue; const d = cmpData(k); const b = (lo && d.find(x => x.time >= lo)) || d[0]; const raw = d.find(x => x.time === tipDate(param.time, true)); if (!b || !raw) continue; rows.push([k, raw.value / b.value - 1]); }
+      rows.sort((a, b) => b[1] - a[1]);
+      return rows.length ? `<div class="ctip-d">${tipDate(param.time)}</div>` + rows.map(([k, c]) => `<div class="ctip-r"><i style="background:${cmpColor(k)}"></i>${cmpLabel(k)}<b class="${c >= 0 ? 'pos' : 'neg'}">${fmtPct(c, 1, true)}</b></div>`).join('') : null;
+    });
+    const link = (a, b) => a.timeScale().subscribeVisibleTimeRangeChange(rg => { if (bt.syncing || !rg) return; bt.syncing = true; try { b.timeScale().setVisibleRange(rg); } catch (e) { } bt.syncing = false; });
+    link(bt.nav, bt.asset); link(bt.asset, bt.nav);
+    segBind('#navScale', b => bt.nav.applyOptions({ rightPriceScale: { mode: b.dataset.v === '1' ? 1 : 0 } }));
+  }
+  bt.r = r;
+  bt.navS.setData(navMonthly(r)); bt.b1.setData(navLine(b1)); bt.b2.setData(navLine(b2)); setMarkers();
+  const vm = []; const im = []; let lm = null; r.val.forEach(([i, v], k) => { const m = ym(i); if (m !== lm) { vm.push({ time: m + '-01', value: v }); im.push({ time: m + '-01', value: r.inv[k][1] }); lm = m; } else { vm[vm.length - 1].value = v; im[im.length - 1].value = r.inv[k][1]; } });
+  bt.valS.setData(vm); bt.invS.setData(im); bt.val.timeScale().fitContent();
+  const ids = r.ids;
+  const top = ids.slice().sort((a, b) => S.weights[b] - S.weights[a])[0];
+  if (!bt.selSet) bt.selSet = new Set([STRAT, top]);
+  for (const k of [...bt.selSet]) if (k !== STRAT && !ids.includes(k)) bt.selSet.delete(k);
+  if (!bt.selSet.size) bt.selSet = new Set([STRAT, top]);
+  const chip = (k, label, color) => `<button type="button" data-id="${k}" aria-pressed="${bt.selSet.has(k)}"><span class="dot" style="background:${color}"></span>${label}</button>`;
+  $('#assetChips').innerHTML = chip(STRAT, '本策略', 'var(--ink)') + ids.map(id => chip(id, id, A[id].color)).join('') + `<button type="button" class="chip-act" data-act="all">全选</button><button type="button" class="chip-act" data-act="reset">重置</button>`;
+  $('#assetChips').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.act === 'all') bt.selSet = new Set([STRAT, ...ids]);
+    else if (b.dataset.act === 'reset') bt.selSet = new Set([STRAT, top]);
+    else { const k = b.dataset.id; if (bt.selSet.has(k) && bt.selSet.size > 1) bt.selSet.delete(k); else bt.selSet.add(k); }
+    [...$('#assetChips').querySelectorAll('[data-id]')].forEach(x => x.setAttribute('aria-pressed', bt.selSet.has(x.dataset.id)));
+    setAssetChart();
+  };
+  setAssetChart(); bt.nav.timeScale().fitContent();
+  renderStack(r); renderYears(r, b1); renderLog(r);
+}
+// floating hover card for a chart: build(param) returns HTML, or null to hide
+const tipDate = (t, full) => { const s = typeof t === 'string' ? t : t && typeof t === 'object' ? `${t.year}-${String(t.month).padStart(2, '0')}-${String(t.day).padStart(2, '0')}` : new Date(t * 1000).toISOString().slice(0, 10); return full ? s : s.slice(0, 7).replace('-', ' 年 ') + ' 月'; };
+function attachTip(chart, el, build) {
+  const host = el.parentElement; host.style.position = 'relative';
+  const tip = document.createElement('div'); tip.className = 'ctip'; tip.hidden = true; host.append(tip);
+  chart.subscribeCrosshairMove(param => {
+    if (!param.time || !param.point || param.point.x < 0 || param.point.y < 0) { tip.hidden = true; return; }
+    const html = build(param); if (!html) { tip.hidden = true; return; }
+    tip.innerHTML = html; tip.hidden = false;
+    const w = tip.offsetWidth, x0 = el.offsetLeft, maxX = el.offsetLeft + el.clientWidth - 70 - w;
+    let x = x0 + param.point.x + 16; if (x > maxX) x = x0 + param.point.x - w - 16;
+    tip.style.left = Math.max(x0 + 4, x) + 'px'; tip.style.top = (el.offsetTop + 10) + 'px';
+  });
+}
+function setMarkers() { if (!bt.r) return; const seen = new Set(); const mk = []; for (const i of bt.r.marks) { const t = ym(i) + '-01'; if (seen.has(t)) continue; seen.add(t); mk.push({ time: t, position: 'aboveBar', color: '#B4AC9C', shape: 'arrowDown', size: 0.5 }); } bt.navS.setMarkers(mk); }
+// one asset alone → its candles on a log scale; anything else → lines in percentage mode, each rebased to the first visible month
+const STRAT = '__strategy';
+const cmpLabel = k => k === STRAT ? '本策略' : k;
+const cmpColor = k => k === STRAT ? css('--ink') : A[k].color;
+function cmpData(k) { return k === STRAT ? navLine(bt.r) : monthlyUSD(k, bt.r.s0); }
+const pctFmt = p => (p > 0 ? '+' : '') + p.toFixed(Math.abs(p) >= 100 ? 0 : 1) + '%';
+const visLo = () => { let rg = null; try { rg = bt.asset.timeScale().getVisibleRange(); } catch (e) { } const t = rg && rg.from; return typeof t === 'string' ? t : t && typeof t === 'object' ? `${t.year}-${String(t.month).padStart(2, '0')}-${String(t.day).padStart(2, '0')}` : null; };
+// log comparison: lightweight-charts has no "percentage on a log axis", so rebase each line to 100 at the first visible month ourselves
+function rebaseCmp() {
+  const lo = visLo();
+  for (const [k, s] of bt.cmp) { const d = cmpData(k); const b = (lo && d.find(p => p.time >= lo)) || d[0]; if (b) s.setData(d.map(p => ({ time: p.time, value: p.value / b.value * 100 }))); }
+}
+function setAssetChart() {
+  if (!bt.cmp) {
+    bt.cmp = new Map(); if (bt.cmpLog == null) bt.cmpLog = true;
+    bt.asset.applyOptions({ localization: { locale: 'zh-CN', percentageFormatter: pctFmt } });
+    let pending = false;
+    bt.asset.timeScale().subscribeVisibleTimeRangeChange(() => {
+      updateCmpLegend();
+      if (bt.cmpMode === 'log' && !pending) { pending = true; setTimeout(() => { pending = false; rebaseCmp(); }, 0); }
+    });
+    segBind('#cmpScale', b => { bt.cmpLog = b.dataset.v === '1'; setAssetChart(); });
+  }
+  const sel = [...bt.selSet]; const single = sel.length === 1 && sel[0] !== STRAT;
+  bt.cmpMode = single ? 'candle' : bt.cmpLog ? 'log' : 'pct';
+  bt.assetS.applyOptions({ visible: single });
+  bt.assetS.setData(single ? monthly(sel[0], bt.r.s0).map(({ time, open, high, low, close }) => ({ time, open, high, low, close })) : []);
+  for (const [k, s] of [...bt.cmp]) if (single || !bt.selSet.has(k)) { bt.asset.removeSeries(s); bt.cmp.delete(k); }
+  if (!single) for (const k of sel) {
+    if (!bt.cmp.has(k)) bt.cmp.set(k, bt.asset.addLineSeries({ color: cmpColor(k), lineWidth: k === STRAT ? 3 : 1.5, priceLineVisible: false, lastValueVisible: true, title: cmpLabel(k) }));
+    bt.cmp.get(k).setData(cmpData(k));
+  }
+  const baseFmt = chartOpts(true).localization.priceFormatter;
+  bt.asset.applyOptions({ rightPriceScale: { mode: bt.cmpMode === 'pct' ? 2 : bt.cmpLog ? 1 : 0 }, localization: { locale: 'zh-CN', priceFormatter: bt.cmpMode === 'log' ? (p => pctFmt((p / 100 - 1) * 100)) : baseFmt, percentageFormatter: pctFmt } });
+  if (bt.cmpMode === 'log') rebaseCmp();
+  [...$('#cmpScale').children].forEach(x => x.setAttribute('aria-pressed', (x.dataset.v === '1') === bt.cmpLog));
+  $('#cmpTitle').textContent = single ? `${sel[0]} K 线` : '走势对比';
+  $('#cmpSub').textContent = single ? '月线 · 复权价格 · 可多选标的或「本策略」进行对比' : `涨跌幅（均按美元计）· 以可见区间的第一个月为 0%，拖动或缩放会重新计算${bt.cmpLog ? ' · 对数坐标，相同涨幅高度相同' : ''}`;
+  try { const rg = bt.nav.timeScale().getVisibleRange(); if (rg) bt.asset.timeScale().setVisibleRange(rg); else bt.asset.timeScale().fitContent(); } catch (e) { bt.asset.timeScale().fitContent(); }
+  updateCmpLegend();
+}
+function updateCmpLegend() {
+  const el = $('#cmpLegend'); if (!el || !bt.r || !bt.selSet) return;
+  const sel = [...bt.selSet]; if (sel.length === 1 && sel[0] !== STRAT) { el.innerHTML = ''; return; }
+  // the chart hands back times as strings, business-day objects or timestamps depending on version; compare as YYYY-MM-DD
+  const tStr = t => typeof t === 'string' ? t : t && typeof t === 'object' ? `${t.year}-${String(t.month).padStart(2, '0')}-${String(t.day).padStart(2, '0')}` : typeof t === 'number' ? new Date(t * 1000).toISOString().slice(0, 10) : null;
+  let rg = null; try { rg = bt.asset.timeScale().getVisibleRange(); } catch (e) { }
+  const lo = rg ? tStr(rg.from) : null, hi = rg ? tStr(rg.to) : null;
+  const rows = sel.map(k => { const d = cmpData(k).filter(p => (!lo || p.time >= lo) && (!hi || p.time <= hi)); if (d.length < 2) return null; return { k, chg: d.at(-1).value / d[0].value - 1, from: d[0].time.slice(0, 7) }; }).filter(Boolean).sort((a, b) => b.chg - a.chg);
+  const visStart = rows.reduce((m, r) => r.from < m ? r.from : m, '9999-99');
+  el.innerHTML = rows.length ? `<span class="muted">可见区间涨跌：</span>` + rows.map(r => `<span class="cmp-item${r.k === STRAT ? ' is-strat' : ''}"><span class="dot" style="background:${cmpColor(r.k)}"></span>${cmpLabel(r.k)} <b class="${r.chg >= 0 ? 'pos' : 'neg'}">${fmtPct(r.chg, 1, true)}</b>${r.from > visStart ? `<span class="muted small">（自 ${r.from}）</span>` : ''}</span>`).join('') : '';
+}
+function renderStack(r) {
+  const W = 1000, H = 220, pad = { l: 34, r: 8, t: 8, b: 22 }; const ids = r.ids; const n = r.wHist.length; if (n < 2) { $('#stack').innerHTML = ''; return; }
+  const x = k => pad.l + (W - pad.l - pad.r) * k / (n - 1), y = v => pad.t + (H - pad.t - pad.b) * (1 - v);
+  let acc = new Array(n).fill(0); let paths = '';
+  for (const id of ids) { const top = r.wHist.map((h, k) => acc[k] + (h.w[id] || 0)); const d = 'M' + top.map((v, k) => `${x(k).toFixed(1)} ${y(v).toFixed(1)}`).join('L') + 'L' + acc.map((v, k) => [k, v]).reverse().map(([k, v]) => `${x(k).toFixed(1)} ${y(v).toFixed(1)}`).join('L') + 'Z'; paths += `<path d="${d}" fill="${A[id].color}" fill-opacity=".85" stroke="var(--surface)" stroke-width=".4"><title>${id}</title></path>`; acc = top; }
+  let grid = ''; for (const g of [0, .25, .5, .75, 1]) grid += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(g)}" y2="${y(g)}" stroke="var(--line)" stroke-width="1"/><text x="${pad.l - 6}" y="${y(g) + 3}" text-anchor="end" font-size="10" fill="var(--ink-3)" font-family="Inter, sans-serif">${g * 100}%</text>`;
+  let ticks = ''; let lastY = null; r.wHist.forEach((h, k) => { const yy = ym(h.i).slice(0, 4); if (yy !== lastY && +yy % (n > 180 ? 4 : 2) === 0 && ym(h.i).slice(5) === '01') { ticks += `<text x="${x(k)}" y="${H - 6}" text-anchor="middle" font-size="10" fill="var(--ink-3)" font-family="Inter, sans-serif">${yy}</text>`; } lastY = yy; });
+  const leg = ids.map(id => `<span><span class="dot" style="background:${A[id].color}"></span>${id} 目标 ${S.weights[id]}%</span>`).join('');
+  $('#stack').innerHTML = `<div class="legend" style="margin-bottom:10px">${leg}</div><div class="tbl-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="实际权重随时间变化的堆叠面积图" style="min-width:560px">${grid}${paths}${ticks}</svg></div>`;
+}
+function renderYears(r, b1) {
+  const ys = Object.keys(r.years); const mx = Math.max(0.01, ...ys.map(y => Math.abs(r.years[y].e / r.years[y].s - 1)), ...ys.map(y => b1.years[y] ? Math.abs(b1.years[y].e / b1.years[y].s - 1) : 0));
+  const bar = (v, c) => { const w = Math.abs(v) / mx * 50; return `<span style="${v >= 0 ? `left:50%;width:${w}%` : `left:${50 - w}%;width:${w}%`};background:${c}"></span>`; };
+  $('#yrTable').innerHTML = `<thead><tr><th>年份</th><th class="r">策略</th><th class="r">标普 500</th><th class="barcell"></th></tr></thead><tbody>${ys.slice().reverse().map(y => { const a = r.years[y].e / r.years[y].s - 1, b = b1.years[y] ? b1.years[y].e / b1.years[y].s - 1 : null;
+    return `<tr><td class="num">${y}${y === ym(N - 1).slice(0, 4) ? '<sup class="muted"> 至今</sup>' : ''}</td><td class="r num ${a >= 0 ? 'pos' : 'neg'}">${fmtPct(a, 1, true)}</td><td class="r num muted">${fmtPct(b, 1, true)}</td><td class="barcell"><div class="ybar"><span class="mid"></span>${bar(a, 'var(--accent)')}</div><div class="ybar" style="margin-top:3px;height:4px">${b != null ? bar(b, 'var(--ink-3)') : ''}</div></td></tr>`; }).join('')}</tbody>`;
+}
+function renderLog(r) {
+  $('#logCount').textContent = `共 ${r.rebCount} 次`;
+  $('#logTable').innerHTML = r.log.length ? `<thead><tr><th>日期</th><th>原因</th><th class="r">换手</th><th>主要调整</th></tr></thead><tbody>${r.log.slice().reverse().slice(0, 300).map(e => `<tr><td class="num">${ymd(wDate(e.i))}</td><td>${esc(e.reason)}</td><td class="r num">${fmtPct(e.turn, 1)}</td><td class="small">${e.trades.slice(0, 3).map(([id, d]) => `<span class="${d > 0 ? 'pos' : 'neg'}">${d > 0 ? '买' : '卖'} ${id}</span>`).join(' · ')}</td></tr>`).join('')}</tbody>` : `<tbody><tr><td class="muted">该设置下没有发生再平衡。</td></tr></tbody>`;
+}
+
+/* ---------------- 00 rebalance view (home) ---------------- */
+const LAST = N - 1;
+// shares per board lot: A-share ETFs trade in 100s; Hong Kong lots vary by fund (check your broker)
+const lotOf = id => (A[id] && A[id].lot) || 1;
+const fxNow = cur => cur === 'CNY' ? (S.fx || fxAt('CNY', LAST)) : fxAt(cur, LAST);
+const pxLocal = id => Pl(id, LAST);
+const px = id => pxLocal(id) / fxNow(CUR(id));
+const money = (x, cur) => (x < 0 ? '-' : '') + CUR_SYM[cur] + Math.abs(x).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: cur === 'USD' ? 2 : 3 });
+const usd = (x, d = 2) => (x < 0 ? '-' : '') + '$' + Math.abs(x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const usd0 = x => usd(x, Math.abs(x) >= 1000 ? 0 : 2);
+const modelIds = () => Object.keys(S.weights).filter(id => S.weights[id] > 0);
+// trigger band: an asset is "over" when it is off by >= abs points OR by >= rel% of its target, so the tighter of the two applies
+const bandOf = tw => Math.min(S.abs / 100, S.rel / 100 * tw);
+
+// a year-ago portfolio bought exactly at target weights for $18,000, then left to drift with the real market
+function exampleHoldings() {
+  const ids = modelIds(); const tot = ids.reduce((a, id) => a + S.weights[id], 0) || 1; const i0 = Math.max(0, LAST - 52); const h = {};
+  for (const id of ids) { const p0 = P(id, i0) || px(id); h[id] = +(18000 * S.weights[id] / tot / p0).toFixed(3); }
+  return h;
+}
+function ensureRebalanceState() {
+  const mk = JSON.stringify(S.weights);
+  if (!S.holdings || (S.holdingsExample && S.exampleKey !== mk)) { S.holdings = exampleHoldings(); S.holdingsExample = true; S.exampleKey = mk; }
+  // default to the latest market rate until the person types their own
+  if (!S.fxManual || !(S.fx > 0)) S.fx = +fxAt('CNY', LAST).toFixed(2);
+  if (!S.contribOverride) S.contribUsd = Math.max(10, Math.round(S.monthly / S.fx / 10) * 10);
+  if (S.allowSell == null) S.allowSell = true;
+}
+
+const COOLDOWN_DAYS = 28;
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+function cooldownState() {
+  if (!S.lastRebalance) return { active: false, overridden: false, days: null };
+  const days = Math.floor((Date.parse(todayStr() + 'T00:00:00') - Date.parse(S.lastRebalance + 'T00:00:00')) / 864e5);
+  const active = days >= 0 && days < COOLDOWN_DAYS;
+  return { active, overridden: active && S.cooldownOverride === S.lastRebalance, days, left: COOLDOWN_DAYS - days };
+}
+
+// the month's plan, following the model's rules (section 5.3 of the design doc)
+function planRebalance() {
+  const ids = modelIds(); const tot = ids.reduce((a, id) => a + S.weights[id], 0);
+  const tw = Object.fromEntries(ids.map(id => [id, S.weights[id] / tot]));
+  const v = Object.fromEntries(ids.map(id => [id, (+S.holdings[id] || 0) * px(id)]));
+  const V = ids.reduce((a, id) => a + v[id], 0); const A = Math.max(0, +S.contribUsd || 0); const T = V + A;
+  const cur = Object.fromEntries(ids.map(id => [id, V > 0 ? v[id] / V : 0]));
+  const alloc = {};
+  if (S.cashflow && V > 0) {
+    const gaps = Object.fromEntries(ids.map(id => [id, Math.max(0, tw[id] * T - v[id])])); const gs = ids.reduce((a, id) => a + gaps[id], 0);
+    for (const id of ids) alloc[id] = gs >= A ? (gs > 0 ? A * gaps[id] / gs : 0) : gaps[id] + (A - gs) * tw[id];
+  } else for (const id of ids) alloc[id] = A * tw[id];
+  const w1 = id => T > 0 ? (v[id] + alloc[id]) / T : 0;
+  const over = ids.filter(id => Math.abs(w1(id) - tw[id]) >= bandOf(tw[id]) - 1e-9);
+  const overNow = V > 0 ? ids.filter(id => Math.abs(cur[id] - tw[id]) >= bandOf(tw[id]) - 1e-9) : [];
+  const month = new Date().getMonth() + 1;
+  const calMonth = S.period === 'Q' ? [1, 4, 7, 10].includes(month) : month === 1;
+  const thr = (S.mode === 'threshold' || S.mode === 'hybrid') && over.length > 0 && V > 0;
+  const cal = (S.mode === 'calendar' || S.mode === 'hybrid') && calMonth && V > 0;
+  const needSell = thr || cal;
+  // cooldown: within 4 weeks of the last rebalance, default to buy-only unless the person overrides for this cooldown
+  const cd = cooldownState();
+  const cooldownBlocked = needSell && S.allowSell && cd.active && !cd.overridden;
+  const rebalance = needSell && S.allowSell && !cooldownBlocked;
+  const delta = Object.fromEntries(ids.map(id => [id, rebalance ? tw[id] * T - v[id] : alloc[id]]));
+  const intended = { ...delta };
+  let leftover = 0; for (const id of ids) if (Math.abs(delta[id]) < 1) { if (delta[id] > 0) leftover += delta[id]; delta[id] = 0; }
+  const shares = Object.fromEntries(ids.map(id => [id, delta[id] / px(id)]));
+  if (S.wholeShares && ids.length) {
+    // whole lots only (one share for US listings, a board lot for A-shares and Hong Kong): round sells and buys down,
+    // then spend what is left one lot at a time on the asset furthest below target
+    let cash = A; const lp = id => px(id) * lotOf(id);
+    for (const id of ids) { const n = delta[id] < 0 ? -Math.floor(-delta[id] / lp(id) + 1e-9) : Math.floor(delta[id] / lp(id) + 1e-9); shares[id] = n * lotOf(id); cash -= n * lp(id); }
+    const gap = id => tw[id] * T - (v[id] + shares[id] * px(id));
+    for (let guard = 0; cash < -1e-9 && guard < 500; guard++) { const id = ids.filter(i => shares[i] > 0).sort((a, b) => gap(a) - gap(b))[0]; if (!id) break; shares[id] -= lotOf(id); cash += lp(id); }
+    // only buy a lot when it brings the asset closer to target than not buying (remaining gap > half a lot)
+    for (let guard = 0; guard < 2000; guard++) { const id = ids.filter(i => lp(i) <= cash + 1e-9 && gap(i) > lp(i) / 2).sort((a, b) => gap(b) - gap(a))[0]; if (!id) break; shares[id] += lotOf(id); cash -= lp(id); }
+    for (const id of ids) delta[id] = shares[id] * px(id);
+    leftover = Math.max(0, cash);
+  }
+  const after = Object.fromEntries(ids.map(id => [id, T > 0 ? (v[id] + delta[id]) / T : 0]));
+  const buy = ids.reduce((a, id) => a + Math.max(0, delta[id]), 0), sell = ids.reduce((a, id) => a + Math.max(0, -delta[id]), 0);
+  const maxAfter = ids.reduce((m, id) => Math.max(m, Math.abs(after[id] - tw[id])), 0);
+  const worstNow = ids.slice().sort((a, b) => Math.abs(cur[b] - tw[b]) - Math.abs(cur[a] - tw[a]))[0];
+  return { ids, tw, v, V, A, T, cur, alloc, delta, intended, shares, after, over, overNow, thr, cal, calMonth, needSell, rebalance, cooldownBlocked, cd, buy, sell, leftover, maxAfter, worstNow };
+}
+
+function marketRead(id) {
+  const c = D.assets[id].c, L = c.length - 1, at = k => c[Math.max(0, L - k)];
+  const win = c.slice(Math.max(0, L - 39)); const ma = win.reduce((x, y) => x + y, 0) / win.length;
+  const hi = Math.max(...c.slice(Math.max(0, L - 51)));
+  const pos = c[L] / ma - 1;
+  return { r4: c[L] / at(4) - 1, r13: c[L] / at(13) - 1, r52: c[L] / at(52) - 1, pos, dd: c[L] / hi - 1, trend: pos > 0.03 ? 'up' : pos < -0.03 ? 'down' : 'flat', vol: ST[id].vol };
+}
+const TREND_TXT = { up: '在长期均线上方', down: '跌破长期均线', flat: '贴近长期均线' };
+const pp = x => (x >= 0 ? '+' : '') + (x * 100).toFixed(1) + ' 个百分点';
+
+function assetReading(id, plan, m) {
+  const cur = plan.cur[id], tw = plan.tw[id], d = cur - tw, act = plan.delta[id];
+  const parts = [];
+  parts.push(m.dd < -0.15 ? `较一年内高点回落 ${fmtPct(-m.dd, 0)}，处在回调中。` : m.dd > -0.03 ? '价格接近一年内高点。' : `过去一年 ${m.r52 >= 0 ? '上涨' : '下跌'} ${fmtPct(Math.abs(m.r52), 0)}，${TREND_TXT[m.trend]}。`);
+  if (plan.V <= 0) parts.push(`本月按目标比例 ${fmtPct(tw, 0)} 买入，开始建仓。`);
+  else if (d > 0.005) parts.push(`${m.r52 > 0 ? '上涨' : '相对其他资产跌得少'}把占比推到 ${fmtPct(cur)}，高于目标 ${fmtPct(tw)}。${act < 0 ? '本月按规则卖出一部分，把涨出来的部分落袋。' : '本月新钱先不给它，等其他资产追上来。'}`);
+  else if (d < -0.005) parts.push(`占比降到 ${fmtPct(cur)}，低于目标 ${fmtPct(tw)}。本月新钱优先补它${m.r13 < -0.03 ? '：它近期在跌，这正是定投再平衡「跌了多买」的那一步' : ''}。`);
+  else parts.push(`占比 ${fmtPct(cur)}，和目标 ${fmtPct(tw)} 基本一致，本月按比例少量买入。`);
+  return parts.join('');
+}
+
+function renderModelStrip() {
+  const ids = modelIds(); const modeTxt = { hybrid: `偏离 ≥ ${S.abs} 个百分点或 ≥ ${S.rel}% 时再平衡，另每${S.period === 'Q' ? '季度首月' : '年 1 月'}检查一次`, threshold: `偏离 ≥ ${S.abs} 个百分点或 ≥ ${S.rel}% 时再平衡`, calendar: `每${S.period === 'Q' ? '季度首月' : '年 1 月'}调回目标`, none: '只定投，不卖出' }[S.mode];
+  $('#modelStrip').innerHTML = `<div style="min-width:0"><div class="ms-name"><span class="eyebrow" style="letter-spacing:.18em">我的定投模型</span><h3>${esc(S.label || '自定义')}</h3><span class="chip">${ids.length} 个标的</span></div>
+    ${allocBar(S.weights)}
+    <div class="ms-legend">${ids.map(id => `<span><span class="dot" style="background:${A[id].color}"></span>${id} ${S.weights[id]}%</span>`).join('')}</div>
+    <div class="ms-rule">规则：${S.cashflow ? '新钱优先补低配；' : ''}${modeTxt}。</div></div>
+    <div class="ms-actions"><button class="btn sm" type="button" data-go="strategy"><svg><use href="#i-scale"/></svg>调整模型</button><button class="btn sm" type="button" data-go="ai"><svg><use href="#i-quill"/></svg>让 AI 重新配</button><button class="btn sm ghost" type="button" data-go="backtest">看历史回测</button></div>`;
+}
+
+function renderOps(plan) {
+  $('#rbCny').textContent = `≈ ¥${Math.round(plan.A * S.fx).toLocaleString('zh-CN')}`;
+  $('#opsAsOf').textContent = `按 ${D.asOf || ym(LAST)} 收盘价`;
+  let flag;
+  if (!plan.ids.length) flag = `<div class="flag warn ops-flag"><b>!</b><span>定投模型里还没有标的。先到「定投模型」选一个模板，或让 AI 帮你配。</span></div>`;
+  else if (plan.V <= 0) flag = `<div class="flag good ops-flag"><b>✓</b><span>还没有持仓：本月的钱直接按目标比例分配，开始建仓。</span></div>`;
+  else if (plan.rebalance) flag = `<div class="flag warn ops-flag"><b>!</b><span>${plan.thr ? `${plan.over.slice().sort((a, b) => Math.abs(plan.cur[b] - plan.tw[b]) - Math.abs(plan.cur[a] - plan.tw[a])).slice(0, 2).map(id => `${id}（${pp(plan.cur[id] - plan.tw[id])}）`).join('、')}${plan.over.length > 2 ? ` 等 ${plan.over.length} 个资产` : ''} 超出了阈值` : `本月是${S.period === 'Q' ? '季度' : '年度'}定期检查月`}：按模型规则，本月把整个组合调回目标，需要卖出 ${usd0(plan.sell)}，连同新钱一起买入低配资产。</span></div>`;
+  else if (plan.cooldownBlocked) flag = `<div class="flag warn ops-flag"><b>!</b><span>按规则本月需要再平衡${plan.thr ? `（${plan.over.slice(0, 2).join('、')}${plan.over.length > 2 ? ' 等' : ''}超出阈值）` : ''}，但距上次再平衡（${S.lastRebalance}）才 ${plan.cd.days} 天，还在 4 周冷却期内：本月默认只买不卖，避免短期内来回买卖。确需卖出，可切到「按模型规则卖出」。操作后最大偏离 ${(plan.maxAfter * 100).toFixed(1)} 个百分点。</span></div>`;
+  else if (plan.needSell) flag = `<div class="flag warn ops-flag"><b>!</b><span>按规则本月需要再平衡，但你选了「只买不卖」：只用新钱补低配，操作后最大偏离仍有 ${(plan.maxAfter * 100).toFixed(1)} 个百分点。</span></div>`;
+  else if (plan.overNow.length) flag = `<div class="flag good ops-flag"><b>✓</b><span>${plan.overNow.join('、')} 目前超出阈值，但本月新钱补进去后就能回到范围内，所以不用卖出。</span></div>`;
+  else flag = `<div class="flag good ops-flag"><b>✓</b><span>所有资产都在阈值内：本月不用卖出，只需用新钱补足偏低的资产。</span></div>`;
+  $('#opsFlag').innerHTML = flag;
+  $('#opsSum').innerHTML = `<div><div class="l">买入合计</div><div class="v">${usd0(plan.buy)}</div><div class="c">${plan.ids.filter(id => plan.delta[id] > 0).length} 笔${plan.leftover >= 0.01 ? ` · 剩余 ${usd(plan.leftover)} 留到下月` : ''}</div></div>
+    <div><div class="l">卖出合计</div><div class="v">${usd0(plan.sell)}</div><div class="c">${plan.ids.filter(id => plan.delta[id] < 0).length} 笔</div></div>
+    <div><div class="l">操作后最大偏离</div><div class="v">${(plan.maxAfter * 100).toFixed(1)}<span style="font-size:13px"> 个百分点</span></div><div class="c">操作前 ${plan.V > 0 ? (Math.abs(plan.cur[plan.worstNow] - plan.tw[plan.worstNow]) * 100).toFixed(1) : '0.0'} 个百分点</div></div>`;
+  const rows = plan.ids.slice().sort((a, b) => Math.abs(plan.delta[b]) - Math.abs(plan.delta[a])).map(id => {
+    const d = plan.delta[id], sh = plan.shares[id]; const kind = d > 0 ? 'buy' : d < 0 ? 'sell' : 'hold';
+    const tooSmall = S.wholeShares && !d && plan.intended[id] > 0;
+    const why = tooSmall ? `计划买 ${usd(plan.intended[id])}，不够买 1 ${lotOf(id) > 1 ? `手（${lotOf(id)} 股）` : '股'}，留到下月` : plan.V <= 0 ? '按目标比例建仓' : kind === 'sell' ? (plan.over.includes(id) ? '超出阈值，卖回目标' : '整体再平衡，卖回目标') : kind === 'buy' ? (plan.cur[id] < plan.tw[id] ? `低于目标 ${pp(plan.cur[id] - plan.tw[id]).replace('-', '')}，优先补` : plan.rebalance ? '整体再平衡，买回目标' : '按比例分配剩余新钱') : '高于目标，本月不买';
+    return `<tr><td><div class="tk" style="min-width:150px"><span class="dot" style="background:${A[id].color}"></span><div><b>${id}</b><span>${A[id].cn}</span></div></div></td>
+      <td><span class="op ${kind}">${{ buy: '买入', sell: '卖出', hold: '不动' }[kind]}</span></td>
+      <td class="r"><span class="amt">${d ? usd(Math.abs(d)) : '—'}</span>${d && CUR(id) !== 'USD' ? `<div class="small muted">≈ ${CUR_SYM[CUR(id)]}${Math.round(Math.abs(d) * fxNow(CUR(id))).toLocaleString('en-US')}</div>` : ''}</td>
+      <td class="r num">${d ? (S.wholeShares ? `${Math.abs(sh)} 股${lotOf(id) > 1 ? `<div class="small muted">${Math.abs(sh) / lotOf(id)} 手</div>` : ''}` : `${Math.abs(sh).toFixed(2)} 股<div class="small muted">${lotOf(id) > 1 ? `按手 ${Math.floor(Math.abs(sh) / lotOf(id) + 1e-9) * lotOf(id)} 股（每手 ${lotOf(id)}）` : `整数股 ${Math.floor(Math.abs(sh) + 1e-9)}`}</div>`) : '—'}</td>
+      <td><span class="wto">${fmtPct(plan.cur[id])} → <b>${fmtPct(plan.after[id])}</b><span class="muted"> / 目标 ${fmtPct(plan.tw[id])}</span></span></td>
+      <td class="why">${why}</td></tr>`;
+  }).join('');
+  $('#opsTable').innerHTML = `<thead><tr><th>标的</th><th>操作</th><th class="r">金额</th><th class="r">${S.wholeShares ? '股数' : '约合股数'}</th><th>占比变化</th><th>原因</th></tr></thead><tbody>${rows}</tbody>`;
+  const nBuy = plan.ids.filter(id => plan.delta[id] > 0).length, nSell = plan.ids.filter(id => plan.delta[id] < 0).length;
+  $('#rbOps').textContent = `买 ${nBuy} · 卖 ${nSell}`;
+  $('#opsApply').disabled = !(plan.buy || plan.sell);
+}
+
+function renderHoldings(plan, rebuild) {
+  $('#exampleNote').innerHTML = S.holdingsExample ? `<div class="example-note"><svg width="16" height="16" style="color:var(--brass);flex:none;margin-top:2px"><use href="#i-star"/></svg><span><b>这是示例持仓</b>：假设一年前按当前模型买入 18,000 美元，放到今天自然漂移后的样子。把「持有股数」改成你券商账户里的实际数字，上面的操作清单会立刻按你的持仓重算。</span></div>` : '';
+  const ids = plan.ids; const maxW = Math.max(0.05, ...ids.map(id => Math.max(plan.cur[id], plan.tw[id] + bandOf(plan.tw[id])))) * 1.15;
+  const x = w => Math.min(100, w / maxW * 100);
+  if (rebuild || $('#holdTable tbody')?.children.length !== ids.length) {
+    $('#holdTable').innerHTML = `<thead><tr><th>标的</th><th class="r">最新价</th><th class="r">持有股数</th><th class="r">市值</th><th>当前占比 vs 目标</th><th class="r">偏离</th><th>状态</th></tr></thead>
+      <tbody>${ids.map(id => `<tr data-id="${id}"><td><div class="tk" style="min-width:150px"><span class="dot" style="background:${A[id].color}"></span><div><b>${id}</b><span>${A[id].cn}</span></div></div></td>
+        <td class="r num">${money(pxLocal(id), CUR(id))}</td>
+        <td class="r"><input class="hold-in" type="number" min="0" step="0.001" id="h-${id}" value="${+(+S.holdings[id] || 0).toFixed(3)}" aria-label="${id} 持有股数"></td>
+        <td class="r num" data-k="val"></td><td data-k="bar"></td><td class="r num" data-k="dev"></td><td data-k="st"></td></tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="3" class="sub">合计</td><td class="r num" id="holdTotal"></td><td colspan="3" class="small muted">黑色竖线为目标占比，浅色带为不触发再平衡的范围</td></tr></tfoot>`;
+  }
+  for (const id of ids) {
+    const row = document.querySelector(`#holdTable tr[data-id="${id}"]`); if (!row) continue;
+    const cur = plan.cur[id], tw = plan.tw[id], b = bandOf(tw), d = cur - tw, over = plan.V > 0 && Math.abs(d) >= b - 1e-9;
+    row.querySelector('[data-k=val]').textContent = usd0(plan.v[id]);
+    row.querySelector('[data-k=bar]').innerHTML = `<div class="dual" title="当前 ${fmtPct(cur)}，目标 ${fmtPct(tw)}"><span class="band" style="left:${x(Math.max(0, tw - b))}%;width:${x(tw + b) - x(Math.max(0, tw - b))}%"></span><span class="cur" style="width:${x(cur)}%;background:${A[id].color}"></span><span class="tgt" style="left:calc(${x(tw)}% - 1px)"></span></div><div class="small muted" style="margin-top:4px">${fmtPct(cur)} / 目标 ${fmtPct(tw)}</div>`;
+    const dv = row.querySelector('[data-k=dev]'); dv.textContent = plan.V > 0 ? pp(d).replace(' 个百分点', '') : '—'; dv.className = 'r num dev ' + (Math.abs(d) < 0.005 || plan.V <= 0 ? 'ok' : d > 0 ? 'hi' : 'lo');
+    row.querySelector('[data-k=st]').innerHTML = plan.V <= 0 ? '<span class="st muted">未持有</span>' : over ? (plan.over.includes(id) ? `<span class="st" style="color:var(--bad)"><i style="background:var(--bad)"></i>超出阈值</span>` : `<span class="st" style="color:var(--warn)"><i style="background:var(--warn)"></i>超出阈值 · 新钱可补回</span>`) : Math.abs(d) < b / 2 ? '<span class="st" style="color:var(--good)"><i style="background:var(--good)"></i>正常</span>' : `<span class="st" style="color:var(--warn)"><i style="background:var(--warn)"></i>${d > 0 ? '偏高' : '偏低'}</span>`;
+  }
+  $('#holdTotal').textContent = usd0(plan.V);
+  const outside = Object.keys(S.holdings).filter(id => !plan.ids.includes(id) && +S.holdings[id] > 0 && A[id]);
+  $('#outsideNote').innerHTML = outside.length ? `<div class="flag warn ops-flag" style="margin-bottom:12px"><b>!</b><span>你还持有 ${outside.map(id => `${id}（${(+S.holdings[id]).toFixed(2)} 股，约 ${usd0(S.holdings[id] * px(id))}）`).join('、')}，它们不在当前模型里，没有计入上面的占比和操作。若想纳入，请到「定投模型」把它们加进来；不想再持有，可以在券商处卖出后把股数清零。<button type="button" class="linkbtn" id="outsideClear">清零这些持仓</button></span></div>` : '';
+  $('#rbValue').textContent = plan.V > 0 ? usd0(plan.V) : '未录入';
+}
+
+let modelBt = null, modelBtKey = '';
+function renderReading(plan) {
+  const ids = plan.ids; if (!ids.length) { $('#readSummary').innerHTML = ''; $('#readMini').innerHTML = ''; $('#readCards').innerHTML = ''; return; }
+  const key = JSON.stringify([S.weights, S.mode, S.abs, S.rel, S.period, S.cashflow]);
+  if (key !== modelBtKey && sumW() === 100) { modelBt = backtest({ weights: { ...S.weights }, start: '2000-01', monthly: 3000, initial: 0, mode: S.mode, abs: S.abs, rel: S.rel, period: S.period, fee: S.fee, cashflow: S.cashflow }); modelBtKey = key; }
+  const reads = Object.fromEntries(ids.map(id => [id, marketRead(id)]));
+  const above = ids.filter(id => reads[id].trend === 'up').length, below = ids.filter(id => reads[id].trend === 'down').length;
+  const tone = above >= ids.length * 0.7 ? '多数资产处在上升趋势里，市场整体偏强' : below >= ids.length * 0.5 ? '不少资产跌破了长期均线，市场整体偏弱' : '各资产走势分化，有涨有跌';
+  const hiRisk = id => A[id].risk >= 5; const curHi = ids.filter(hiRisk).reduce((a, id) => a + plan.cur[id], 0), tgtHi = ids.filter(hiRisk).reduce((a, id) => a + plan.tw[id], 0);
+  const w = plan.worstNow;
+  const p1 = plan.V > 0 ? `组合市值 ${usd0(plan.V)}，偏离最大的是 <b>${w}</b>（当前 ${fmtPct(plan.cur[w])}，目标 ${fmtPct(plan.tw[w])}）。${plan.over.length ? `${plan.over.length} 个资产在加入本月新钱后仍超出阈值，${plan.rebalance ? '所以本月需要整体再平衡。' : '按规则应再平衡。'}` : '加入本月新钱后，所有资产都能回到阈值以内。'}` : '还没有持仓，下面的解读只描述各资产的近期走势。';
+  const p2 = `<b>近期市场：</b>${ids.length} 个标的中，${above} 个在长期均线（约 200 个交易日）上方，${below} 个在下方${ids.length - above - below ? `，${ids.length - above - below} 个贴近均线` : ''}，${tone}。`;
+  const p3 = tgtHi > 0 && plan.V > 0 ? `<b>风险结构：</b>高风险资产（风险等级 R5 及以上）当前占 ${fmtPct(curHi)}，目标 ${fmtPct(tgtHi)}，组合${curHi - tgtHi > 0.01 ? '比目标更进取，再平衡会把风险降回来' : curHi - tgtHi < -0.01 ? '比目标更稳健，新钱会补回高风险部分' : '的风险水平和目标一致'}。` : '';
+  const p4 = modelBt ? `<b>怎么看预期：</b>没有人能预测下个月的涨跌。按这个模型 2000 年以来的历史，年化波动约 ${fmtPct(modelBt.vol, 0)}，也就是一年里涨跌 ${fmtPct(modelBt.vol, 0)} 左右都算正常；历史最大回撤 ${fmtPct(modelBt.mdd, 0)}。坚持按规则定投和再平衡，比判断短期方向更重要。` : '';
+  $('#readSummary').innerHTML = [p1, p2, p3, p4].filter(Boolean).map(t => `<p>${t}</p>`).join('');
+  $('#readMini').innerHTML = `<div><div class="l">偏离最大</div><div class="v">${plan.V > 0 ? `${w} ${pp(plan.cur[w] - plan.tw[w]).replace(' 个百分点', '')}` : '—'}</div></div>
+    <div><div class="l">高风险资产占比（当前 / 目标）</div><div class="v">${plan.V > 0 ? fmtPct(curHi) : '—'} / ${fmtPct(tgtHi)}</div></div>
+    <div><div class="l">本模型历史年化波动 · 最大回撤</div><div class="v">${modelBt ? `${fmtPct(modelBt.vol, 0)} · ${fmtPct(modelBt.mdd, 0)}` : '—'}</div></div>`;
+  $('#readCards').innerHTML = ids.slice().sort((a, b) => Math.abs(plan.cur[b] - plan.tw[b]) - Math.abs(plan.cur[a] - plan.tw[a])).map(id => { const m = reads[id];
+    return `<div class="read"><div class="read-h"><div class="tk" style="min-width:0"><span class="dot" style="background:${A[id].color}"></span><div><b>${id}</b><span>${A[id].cn}</span></div></div><span class="trend ${m.trend}">${TREND_TXT[m.trend]}</span></div>
+      <div class="metrics"><span>近 4 周 <b class="${m.r4 >= 0 ? 'pos' : 'neg'}">${fmtPct(m.r4, 1, true)}</b></span><span>近 1 年 <b class="${m.r52 >= 0 ? 'pos' : 'neg'}">${fmtPct(m.r52, 1, true)}</b></span><span>距一年高点 <b>${fmtPct(m.dd, 1)}</b></span></div>
+      <p>${assetReading(id, plan, m)}</p><div class="exp">一年内常见波动约 ±${fmtPct(m.vol, 0)}（按历史年化波动）</div></div>`; }).join('');
+}
+
+function renderContribHint() { $('#contribHint').innerHTML = S.contribOverride ? `已手动设定 · <button type="button" class="linkbtn" id="contribReset">恢复为模型的每月 ${S.monthly.toLocaleString('zh-CN')} 元</button>` : `按定投模型的每月 ${S.monthly.toLocaleString('zh-CN')} 元换算`; }
+function renderRebalance() {
+  ensureRebalanceState();
+  const plan = planRebalance();
+  $('#rbModel').textContent = S.label || '自定义';
+  $('#rbContrib').value = S.contribUsd; $('#rbFx').value = S.fx;
+  syncOpsControls();
+  renderModelStrip(); renderOps(plan); renderHoldings(plan, true); renderReading(plan); renderContribHint(); updateWsCard(plan);
+  window.__plan = plan;
+}
+function refreshRebalance() { const plan = planRebalance(); syncOpsControls(); renderOps(plan); renderHoldings(plan, false); renderReading(plan); window.__plan = plan; updateWsCard(plan); }
+// the sidebar plan card doubles as the entry to this view and shows what this month needs
+function updateWsCard(plan) {
+  if (!$('#wsSub')) return;
+  try { ensureRebalanceState(); plan = plan || planRebalance(); } catch (e) { return; }
+  const nb = plan.ids.filter(id => plan.delta[id] > 0).length, ns = plan.ids.filter(id => plan.delta[id] < 0).length;
+  const name = S.label || '自定义';
+  $('#wsSub').textContent = !plan.ids.length ? '还没有定投模型' : plan.V <= 0 ? `${name} · 本月开始建仓` : plan.rebalance ? `${name} · 本月需再平衡` : `${name} · 本月买 ${nb} 笔${ns ? ` 卖 ${ns} 笔` : ''}`;
+  $('#wsDot').classList.toggle('warn', !!(plan.rebalance || plan.cooldownBlocked || (plan.needSell && !S.allowSell)));
+}
+// the sell switch shows what will actually happen: during an un-overridden cooldown it reads "只买不卖"
+function syncOpsControls() {
+  const cd = cooldownState(); const effSell = S.allowSell && (!cd.active || cd.overridden);
+  [...$('#rbSell').children].forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === effSell));
+  [...$('#rbWhole').children].forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S.wholeShares));
+  if (document.activeElement !== $('#rbLast')) $('#rbLast').value = S.lastRebalance || '';
+  $('#rbLastHint').innerHTML = !S.lastRebalance ? '还没有记录。按清单更新持仓且含卖出时会自动记下' : cd.active ? `冷却期还剩 ${cd.left} 天${cd.overridden ? '（本次已选择照常卖出）' : '，期间默认只买不卖'} · <button type="button" class="linkbtn" id="rbLastClear">清除</button>` : `已过 4 周冷却期 · <button type="button" class="linkbtn" id="rbLastClear">清除</button>`;
+}
+
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.append(t); setTimeout(() => t.remove(), 2400); }
+let undoHoldings = null;
+async function copyOps() {
+  const plan = window.__plan; if (!plan) return;
+  const lines = [`衡 · 本月操作清单（${new Date().toISOString().slice(0, 10)}，按 ${D.asOf} 收盘价）`, `模型：${S.label || '自定义'}；本月新增 ${usd(plan.A)}`];
+  for (const id of plan.ids) { const d = plan.delta[id]; if (!d) continue; lines.push(`${d > 0 ? '买入' : '卖出'} ${id}  ${usd(Math.abs(d))}  ${S.wholeShares ? '' : '≈ '}${S.wholeShares ? Math.abs(plan.shares[id]) : Math.abs(plan.shares[id]).toFixed(2)} 股`); }
+  if (lines.length === 2) lines.push('本月无需操作');
+  if (plan.leftover >= 0.01) lines.push(`剩余现金 ${usd(plan.leftover)} 留到下月`);
+  const text = lines.join('\n');
+  try { await navigator.clipboard.writeText(text); toast('已复制操作清单'); }
+  catch (e) { const ta = document.createElement('textarea'); ta.className = 'copy-area'; ta.value = text; document.body.append(ta); ta.select(); try { document.execCommand('copy'); toast('已复制操作清单'); } catch (_) { toast('复制失败，请手动选中表格内容'); } ta.remove(); }
+}
+function applyOps() {
+  const plan = window.__plan; if (!plan) return;
+  undoHoldings = { holdings: { ...S.holdings }, example: S.holdingsExample, last: S.lastRebalance || null, override: S.cooldownOverride || null };
+  for (const id of plan.ids) S.holdings[id] = +(((+S.holdings[id] || 0) + plan.shares[id])).toFixed(3);
+  const sold = plan.rebalance && plan.sell > 0;
+  if (sold) { S.lastRebalance = todayStr(); S.cooldownOverride = null; }
+  S.holdingsExample = false; save(); renderRebalance();
+  $('#opsUndo').hidden = false; $('#opsNote').textContent = `持仓已按清单更新${sold ? `，并记下今天（${S.lastRebalance}）为上次再平衡日期，接下来 4 周默认只买不卖` : ''}。实际成交股数不同时，直接改下方的持有股数即可。`;
+}
+function bindRebalance() {
+  $('#rebalance').addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go); });
+  $('#rbContrib').addEventListener('input', e => { S.contribUsd = Math.max(0, +e.target.value || 0); S.contribOverride = true; save(); refreshRebalance(); renderContribHint(); });
+  $('#rbFx').addEventListener('input', e => { const v = +e.target.value; if (v > 0) { S.fx = v; S.fxManual = true; if (!S.contribOverride) { S.contribUsd = Math.max(10, Math.round(S.monthly / S.fx / 10) * 10); $('#rbContrib').value = S.contribUsd; } save(); refreshRebalance(); renderContribHint(); } });
+  $('#opsPanel').addEventListener('click', e => { if (e.target.closest('#contribReset')) { S.contribOverride = false; ensureRebalanceState(); $('#rbContrib').value = S.contribUsd; save(); refreshRebalance(); renderContribHint(); } });
+  segBind('#rbSell', b => { S.allowSell = b.dataset.v === '1'; const cd = cooldownState(); S.cooldownOverride = S.allowSell && cd.active ? S.lastRebalance : null; save(); refreshRebalance(); });
+  segBind('#rbWhole', b => { S.wholeShares = b.dataset.v === '1'; save(); refreshRebalance(); });
+  $('#rbLast').addEventListener('change', e => { S.lastRebalance = e.target.value || null; S.cooldownOverride = null; save(); refreshRebalance(); });
+  $('#opsPanel').addEventListener('click', e => { if (e.target.closest('#rbLastClear')) { S.lastRebalance = null; S.cooldownOverride = null; save(); refreshRebalance(); } });
+  $('#holdTable').addEventListener('input', e => { const inp = e.target.closest('.hold-in'); if (!inp) return; const id = inp.id.slice(2); S.holdings[id] = Math.max(0, +inp.value || 0); S.holdingsExample = false; $('#opsUndo').hidden = true; $('#opsNote').textContent = ''; save(); refreshRebalance(); $('#exampleNote').innerHTML = ''; });
+  $('#holdExample').onclick = () => { S.holdings = exampleHoldings(); S.holdingsExample = true; S.exampleKey = JSON.stringify(S.weights); save(); renderRebalance(); };
+  $('#holdClear').onclick = () => { S.holdings = Object.fromEntries(modelIds().map(id => [id, 0])); S.holdingsExample = false; save(); renderRebalance(); };
+  $('#holdPanel').addEventListener('click', e => { if (e.target.closest('#outsideClear')) { for (const id of Object.keys(S.holdings)) if (!modelIds().includes(id)) delete S.holdings[id]; save(); renderRebalance(); } });
+  $('#opsCopy').onclick = copyOps;
+  $('#opsApply').onclick = applyOps;
+  $('#opsUndo').onclick = () => { if (!undoHoldings) return; S.holdings = undoHoldings.holdings; S.holdingsExample = undoHoldings.example; S.lastRebalance = undoHoldings.last; S.cooldownOverride = undoHoldings.override; undoHoldings = null; save(); renderRebalance(); $('#opsUndo').hidden = true; $('#opsNote').textContent = '已撤销。'; };
+  $('#readAI').onclick = runReadAI; $('#readStop').onclick = () => readCtl && readCtl.abort();
+}
+
+let readCtl = null;
+async function runReadAI() {
+  const plan = window.__plan; if (!plan || !plan.ids.length) return;
+  if (!sampleFn) { $('#readAIOut').innerHTML = `<div class="ai-read"><p>当前环境无法调用 AI（需要在 claude.ai 中打开本页）。上方是按规则生成的解读。</p></div>`; return; }
+  const rows = plan.ids.map(id => { const m = marketRead(id); return `${id}（${A[id].cn}，风险R${Math.min(A[id].risk, 5)}${A[id].risk > 5 ? '+' : ''}）：当前占比${(plan.cur[id] * 100).toFixed(1)}%，目标${(plan.tw[id] * 100).toFixed(1)}%，本月操作${plan.delta[id] > 0 ? '买入' : plan.delta[id] < 0 ? '卖出' : '不动'}${plan.delta[id] ? Math.abs(plan.delta[id]).toFixed(0) + '美元' : ''}；近4周${(m.r4 * 100).toFixed(1)}%，近1年${(m.r52 * 100).toFixed(1)}%，距一年高点${(m.dd * 100).toFixed(1)}%，${TREND_TXT[m.trend]}，历史年化波动${(m.vol * 100).toFixed(0)}%`; }).join('\n');
+  const prompt = `你是理财教育助手，帮一位上班族读懂他本月的定投再平衡操作。只依据下面的数据写，不预测价格，不建议偏离规则的买卖，不使用"保证""一定"之类的词。这是学习参考，不是投资建议。
+
+模型：${S.label || '自定义'}；本月新增 ${plan.A.toFixed(0)} 美元；组合市值 ${plan.V.toFixed(0)} 美元；${plan.rebalance ? '本月触发整体再平衡' : plan.needSell ? '按规则应再平衡，但用户选择只买不卖' : '本月只用新钱纠偏，不卖出'}。数据截至 ${D.asOf}。
+各标的：
+${rows}
+
+只输出一个 JSON 对象：{"headline":"不超过 20 字的一句话结论","summary":"3-4 句，说明组合现在的状态、本月操作的逻辑，以及当前市场环境对这类组合意味着什么","watch":["2-3 条接下来值得留意的事，每条一句"]}`;
+  readCtl = new AbortController(); $('#readAI').disabled = true; $('#readStop').hidden = false;
+  $('#readAIOut').innerHTML = `<div class="ai-read"><div class="thinking"><span class="pulse"></span>AI 正在阅读你的持仓…</div></div>`;
+  try {
+    const r = await sampleFn.json(prompt, { signal: readCtl.signal, cache: false });
+    $('#readAIOut').innerHTML = `<div class="ai-read"><div class="eyebrow">AI 解读 · 仅供学习参考</div><h3>${esc(String(r.headline || ''))}</h3><p>${esc(String(r.summary || ''))}</p>${Array.isArray(r.watch) && r.watch.length ? `<ul class="clean">${r.watch.slice(0, 4).map(x => `<li>${esc(String(x))}</li>`).join('')}</ul>` : ''}</div>`;
+  } catch (e) {
+    const code = e && e.code;
+    $('#readAIOut').innerHTML = code === 'cancelled' ? '' : `<div class="ai-read"><p>${code === 'not_granted' ? '你没有允许本页使用 AI。上方是按规则生成的解读。' : code === 'rate_limited' ? 'AI 调用过于频繁或已达用量上限，请稍后再试。' : 'AI 暂时没有响应，请稍后再试。'}</p></div>`;
+  } finally { $('#readAI').disabled = false; $('#readStop').hidden = true; }
+}
+
+/* ---------------- routing ---------------- */
+const VIEWS = ['rebalance', 'assets', 'strategy', 'ai', 'backtest'];
+function setSidebar(open) { const sb = $('#sidebar'); if (!sb) return; sb.classList.toggle('open', open); $('#sideScrim').hidden = !open; }
+let current = null;
+function go(v, push = true) {
+  if (!VIEWS.includes(v)) v = 'rebalance';
+  current = v;
+  document.querySelectorAll('section[data-view]').forEach(s => s.hidden = s.dataset.view !== v);
+  document.querySelectorAll('#sidebar [data-tab]').forEach(t => t.dataset.tab === v ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current'));
+  $('#crumb').textContent = { rebalance: '动态再平衡', assets: '标的库', strategy: '定投模型', ai: 'AI 方案', backtest: '回测' }[v];
+  setSidebar(false);
+  if (push) { try { history.replaceState(null, '', '#' + v); } catch (e) { } }
+  window.scrollTo(0, 0);
+  if (v === 'rebalance') renderRebalance(); else updateWsCard();
+  if (v === 'backtest') renderBacktest();
+  requestAnimationFrame(() => drawAllArt());
+}
+
+/* ---------------- boot ---------------- */
+function boot() {
+  const last = D.asOf || ymd(wDate(N - 1));
+  $('#dataAsOf').textContent = `数据截至 ${last}`; $('#from20').textContent = ym(Math.max(0, N - 1 - W20)); $('#btYears').textContent = cnNum(Math.floor((N - 1 - D.assets.SPY.first) / 52.1775)); $('#asOf2').textContent = last; $('#dataSpan').textContent = `${ymd(wDate(D.assets.SPY.first)).slice(0, 4)}–${last.slice(0, 4)}`;
+  computePresetStats();
+  renderVerdict(); renderAssets(); renderPresets(); renderStrategy();
+  bindAssets(); bindDrawer(); bindStrategy(); bindAI(); bindRebalance();
+  document.querySelector('#sidebar').addEventListener('click', e => {
+    const t = e.target.closest('[data-tab]'); if (t) { go(t.dataset.tab); return; }
+    const l = e.target.closest('[data-layer]'); if (!l) return;
+    if (sortKey !== 'layer') { sortKey = 'layer'; [...$('#sortSeg').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.sort === 'layer')); renderAssets(); }
+    go('assets'); requestAnimationFrame(() => { const row = document.querySelector(`tr.group[data-layer="${l.dataset.layer}"]`); if (row) row.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
+  });
+  $('#layerNav').innerHTML = LAYERS.map(L => `<button class="nav-item" type="button" data-layer="${L.key}"><span class="sq" style="background:${L.color}"></span>${L.name.split(' · ')[0]}<span class="cnt">${L.ids.length}</span></button>`).join('');
+  $('#menuBtn').onclick = () => setSidebar(true); $('#sideScrim').onclick = () => setSidebar(false);
+  $('#heroRun').onclick = () => { if (sumW() === 100) go('backtest'); else $('#weightRows').scrollIntoView({ behavior: 'smooth' }); };
+  $('#heroAI').onclick = () => go('ai');
+  go((location.hash || '#rebalance').slice(1), false);
+  window.addEventListener('resize', () => { clearTimeout(window.__rz); window.__rz = setTimeout(drawAllArt, 150); });
+  const mq = matchMedia('(prefers-color-scheme: dark)'); const onTheme = () => { drawAllArt(); rethemeCharts(); renderAssets(); if (current === 'backtest' && bt.r) renderStack(bt.r); };
+  mq.addEventListener && mq.addEventListener('change', onTheme);
+  new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  if (window.claude && claude.use) claude.use('sample').then(fn => { sampleFn = fn; $('#aiHint').textContent = fn ? '' : '当前环境无法调用 AI，将使用规则推荐。'; }).catch(() => { $('#aiHint').textContent = '当前环境无法调用 AI，将使用规则推荐。'; });
+  else $('#aiHint').textContent = '当前环境无法调用 AI，将使用规则推荐。';
+}
+boot();
+</script>
+
