@@ -372,6 +372,39 @@ ul.clean li{margin:4px 0}
 .ai-read p{margin:0;color:var(--ink-2)}
 .copy-area{position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:0}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#34372E;color:#FAF8F2;padding:10px 18px;border-radius:999px;font-size:12px;z-index:40;box-shadow:0 6px 24px rgba(45,39,25,.2)}
+/* 3D balance on the rebalance view */
+.bal{display:grid;grid-template-columns:minmax(0,1fr) 270px}
+.bal-stage{position:relative;height:430px;overflow:hidden;border-right:1px solid #EFEBE3}
+.bal-stage canvas{display:block}
+.bal-labels{position:absolute;inset:0;pointer-events:none}
+.bal-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:2;pointer-events:none;padding:5px 12px;border-radius:999px;background:rgba(252,251,248,.88);border:1px solid var(--line);color:var(--ink-3);font-size:11px;white-space:nowrap}
+.bal-fail{position:absolute;inset:0;display:grid;place-items:center;margin:0;padding:24px;text-align:center;color:var(--ink-3);font-size:13px}
+.bal-label{display:grid;justify-items:center;gap:1px;padding:5px 11px;border-radius:10px;background:rgba(252,251,248,.92);border:1px solid var(--line);box-shadow:var(--shadow);font-size:11px;color:var(--ink-2);white-space:nowrap}
+.bal-label b{color:var(--ink);font:500 12px var(--f-display)}
+.bal-label span{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.bal-label i{font-style:normal;font-weight:400;color:var(--ink-3)}
+.bal-label em,.bal-tip span:last-child{font-style:normal;font-weight:600;font-variant-numeric:tabular-nums}
+.bal .ok{color:var(--good)}.bal .hi{color:var(--accent-dark)}.bal .lo{color:#55667A}
+.bal-tip{position:absolute;top:0;left:0;z-index:3;pointer-events:none;display:grid;gap:2px;padding:9px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line-2);box-shadow:var(--shadow);font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.bal-tip b{display:flex;gap:6px;align-items:center;color:var(--ink)}
+.bal-tip b i{width:9px;height:9px;border-radius:50%}
+.bal-side{padding:20px 22px;display:flex;flex-direction:column;gap:14px;font-size:13px;color:var(--ink-2)}
+.bal-side p{margin:0}
+.bal-badge{border-radius:var(--r);padding:12px 14px;background:var(--good-soft)}
+.bal-badge small{display:block;font-size:11px;color:var(--ink-3)}
+.bal-badge b{font:600 22px var(--f-display);color:var(--good)}
+.bal-badge.drift{background:var(--warn-soft)}.bal-badge.drift b{color:var(--warn)}
+.bal-badge.out{background:var(--bad-soft)}.bal-badge.out b{color:var(--bad)}
+.bal-badge.empty{background:var(--sunken)}.bal-badge.empty b{color:var(--ink-2)}
+.bal-groups{margin:0;display:grid;gap:8px}
+.bal-groups div{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #EFEBE3;padding-bottom:8px}
+.bal-groups dt{display:flex;align-items:center;gap:7px;color:var(--ink)}
+.bal-groups dt i{width:8px;height:8px;border-radius:2px;background:#B8654A}.bal-groups dt i.lo{background:#8299A8}
+.bal-groups dd{margin:0;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.bal-groups dd span{margin-left:6px;font-weight:400;font-size:11px;color:var(--ink-3)}
+.bal-next{font-size:12px;color:var(--ink-3)}
+@media (max-width:980px){.bal{grid-template-columns:1fr}.bal-stage{height:360px;border-right:0;border-bottom:1px solid #EFEBE3}}
+@media (max-width:520px){.bal-stage{height:320px}.bal-hint{font-size:10px}}
 @media (max-width:980px){.read-top{grid-template-columns:1fr}.reads{grid-template-columns:1fr}.model-strip{grid-template-columns:1fr}.ms-actions{justify-content:flex-start}}
 @media (max-width:520px){.ops-sum{gap:8px}.ops-sum>div{padding:10px 12px}.ops-sum .v{font-size:16px}.ops-sum .v span{display:none}.money input{width:110px}.ops-controls{gap:12px 16px}}
 @media (max-width:1180px){.sidebar{width:210px}main{margin-left:210px}.page{padding-left:32px;padding-right:max(32px,env(safe-area-inset-right,0px))}.topbar{padding-left:32px}.presets{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.hero h1{font-size:34px}.cols{grid-template-columns:1fr}}
@@ -470,6 +503,15 @@ ul.clean li{margin:4px 0}
 
     <div class="section grid">
       <div class="panel model-strip" id="modelStrip"></div>
+
+      <div class="panel" id="balancePanel">
+        <div class="panel-h"><h2>持仓天平<span class="small">左盘高波动（R4 及以上），右盘低波动；两盘都在目标占比时天平水平</span></h2>
+          <div class="seg" id="balWhen"><button type="button" data-v="now" aria-pressed="true">当前持仓</button><button type="button" data-v="after" aria-pressed="false">按清单操作后</button></div></div>
+        <div class="bal">
+          <div class="bal-stage" id="balStage"><div class="bal-hint">拖动托盘上下 · 拖动空白处旋转 · 悬停色层看明细</div><div class="bal-tip" hidden></div></div>
+          <div class="bal-side" id="balSide"></div>
+        </div>
+      </div>
 
       <div class="panel" id="opsPanel">
         <div class="panel-h"><h2>本月操作清单<span class="small" id="opsAsOf"></span></h2><span class="tagline">Buy what's light. Trim what's heavy.</span></div>
@@ -829,6 +871,7 @@ ul.clean li{margin:4px 0}
   </div>
 </aside>
 
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script id="pricedata" type="application/json">__DATA__</script>
 <script>
@@ -1728,9 +1771,9 @@ function renderRebalance() {
   $('#rbContrib').value = S.contribUsd; $('#rbFx').value = S.fx;
   syncOpsControls();
   renderModelStrip(); renderOps(plan); renderHoldings(plan, true); renderReading(plan); renderContribHint(); updateWsCard(plan);
-  window.__plan = plan;
+  window.__plan = plan; updateBalance(plan);
 }
-function refreshRebalance() { const plan = planRebalance(); syncOpsControls(); renderOps(plan); renderHoldings(plan, false); renderReading(plan); window.__plan = plan; updateWsCard(plan); }
+function refreshRebalance() { const plan = planRebalance(); syncOpsControls(); renderOps(plan); renderHoldings(plan, false); renderReading(plan); window.__plan = plan; updateWsCard(plan); updateBalance(plan); }
 // the sidebar plan card doubles as the entry to this view and shows what this month needs
 function updateWsCard(plan) {
   if (!$('#wsSub')) return;
@@ -1783,6 +1826,7 @@ function bindRebalance() {
   $('#holdExample').onclick = () => { S.holdings = exampleHoldings(); S.holdingsExample = true; S.exampleKey = JSON.stringify(S.weights); save(); renderRebalance(); };
   $('#holdClear').onclick = () => { S.holdings = Object.fromEntries(modelIds().map(id => [id, 0])); S.holdingsExample = false; save(); renderRebalance(); };
   $('#holdPanel').addEventListener('click', e => { if (e.target.closest('#outsideClear')) { for (const id of Object.keys(S.holdings)) if (!modelIds().includes(id)) delete S.holdings[id]; save(); renderRebalance(); } });
+  segBind('#balWhen', b => { balWhen = b.dataset.v; updateBalance(window.__plan); });
   $('#opsCopy').onclick = copyOps;
   $('#opsApply').onclick = applyOps;
   $('#opsUndo').onclick = () => { if (!undoHoldings) return; S.holdings = undoHoldings.holdings; S.holdingsExample = undoHoldings.example; S.lastRebalance = undoHoldings.last; S.cooldownOverride = undoHoldings.override; undoHoldings = null; save(); renderRebalance(); $('#opsUndo').hidden = true; $('#opsNote').textContent = '已撤销。'; };
@@ -1810,6 +1854,279 @@ ${rows}
     const code = e && e.code;
     $('#readAIOut').innerHTML = code === 'cancelled' ? '' : `<div class="ai-read"><p>${code === 'not_granted' ? '你没有允许本页使用 AI。上方是按规则生成的解读。' : code === 'rate_limited' ? 'AI 调用过于频繁或已达用量上限，请稍后再试。' : 'AI 暂时没有响应，请稍后再试。'}</p></div>`;
   } finally { $('#readAI').disabled = false; $('#readStop').hidden = true; }
+}
+
+/* ---------------- 3D balance ---------------- */
+// Left pan holds the high-risk assets (R4+), right pan the rest. Each asset is a layer whose height is its value over its
+// side's target value, so a pan exactly on target fills to the ring; the beam tilts by how far the high-risk share is off target.
+// Three.js loads on the first visit to this view (see the import map in the head), so the other views don't pay for it.
+let bal = null, balLoading = null, balWhen = 'now';
+function balanceView(plan, when) {
+  const after = when === 'after' && plan.T > 0;
+  const w = after ? plan.after : plan.cur, tot = after ? plan.T : plan.V;
+  const rows = plan.ids.map(id => ({ id, cur: w[id], tgt: plan.tw[id], dev: w[id] - plan.tw[id], value: w[id] * tot, high: A[id].risk >= 4 }));
+  const side = high => { const r = rows.filter(x => x.high === high); return { rows: r, cur: r.reduce((s, x) => s + x.cur, 0), tgt: r.reduce((s, x) => s + x.tgt, 0) }; };
+  const hi = side(true), lo = side(false), held = tot > 0;
+  const outCount = held ? rows.filter(r => Math.abs(r.dev) >= bandOf(r.tgt) - 1e-9).length : 0;
+  const drift = held && rows.some(r => Math.abs(r.dev) >= bandOf(r.tgt) / 2);
+  return { rows, hi, lo, held, total: tot, tilt: held ? hi.cur - hi.tgt : 0, outCount, status: !held ? 'empty' : outCount ? 'out' : drift ? 'drift' : 'level' };
+}
+function renderBalanceSide(m, plan) {
+  const word = { empty: ['还没有持仓', '在下方「我的持仓」填入股数，天平会按你的真实持仓倾斜。'], level: ['平衡', '每个标的都在目标附近。'],
+    drift: ['轻微偏离', '还在阈值内，新钱会慢慢把它补齐。'], out: ['超出阈值', `${m.outCount} 个标的的偏离超过了模型的再平衡阈值。`] }[m.status];
+  const t = m.tilt * 100;
+  const tiltTxt = !m.held ? '' : Math.abs(t) < 0.05 ? '两盘持平，天平水平。' : `${t > 0 ? '左盘（高波动）' : '右盘（低波动）'}偏重 ${Math.abs(t).toFixed(1)} 个百分点，天平往${t > 0 ? '左' : '右'}沉。`;
+  const next = !m.held || !(plan.buy || plan.sell) ? '' : balWhen === 'now' ? '切到「按清单操作后」，看本月操作能把天平拉回多少；下单后点「我已下单，按清单更新持仓」，天平会慢慢摆回。' : `这是执行本月清单（含新增 ${usd0(plan.A)}）之后的样子。`;
+  const g = (k, name, s) => `<div><dt><i class="${k}"></i>${name}</dt><dd>${m.held ? fmtPct(s.cur) : '—'}<span>目标 ${fmtPct(s.tgt)}</span></dd></div>`;
+  $('#balSide').innerHTML = `<div class="bal-badge ${m.status}"><small>${balWhen === 'after' ? '按清单操作后' : '当前持仓'}</small><b>${word[0]}</b></div>
+    <p>${word[1]}${tiltTxt}</p><dl class="bal-groups">${g('hi', '高波动 · R4+', m.hi)}${g('lo', '低波动 · R1–R3', m.lo)}</dl>${next ? `<p class="bal-next">${next}</p>` : ''}`;
+}
+function updateBalance(plan) {
+  if (!$('#balStage') || !plan) return;
+  const m = balanceView(plan, balWhen);
+  renderBalanceSide(m, plan);
+  if (bal) return bal.set(m);
+  balLoading = balLoading || mountBalance($('#balStage'))
+    .then(b => { bal = b; bal.set(balanceView(window.__plan || plan, balWhen)); })
+    .catch(e => { $('#balStage').insertAdjacentHTML('beforeend', `<p class="bal-fail">3D 天平没能加载（${esc(e && e.message || '网络或浏览器不支持 WebGL')}），不影响下方的操作清单。</p>`); });
+}
+
+async function mountBalance(stage) {
+  const [THREE, { OrbitControls }, { RoomEnvironment }, { CSS2DRenderer, CSS2DObject }] = await Promise.all([
+    import('three'), import('three/addons/controls/OrbitControls.js'), import('three/addons/environments/RoomEnvironment.js'), import('three/addons/renderers/CSS2DRenderer.js')]);
+  const PIVOT_Y = 3.7, ARM = 2.9, HANG = 1.7, PAN_R = 1, STACK_R = 0.62, TARGET_H = 1;
+  const MAX_ANGLE = 0.42, STOP = MAX_ANGLE + 0.08; // beam travel, and the mechanical stop just past it
+  const GAIN = 4;                // rad of tilt per unit of high-risk overweight (5 pp ≈ 11°)
+  const STIFF = 3.2, DAMP = 1.5; // slow, slightly under-damped settle
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  stage.prepend(renderer.domElement);
+  const labels = new CSS2DRenderer();
+  labels.domElement.className = 'bal-labels';
+  stage.append(labels.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color('#FCFBF8');
+  scene.fog = new THREE.Fog('#FCFBF8', 16, 34);
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+  camera.position.set(1.2, 4.2, 11.5);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 2.45, 0);
+  Object.assign(controls, { enableDamping: true, enablePan: false, enableZoom: false, minPolarAngle: 0.25, maxPolarAngle: 1.48 }); // no wheel zoom: the page has to scroll
+
+  scene.add(new THREE.HemisphereLight('#FFFBF2', '#D8D2C2', 0.7));
+  const sun = new THREE.DirectionalLight('#FFF6E8', 2.2);
+  sun.position.set(4, 9, 6); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7, near: 1, far: 25 });
+  sun.shadow.bias = -0.0004; sun.shadow.radius = 4;
+  scene.add(sun);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.12 }));
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+  const table = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.2, 0.04, 96), new THREE.MeshStandardMaterial({ color: '#F1EEE6', roughness: 0.95 }));
+  table.position.y = 0.02; table.receiveShadow = true; scene.add(table);
+
+  const mat = {
+    brass: new THREE.MeshStandardMaterial({ color: '#B39859', metalness: 0.85, roughness: 0.32 }),
+    ink: new THREE.MeshStandardMaterial({ color: '#413F35', metalness: 0.3, roughness: 0.55 }),
+    stone: new THREE.MeshStandardMaterial({ color: '#E6E1D5', roughness: 0.85 }),
+    accent: new THREE.MeshStandardMaterial({ color: '#BF6B50', metalness: 0.2, roughness: 0.4 }),
+    tick: new THREE.MeshStandardMaterial({ color: '#8E897D', roughness: 0.6 }),
+  };
+  const mesh = (geo, m, parent, cast = true) => { const o = new THREE.Mesh(geo, m); o.castShadow = cast; o.receiveShadow = true; parent.add(o); return o; };
+
+  // stand, finial and the scale the needle sweeps over (a tick every 5°, terracotta at level)
+  mesh(new THREE.CylinderGeometry(1.15, 1.3, 0.26, 72), mat.stone, scene).position.y = 0.17;
+  mesh(new THREE.CylinderGeometry(0.62, 0.8, 0.16, 64), mat.ink, scene).position.y = 0.38;
+  mesh(new THREE.CylinderGeometry(0.075, 0.11, PIVOT_Y - 0.46, 32), mat.ink, scene).position.y = (PIVOT_Y + 0.46) / 2;
+  mesh(new THREE.SphereGeometry(0.13, 32, 16), mat.brass, scene).position.y = PIVOT_Y + 0.32;
+  mesh(new THREE.ConeGeometry(0.06, 0.24, 24), mat.brass, scene).position.y = PIVOT_Y + 0.54;
+  const SCALE_R = 1.05, arcSpan = MAX_ANGLE * 2 + 0.06;
+  const dial = new THREE.Group(); dial.position.set(0, PIVOT_Y, 0.16); scene.add(dial);
+  mesh(new THREE.TorusGeometry(SCALE_R, 0.012, 8, 96, arcSpan), mat.tick, dial, false).rotation.z = -Math.PI / 2 - arcSpan / 2;
+  for (let deg = -20; deg <= 20; deg += 5) {
+    const a = THREE.MathUtils.degToRad(deg);
+    const t = mesh(new THREE.BoxGeometry(0.018, deg ? 0.11 : 0.2, 0.02), deg ? mat.tick : mat.accent, dial, false);
+    t.position.set(Math.sin(a) * SCALE_R, -Math.cos(a) * SCALE_R, 0); t.rotation.z = a;
+  }
+
+  const beam = new THREE.Group(); beam.position.y = PIVOT_Y; scene.add(beam);
+  for (const s of [-1, 1]) {
+    const arm = mesh(new THREE.CylinderGeometry(0.035, 0.075, ARM, 24), mat.brass, beam);
+    arm.rotation.z = s * Math.PI / 2; arm.position.x = s * ARM / 2;
+    mesh(new THREE.SphereGeometry(0.075, 24, 12), mat.brass, beam).position.x = s * ARM;
+  }
+  mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.22, 48), mat.brass, beam).rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.24, 24), mat.ink, beam).rotation.x = Math.PI / 2;
+  const needleMat = new THREE.MeshStandardMaterial({ color: '#5E8466', metalness: 0.3, roughness: 0.4 });
+  const needle = mesh(new THREE.ConeGeometry(0.035, SCALE_R + 0.08, 16), needleMat, beam, false);
+  needle.rotation.z = Math.PI; needle.position.set(0, -(SCALE_R + 0.08) / 2, 0.19);
+
+  const bowl = new THREE.LatheGeometry([[0, 0], [0.8, 0], [0.97, 0.05], [1, 0.16], [0.985, 0.17], [0.95, 0.07], [0.78, 0.035], [0, 0.035]]
+    .map(([r, y]) => new THREE.Vector2(r * PAN_R, y)), 72);
+  const layerGeo = new THREE.CylinderGeometry(STACK_R, STACK_R, 1, 64); layerGeo.translate(0, 0.5, 0);
+  const pickable = [];
+  const makePan = side => {
+    const hanger = new THREE.Group(); scene.add(hanger);
+    const swing = new THREE.Group(); hanger.add(swing); // pendulum sway, pivoting at the hook
+    mesh(new THREE.TorusGeometry(0.07, 0.016, 8, 24), mat.brass, swing).rotation.y = Math.PI / 2;
+    const top = new THREE.Vector3(0, -0.07, 0);
+    for (let k = 0; k < 3; k++) {
+      const a = k * Math.PI * 2 / 3 + Math.PI / 6;
+      const bottom = new THREE.Vector3(Math.cos(a) * PAN_R * 0.97, -HANG + 0.15, Math.sin(a) * PAN_R * 0.97);
+      const cord = mesh(new THREE.CylinderGeometry(0.009, 0.009, top.distanceTo(bottom), 6), mat.ink, swing);
+      cord.position.copy(top).add(bottom).multiplyScalar(0.5);
+      cord.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bottom.clone().sub(top).normalize());
+      cord.userData.side = side; pickable.push(cord);
+    }
+    const dish = mesh(bowl, mat.brass, swing); dish.position.y = -HANG; dish.userData.side = side; pickable.push(dish);
+    const stack = new THREE.Group(); stack.position.y = -HANG + 0.035; swing.add(stack);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(STACK_R + 0.05, 0.008, 6, 72), new THREE.MeshBasicMaterial({ color: '#413F35', transparent: true, opacity: 0.45 }));
+    ring.rotation.x = Math.PI / 2; ring.position.y = TARGET_H; stack.add(ring);
+    const el = document.createElement('div'); el.className = 'bal-label';
+    const label = new CSS2DObject(el); label.center.set(0.5, 1); swing.add(label);
+    return { side, hanger, swing, stack, ring, el, label, layers: new Map(), order: [], sway: 0, swayVel: 0 };
+  };
+  const pans = { [-1]: makePan(-1), [1]: makePan(1) };
+
+  let angle = 0, vel = 0, goal = 0, drag = null, hovered = null, first = true;
+  function set(m) {
+    goal = THREE.MathUtils.clamp(m.tilt * GAIN, -MAX_ANGLE, MAX_ANGLE); // the high-risk pan is on the left, so overweight dips it (positive angle)
+    for (const [side, grp] of [[-1, m.hi], [1, m.lo]]) {
+      const pan = pans[side];
+      const norm = grp.tgt > 0 ? TARGET_H / grp.tgt : TARGET_H;
+      pan.order = [...grp.rows].sort((p, q) => q.tgt - p.tgt).map(r => r.id);
+      for (const r of grp.rows) {
+        let layer = pan.layers.get(r.id);
+        if (!layer) {
+          layer = new THREE.Mesh(layerGeo, new THREE.MeshStandardMaterial({ color: A[r.id].color, roughness: 0.5, metalness: 0.08 }));
+          layer.castShadow = layer.receiveShadow = true;
+          layer.userData = { side, h: 0 };
+          pan.stack.add(layer); pan.layers.set(r.id, layer); pickable.push(layer);
+        }
+        layer.userData.row = r;
+        layer.userData.goal = Math.min(r.cur * norm, 2.6);
+        if (first || calm) layer.userData.h = layer.userData.goal;
+      }
+      for (const [id, layer] of pan.layers) if (!pan.order.includes(id)) {
+        pan.stack.remove(layer); layer.material.dispose(); pickable.splice(pickable.indexOf(layer), 1); pan.layers.delete(id);
+      }
+      pan.ring.visible = grp.tgt > 0;
+      const d = (grp.cur - grp.tgt) * 100;
+      pan.el.innerHTML = `<b>${side < 0 ? '高波动 · R4+' : '低波动 · R1–R3'}</b><span>${m.held ? fmtPct(grp.cur) : '—'} <i>目标 ${fmtPct(grp.tgt)}</i></span>`
+        + (m.held ? `<em class="${Math.abs(d) < 0.5 ? 'ok' : d > 0 ? 'hi' : 'lo'}">${Math.abs(d) < 0.05 ? '持平' : (d > 0 ? '+' : '') + d.toFixed(1) + ' pp'}</em>` : '');
+    }
+    if (first || calm) { angle = goal; vel = 0; }
+    first = false;
+    wake();
+  }
+
+  // pointer: drag a pan to push the beam, drag elsewhere to orbit, hover a layer for its numbers
+  const tip = stage.querySelector('.bal-tip');
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const pick = e => {
+    const r = renderer.domElement.getBoundingClientRect();
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    return ray.intersectObjects(pickable, false).find(h => h.object.visible) || null;
+  };
+  const showTip = (row, e) => {
+    if (hovered) hovered.material.emissive.setHex(0);
+    hovered = null;
+    if (!row) { tip.hidden = true; return; }
+    const d = row.dev * 100;
+    tip.innerHTML = `<b><i style="background:${A[row.id].color}"></i>${row.id} · ${A[row.id].cn}</b><span>市值 ${usd0(row.value)}</span><span>占比 ${fmtPct(row.cur)} · 目标 ${fmtPct(row.tgt)}</span><span class="${Math.abs(d) < 0.5 ? 'ok' : d > 0 ? 'hi' : 'lo'}">偏离 ${d > 0 ? '+' : ''}${d.toFixed(1)} pp</span>`;
+    const r = stage.getBoundingClientRect();
+    tip.style.transform = `translate(${Math.min(e.clientX - r.left + 14, r.width - 190)}px, ${e.clientY - r.top + 14}px)`;
+    tip.hidden = false;
+  };
+  const el = renderer.domElement;
+  el.addEventListener('pointerdown', e => {
+    const hit = pick(e); if (!hit) return;
+    controls.enabled = false; el.setPointerCapture(e.pointerId); el.style.cursor = 'grabbing'; showTip(null);
+    drag = { side: hit.object.userData.side, y: e.clientY, start: angle, last: angle, t: performance.now() };
+    wake();
+  });
+  el.addEventListener('pointermove', e => {
+    if (drag) {
+      // dragging a pan down lowers that end; pixel-based, so it feels the same whatever the angle of view
+      const next = THREE.MathUtils.clamp(drag.start - drag.side * (e.clientY - drag.y) * 0.0045, -STOP, STOP);
+      const now = performance.now();
+      vel = THREE.MathUtils.lerp(vel, (next - drag.last) / (Math.max(1, now - drag.t) / 1000), 0.5);
+      drag.last = angle = next; drag.t = now;
+      return;
+    }
+    const hit = pick(e);
+    showTip(hit?.object.userData.row || null, e);
+    if (hit?.object.userData.row) { hovered = hit.object; hovered.material.emissive.set('#3a2a18'); }
+    el.style.cursor = hit ? 'grab' : '';
+  });
+  const release = e => {
+    if (!drag) return;
+    // a flick carries into the release, a pause before letting go doesn't
+    vel = performance.now() - drag.t > 80 ? 0 : THREE.MathUtils.clamp(vel, -1.2, 1.2);
+    drag = null; controls.enabled = true; el.style.cursor = '';
+    if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+  };
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointercancel', release);
+  el.addEventListener('pointerleave', () => { if (!drag) showTip(null); });
+  controls.addEventListener('start', wake);
+
+  const resize = () => {
+    const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h); labels.setSize(w, h);
+    // widen the vertical field of view on narrow stages so both pans (about ±5 units) always fit across
+    camera.aspect = w / h; camera.fov = Math.max(30, THREE.MathUtils.radToDeg(2 * Math.atan(5.2 / 11.7 / camera.aspect)));
+    camera.updateProjectionMatrix(); wake();
+  };
+  new ResizeObserver(resize).observe(stage);
+
+  // render only while on screen, and stop once everything has come to rest
+  let visible = false, running = false, still = 0;
+  new IntersectionObserver(([en]) => { visible = en.isIntersecting; visible ? wake() : stop(); }).observe(stage);
+  function wake() { still = 0; if (visible && !running) { running = true; clock.getDelta(); renderer.setAnimationLoop(frame); } }
+  function stop() { running = false; renderer.setAnimationLoop(null); }
+  const clock = new THREE.Clock(), tmp = new THREE.Vector3();
+  const levelColor = new THREE.Color('#5E8466'), offColor = new THREE.Color('#BF6B50');
+  function frame() {
+    const dt = Math.min(clock.getDelta(), 1 / 30);
+    if (!drag) {
+      vel += (-(angle - goal) * STIFF - vel * DAMP) * dt;
+      angle += vel * dt;
+      if (Math.abs(angle) > STOP) { angle = Math.sign(angle) * STOP; vel *= -0.3; } // knock against the stop
+    }
+    beam.rotation.z = angle;
+    needleMat.color.copy(levelColor).lerp(offColor, Math.min(1, Math.abs(angle) / 0.12));
+    let moving = drag || Math.abs(angle - goal) > 1e-4 || Math.abs(vel) > 1e-4;
+    for (const s of [-1, 1]) {
+      const pan = pans[s];
+      beam.localToWorld(tmp.set(s * ARM, 0, 0)); pan.hanger.position.copy(tmp);
+      pan.swayVel += (-pan.sway * 6 - pan.swayVel * 1.6 - vel * 1.4) * dt; // pans hang plumb but swing a little as the beam moves
+      pan.sway += pan.swayVel * dt;
+      pan.swing.rotation.z = THREE.MathUtils.clamp(pan.sway, -0.25, 0.25);
+      if (Math.abs(pan.sway) > 1e-4 || Math.abs(pan.swayVel) > 1e-4) moving = true;
+      let y = 0; // layers grow toward their new heights rather than jumping, so an update reads as weight being moved
+      for (const id of pan.order) {
+        const L = pan.layers.get(id), u = L.userData;
+        u.h += (u.goal - u.h) * Math.min(1, dt * 3);
+        if (Math.abs(u.goal - u.h) > 1e-4) moving = true;
+        L.scale.y = Math.max(0.0001, u.h - 0.012); L.position.y = y; L.visible = u.h > 0.002;
+        y += u.h;
+      }
+      pan.label.position.y = -HANG + Math.max(y, TARGET_H) + 0.3;
+    }
+    controls.update();
+    renderer.render(scene, camera); labels.render(scene, camera);
+    // OrbitControls damping keeps moving for a moment after a drag, so give it a second before sleeping
+    if (moving) still = 0; else if ((still += dt) > 1) stop();
+  }
+  resize();
+  return { set };
 }
 
 /* ---------------- routing ---------------- */
