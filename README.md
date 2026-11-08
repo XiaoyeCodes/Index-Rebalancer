@@ -4,6 +4,29 @@
 
 *Index fund DCA, rebalanced. Steady by design.*
 
+## 在线使用
+
+网站地址：**https://xiaoyecodes.github.io/Index-Rebalancer/**
+
+无需安装，电脑和手机浏览器均可打开。持仓和模型保存在当前浏览器的本地存储中，不会上传到仓库；换设备或清除浏览器数据后不会自动同步。独立网站使用规则推荐，Claude 环境的 AI 解读能力不会随部署自动获得。
+
+## 网站部署
+
+网站使用免费的 GitHub Pages，由 `.github/workflows/deploy-pages.yml` 发布：
+
+- `main` 分支的应用代码更新后自动部署。
+- 每周行情更新工作流成功后，重新构建并发布最新数据；更新失败时保留已上线版本。
+- 可在 Actions → Deploy website → Run workflow 手动发布。
+
+仓库 Settings → Pages → Source 选择 **GitHub Actions**。发布目录仅包含 `dist/index.html` 和 `.nojekyll`，不包含产品文档和构建脚本。图表、3D 和字体仍从现有 CDN 加载。
+
+本地生成部署文件：
+
+```bash
+node app/scripts/build.mjs
+node app/scripts/publish.mjs
+```
+
 ## 功能
 
 | 页面 | 做什么 |
