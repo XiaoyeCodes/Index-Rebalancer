@@ -1,11 +1,10 @@
-# Refreshes the price data every week on GitHub's servers, so nothing has to be running locally.
+# Manual fallback. Scheduled updates run in the private Index-Rebalancer-Automation repository
+# so the public-repository 60-day inactivity rule cannot disable the scheduled updater.
 # Downloads from Yahoo Finance, rebuilds the weekly data and app/heng.html, then commits and pushes
 # only those two files (see app/scripts/update.mjs --git). Can also be started by hand from the Actions tab.
 name: Weekly data update
 
 on:
-  schedule:
-    - cron: '0 1 * * 6'   # every Saturday 01:00 UTC = 09:00 Beijing, after the US Friday close
   workflow_dispatch:
 
 permissions:
