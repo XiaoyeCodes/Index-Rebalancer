@@ -15,7 +15,7 @@
 网站使用免费的 GitHub Pages，由 `.github/workflows/deploy-pages.yml` 发布：
 
 - `main` 分支的应用代码更新后自动部署。
-- 每周行情更新工作流成功后，重新构建并发布最新数据；更新失败时保留已上线版本。
+- 私有调度仓库推送行情更新后，自动发布最新数据；本仓库的手动行情更新成功后也会发布。更新失败时保留已上线版本。
 - 可在 Actions → Deploy website → Run workflow 手动发布。
 
 仓库 Settings → Pages → Source 选择 **GitHub Actions**。发布目录仅包含 `dist/index.html` 和 `.nojekyll`，不包含产品文档和构建脚本。图表、3D 和字体仍从现有 CDN 加载。
@@ -77,7 +77,11 @@ node app/scripts/serve.mjs
 
 ## 自动更新
 
-仓库里的 GitHub Actions 工作流 [`.github/workflows/weekly-update.yml`](.github/workflows/weekly-update.yml) 每周六北京时间 9:00 在 GitHub 的服务器上运行 `node app/scripts/update.mjs --git`：下载最新行情、校验、重新打包页面，然后提交并推送 `app/data/prices-weekly.json` 与 `app/heng.html`。数据没有变化时不提交；下载或校验失败时不改动任何文件。也可以在仓库的 Actions 页面选择 "Weekly data update" → "Run workflow" 手动运行。
+定时更新在专用的私有仓库 `XiaoyeCodes/Index-Rebalancer-Automation` 中运行：每周六北京时间 **09:17** 更新，周日 **09:47** 补跑。私有调度仓库不适用 GitHub 当前对公开仓库定时任务的「60 天不活跃停用」规则；无需通过空提交保持活跃。
+
+任务在 GitHub 的服务器上运行 `node app/scripts/update.mjs --git`：下载最新行情、校验、重新打包页面，然后只提交并推送 `app/data/prices-weekly.json` 与 `app/heng.html`。使用仅授权给本仓库的专用 SSH 部署密钥，私钥保存在私有调度仓库的 Actions Secret 中。数据没有变化时不提交；下载或校验失败时保留已上线版本。真实数据提交会触发网站自动发布。
+
+本仓库的 [`.github/workflows/weekly-update.yml`](.github/workflows/weekly-update.yml) 保留手动更新入口：Actions → Weekly data update → Run workflow。私有调度消除了上述公开仓库不活跃条件，但 GitHub 故障、账户 Actions 额度耗尽、密钥撤销或行情源故障仍可能影响更新；不能承诺任何第三方平台永久无故障。私有调度会使用账户内含的 Actions 计算额度，不使用付费规格的运行器。
 
 ## 数据说明
 
