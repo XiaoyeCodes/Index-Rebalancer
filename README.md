@@ -4,21 +4,13 @@
 
 *Index fund DCA, rebalanced. Steady by design.*
 
-## 在线使用
+## 登录
 
-网站地址：**https://xiaoyecodes.github.io/Index-Rebalancer/**
-
-用密码登录后进入定投工具。GitHub Pages 提供登录页，当前设备上的本地服务负责验证密码和调用 AI。首次使用时浏览器可能要求允许访问本地网络。
+本机入口为 [打开 Dynamic Rebalancing](http://127.0.0.1:5178/)。先启动本地服务，再输入账户密码。
 
 ## 网站部署
 
-网站使用免费的 GitHub Pages，由 `.github/workflows/deploy-pages.yml` 发布：
-
-- `main` 分支的应用代码更新后自动部署。
-- 私有调度仓库推送行情更新后，自动发布最新数据；本仓库的手动行情更新成功后也会发布。更新失败时保留已上线版本。
-- 可在 Actions → Deploy website → Run workflow 手动发布。
-
-仓库 Settings → Pages → Source 选择 GitHub Actions。公开发布内容只有登录页和 .nojekyll。应用、账户库和模型凭据由本机服务提供。
+当前 GitHub 套餐不支持从这个私有源码仓库发布 Pages，原项目网址已停用。若通过支持 Pages 的仓库托管登录页，只需发布 `dist/index.html` 和 `dist/.nojekyll`。浏览器可能会提示允许访问本地网络。账户验证、模型调用和应用页面均由当前设备的本地服务提供。
 
 本地生成部署文件：
 
@@ -92,7 +84,7 @@ node app/scripts/serve.mjs
 
 定时更新在专用的私有仓库 `XiaoyeCodes/Index-Rebalancer-Automation` 中运行：每天北京时间 **09:17** 更新，当天 **11:47** 补跑。休市或行情没有变化时保留最近交易日数据。私有调度仓库不适用 GitHub 当前对公开仓库定时任务的「60 天不活跃停用」规则；无需通过空提交保持活跃。
 
-任务在 GitHub 的服务器上运行 `node app/scripts/update.mjs --git`：下载最新行情、校验、重新打包页面，然后只提交并推送 `app/data/prices-weekly.json` 与 `app/heng.html`。使用仅授权给本仓库的专用 SSH 部署密钥，私钥保存在私有调度仓库的 Actions Secret 中。数据没有变化时不提交；下载或校验失败时保留已上线版本。真实数据提交会触发网站自动发布。
+任务在 GitHub 的服务器上运行 `node app/scripts/update.mjs --git`：下载最新行情、校验、重新打包页面，然后只提交并推送 `app/data/prices-weekly.json` 与 `app/heng.html`。使用仅授权给本仓库的专用 SSH 部署密钥，私钥保存在私有调度仓库的 Actions Secret 中。数据没有变化时不提交；下载或校验失败时保留已上线版本。
 
 本仓库的 [`.github/workflows/weekly-update.yml`](.github/workflows/weekly-update.yml) 保留手动更新入口：Actions → Weekly data update → Run workflow。私有调度消除了上述公开仓库不活跃条件，但 GitHub 故障、账户 Actions 额度耗尽、密钥撤销或行情源故障仍可能影响更新；不能承诺任何第三方平台永久无故障。私有调度会使用账户内含的 Actions 计算额度，不使用付费规格的运行器。
 
