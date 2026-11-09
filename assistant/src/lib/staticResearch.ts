@@ -6,7 +6,7 @@ type Message = {message_id:string; role:string; content:string; linked_attempt_i
 type Session = {session_id:string; title:string; updated_at:string; created_at:string; pinned:boolean;
   status:string; last_attempt_id?:string; last_attempt_status?:string; messages:Message[]};
 declare global {
-  interface Window { assistantBrowserResearch?: (messages:Message[], signal:AbortSignal) => Promise<string> }
+  interface Window { canStartBrowserResearch?: () => boolean; assistantBrowserResearch?: (messages:Message[], signal:AbortSignal) => Promise<string> }
 }
 const bus = new EventTarget();
 const peers = staticHosting ? new BroadcastChannel('heng.assistant.web.events') : null;

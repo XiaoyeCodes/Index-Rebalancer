@@ -6,11 +6,13 @@
 
 ## 登录
 
-打开 [GitHub Pages 登录页](https://xiaoyecodes.github.io/Index-Rebalancer/) 或 [本机登录页](http://127.0.0.1:5178/)。两处入口都需要先在当前设备上启动本地服务，再输入账户密码。
+从任意电脑打开 [GitHub Pages 登录页](https://xiaoyecodes.github.io/Index-Rebalancer/)，输入共享访问密码即可使用定投与持仓工具。网页版无需安装软件。
 
 ## 网站部署
 
-公开源码仓库通过 GitHub Actions 部署 Pages。部署文件只有 `dist/index.html` 和 `dist/.nojekyll`。浏览器可能会提示允许访问本地网络。账户验证、模型调用和应用页面均由当前设备的本地服务提供。
+公开源码仓库通过 GitHub Actions 部署 Pages。发布物包含登录页、加密应用包和助手静态资源。输入共享密码后，浏览器用 Web Crypto 解锁应用。共享密码控制网页入口；项目源码公开，持仓与研究历史保存在当前浏览器。
+
+维护者更换共享密码时，将新密码通过标准输入交给 `node app/scripts/set-pages-password.mjs`，重新发布生成的访问配置。密码轮换后，访客需重新录入各自的 API 密钥。
 
 本地生成部署文件：
 
@@ -27,7 +29,7 @@ node app/scripts/publish.mjs
 
 本地版沿用 SparkFlow 的 Vibe-Trading 服务。首次使用先构建前端，再运行 `npm run research:setup --prefix assistant`。需要 Node 24 和 Python 3.11+。在项目根目录将初始密码通过标准输入传给 `node app/scripts/init-access.mjs <DeepSeek配置文件路径>`。配置文件前三行分别为密钥、官方地址和模型。然后运行 `node app/scripts/serve.mjs`。
 
-Pages 通过本机 127.0.0.1:5178 的授权接口读取应用和请求模型。没有运行此服务的设备无法独立登录。研究记录保存在当前设备。
+网页版点击右上角「设置」，填写个人 API 密钥、模型名称和兼容 Chat Completions 的 HTTPS 地址。服务需允许浏览器跨域请求。配置加密保存于当前浏览器的 IndexedDB，模型请求从浏览器直达所填服务。新设备或新浏览器配置文件需单独填写，也可以在设置中移除密钥。
 
 ## 功能
 
@@ -76,9 +78,9 @@ node app/scripts/update.mjs --git
 node app/scripts/serve.mjs
 ```
 
-账户和加密配置保存在项目的 `.private/access.sqlite`。密码使用带随机盐的 scrypt，模型配置使用 AES-256-GCM。主密钥单独存于用户配置目录的 `DynamicRebalancing/keys/vault.key`。迁移设备时需通过安全渠道备份二者。
+可选本地服务的账户和加密配置保存在项目的 `.private/access.sqlite`。密码使用带随机盐的 scrypt，模型配置使用 AES-256-GCM。主密钥单独存于用户配置目录的 `DynamicRebalancing/keys/vault.key`。迁移设备时需通过安全渠道备份二者。
 
-在本地登录后通过「设置」更换模型或密钥。已在运行的本地研究引擎在下一次启动时加载新配置。网页版的模型请求由登录服务代理。
+在本地登录后通过「设置」更换模型或密钥。已在运行的本地研究引擎在下一次启动时加载新配置。
 
 ## 自动更新
 

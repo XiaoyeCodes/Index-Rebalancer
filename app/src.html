@@ -268,11 +268,11 @@
   <form id="aiSettingsForm">
     <div class="settings-heading"><div><span class="eyebrow">PREFERENCES</span><h2 id="aiSettingsTitle">AI 设置</h2></div><button class="dclose" type="button" id="closeSettings" aria-label="关闭设置">×</button></div>
     <p class="execution-intro" id="aiSettingsIntro">AI 配置由本机服务加密保存。留空密钥可继续使用已有密钥。</p>
-    <div class="field"><label for="aiBaseUrl">DeepSeek API 地址</label><input id="aiBaseUrl" type="url" required></div>
+    <div class="field"><label for="aiBaseUrl">API 地址</label><input id="aiBaseUrl" type="url" required></div>
     <div class="field"><label for="aiModel">模型名称</label><input id="aiModel" required></div>
-    <div class="field" id="aiKeyField"><label for="aiApiKey">更换密钥</label><input id="aiApiKey" type="password" autocomplete="new-password"></div>
+    <div class="field" id="aiKeyField"><label for="aiApiKey">API 密钥</label><input id="aiApiKey" type="password" autocomplete="new-password"></div>
     <p id="aiSettingsMessage" role="status"></p>
-    <div class="hero-buttons"><button id="saveAI" type="submit" class="btn primary">保存配置</button><button type="button" class="btn" id="accountLogout">退出登录</button></div>
+    <div class="hero-buttons"><button id="saveAI" type="submit" class="btn primary">保存配置</button><button type="button" class="btn" id="clearAI" hidden>移除本机密钥</button><button type="button" class="btn" id="accountLogout">退出登录</button></div>
   </form>
 </dialog>
 
@@ -1646,7 +1646,7 @@ function bindRebalance() {
 let readCtl = null;
 async function runReadAI() {
   const plan = window.__plan; if (!plan || !plan.ids.length) return;
-  if (!AI.available(sampleFn)) { $('#readAIOut').innerHTML = `<div class="ai-read"><p>${esc(AI.hint(sampleFn))} 上方是按规则生成的解读。</p></div>`; return; }
+  if (!AI.available(sampleFn)) { $('#openSettings').click(); $('#readAIOut').innerHTML = `<div class="ai-read"><p>${esc(AI.hint(sampleFn))} 上方是按规则生成的解读。</p></div>`; return; }
   const rows = plan.ids.map(id => { const m = marketRead(id); return `${id}（${A[id].cn}，风险R${Math.min(A[id].risk, 5)}${A[id].risk > 5 ? '+' : ''}）：${plan.V > 0 ? `当前占比${fmtPct(plan.cur[id])}` : '未录入持仓'}，目标${fmtPct(plan.tw[id])}，清单操作：${assetReading(id, plan)}；近4周${fmtPct(m.r4, 1, true)}，近1年${fmtPct(m.r52, 1, true)}，距${m.weeks >= 52 ? '近一年' : '已有区间'}周收盘高点${fmtPct(m.dd)}，${TREND_TXT[m.trend]}，历史年化波动${fmtPct(m.vol)}`; }).join('\n');
   const action = readingAction(plan);
   const prompt = `你是理财教育助手，帮一位上班族读懂他本月的定投再平衡操作。只依据下面的数据写，不预测价格，不建议偏离规则的买卖，不使用"保证""一定"之类的词。这是学习参考，不是投资建议。
@@ -2009,17 +2009,9 @@ window.assistantPortfolio = function(includePlan) {
   return report;
 };
 
-async function mountAssistant() {
+function mountAssistant() {
   const frame = $('#assistantFrame');
-  if (frame.dataset.loaded) return;
-  frame.dataset.loaded = 'true';
-  if (!window.privateAccount.pages) { frame.src = 'assets/assistant/index.html'; return; }
-  try {
-    const url = window.privateAccount.endpoint + '/assets/assistant/';
-    const res = await window.privateAccount.api('/assets/assistant/index.html');
-    if (!res.ok) throw Error();
-    frame.srcdoc = (await res.text()).replace('<head>', '<head><base href="'+url+'">');
-  } catch { delete frame.dataset.loaded; frame.srcdoc = '<p>无法连接本地助手，请检查本机服务后刷新。</p>'; }
+  if (!frame.getAttribute('src')) frame.src = 'assets/assistant/index.html';
 }
 
 /* ---------------- routing ---------------- */

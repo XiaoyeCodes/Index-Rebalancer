@@ -868,6 +868,8 @@ export function Assistant() {
     const question = value.trim();
     if (!question || isRunning || pendingSubmissionRef.current) return;
 
+    if (staticHosting && !window.parent.canStartBrowserResearch?.()) return;
+
     const submission: PendingSubmission = { sessionId, controller: new AbortController(), dispatched: false, stopRequested: false };
     pendingSubmissionRef.current = submission;
     setStoppingSessionId(null);
