@@ -1,14 +1,14 @@
-// Prepare only the public application for static hosting; do not publish source or product docs.
-// Run after build.mjs: node app/scripts/publish.mjs
+// The Pages artifact may contain only the login shell.
 import fs from 'node:fs';
 
-const app = new URL('../', import.meta.url);
 const output = new URL('../../dist/', import.meta.url);
-const html = fs.readFileSync(new URL('heng.html', app), 'utf8');
-if (!html.startsWith('<!doctype html>') || html.includes('__DATA__')) {
-  throw new Error('Run node app/scripts/build.mjs before preparing the website.');
-}
 fs.mkdirSync(output, { recursive: true });
-fs.writeFileSync(new URL('index.html', output), html);
+const allowed = new Set(['index.html', '.nojekyll']);
+for (const entry of fs.readdirSync(output, { withFileTypes: true })) {
+  if (!entry.isFile() || !allowed.has(entry.name)) {
+    throw new Error('Unexpected file in dist/. Use a clean output directory before publishing.');
+  }
+}
+fs.copyFileSync(new URL('../login.html', import.meta.url), new URL('index.html', output));
 fs.writeFileSync(new URL('.nojekyll', output), '');
-console.log('Website ready: dist/index.html');
+console.log('Pages login ready in dist/');

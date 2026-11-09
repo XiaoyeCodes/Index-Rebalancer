@@ -1,0 +1,28 @@
+{
+  "name": "dynamic-rebalancing-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "research:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/bootstrap-vibe-trading.ps1"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1",
+    "framer-motion": "12.40.0",
+    "lucide-react": "0.468.0",
+    "ogl": "1.0.11",
+    "html2canvas": "1.4.1",
+    "jspdf": "4.2.1"
+  },
+  "devDependencies": {
+    "vite": "6.4.3",
+    "tailwindcss": "3.4.19",
+    "postcss": "8.5.15",
+    "autoprefixer": "10.5.0",
+    "@vitejs/plugin-react": "4.7.0"
+  }
+}

@@ -4,7 +4,7 @@
 // Weekly USD/CNY and USD/HKD closes are stored alongside so the page can express everything in dollars.
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { CHAINS, FX, FX_PEG, fileFor, RAW_DIR, DATA_FILE } from './assets.mjs';
+import { CHAINS, FX, FX_PEG, HISTORY_START, fileFor, RAW_DIR, DATA_FILE } from './assets.mjs';
 
 const DAY = 86400000;
 // week key = Monday of the bar's local trading date (exchange time), in days since epoch
@@ -33,14 +33,21 @@ function load(rawDir, ticker) {
   const j = JSON.parse(fs.readFileSync(new URL(fileFor(ticker), rawDir))).chart.result[0];
   const q = j.indicators.quote[0], a = (j.indicators.adjclose?.[0]?.adjclose || q.close).slice(); const m = new Map();
   const off = j.meta.gmtoffset || 0;
+  const since = HISTORY_START[ticker] ? Date.parse(HISTORY_START[ticker]) / 1000 : null;
+  if (ticker === 'SPCX' && (j.meta.instrumentType !== 'EQUITY' || !/space\s*(?:x|exploration)/i.test(j.meta.longName || j.meta.shortName || ''))) {
+    throw new Error('SPCX 行情不是 SpaceX 股票，停止处理以免混入同代码 ETF 数据');
+  }
   cleanDaily(j.timestamp, q, a, !!j.events?.splits);
   j.timestamp.forEach((ts, i) => {
+    if (since != null && ts < since) return;
     const c = q.close[i], ac = a[i]; if (c == null || ac == null || !(c > 0)) return;
-    const f = ac / c; const o = (q.open[i] || c) * f, h = Math.max(q.high[i] || c, c) * f, l = Math.min(q.low[i] || c, c) * f;
+    const f = ac / c, open = q.open[i] || c;
+    const o = open * f, h = Math.max(q.high[i] || c, open, c) * f, l = Math.min(q.low[i] || c, open, c) * f;
     const k = wk(ts, off); const v = m.get(k);
     if (!v) m.set(k, [o, h, l, ac]); else { v[1] = Math.max(v[1], h); v[2] = Math.min(v[2], l); v[3] = ac; }
   });
-  return { m, first: j.meta.firstTradeDate, name: j.meta.longName, currency: j.meta.currency, lastTs: j.timestamp.at(-1), off };
+  if (!m.size) throw new Error(`${ticker}: 没有有效的历史行情`);
+  return { m, first: since ?? j.meta.firstTradeDate, name: j.meta.longName, currency: j.meta.currency, lastTs: j.timestamp.at(-1), off };
 }
 
 // splice `older` onto `newer`: weeks before the splice point come from `older`, rescaled to `newer`'s price level

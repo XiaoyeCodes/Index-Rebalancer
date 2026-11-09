@@ -10,3 +10,13 @@ node_modules/
 .DS_Store
 Thumbs.db
 dist/
+
+assistant/services/vibe-trading/.venv/
+__pycache__/
+*.egg-info/
+app/assets/assistant/
+assistant/services/vibe-trading/agent/.env
+assistant/services/vibe-trading/agent/runs/
+assistant/services/vibe-trading/agent/sessions/
+
+.private/

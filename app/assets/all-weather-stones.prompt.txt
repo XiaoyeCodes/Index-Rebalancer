@@ -1,0 +1,12 @@
+Generated with the built-in image_gen tool. Transparent alpha preserved in the WebP asset.
+
+Use case: stylized-concept.
+Asset type: isolated transparent illustration for the RIGHT side of an existing warm peach financial portfolio summary card.
+Primary request: "balanced stones in wind and rain", an elegant sculptural cairn symbolizing a diversified portfolio staying balanced as conditions change.
+Subject: FIVE smooth irregular river stones gently stacked in a believable stable sculptural balance. A broad low pale cream foundation stone, an organic flattened warm terracotta stone above, a smaller warm sand stone slightly offset, a rounded ivory stone, and a small muted orange pebble at the top. Natural asymmetrical pebble silhouettes, visible stone-to-stone contact, subtle varying angles, strong calm balance. Beautiful contemporary still-life composition rather than a generic vertical pile of round disks.
+Weather: one SMALL soft ivory cloud near the upper right, three delicate short slanted warm apricot rain strokes beside it, two thin open gently curved warm taupe wind strokes sweeping past the left side of the upper stones. Weather elements stay secondary and occupy less than 15% of image area. Calm resilience, not a dramatic storm.
+Style/medium: premium minimalist 3D editorial illustration, softly sculpted matte ceramic / fine sandstone surfaces, ultra-fine tactile texture, refined smooth forms and soft ambient occlusion, soft warm studio lighting, artistic and quiet, readable at 180 to 240 pixels tall.
+Palette must harmonize with the current project: terracotta orange #DB6842 / #C85B3B, warm ivory #FFF0DE, light apricot #ECAE87, subdued warm taupe #8C6A56. Mostly cream and warm sand, one or two terracotta stones. No cold blue, bright green, metallic gold or glossy material.
+Composition: compact portrait aspect ratio about 4:5. Cairn occupies about 68% of image width and 75% of height. All weather marks fit comfortably inside 7% transparent safe margins, all stones fully visible. Slight three-quarter view from gently above. Actual transparent alpha background, no background panel, no room, no horizon, no floor plane. Tiny localized contact shadow under the base only.
+Text: NONE.
+Avoid: balance scale, balance beam, trays, coins, money symbols, typography, logo, watermark, human hands, plants, leaves, mountains, ocean, rings, shiny plastic, chrome, hard shadows, clutter. Generate only the isolated illustration, no webpage, screenshot, UI or card.

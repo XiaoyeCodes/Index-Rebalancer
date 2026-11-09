@@ -1,0 +1,1349 @@
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Bot,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  CircleStop,
+  Copy,
+  FileDown,
+  History,
+  Loader2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  SendHorizontal,
+  XCircle,
+} from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+import { Strands } from '../components/Strands';
+import { ResearchHistoryItem } from '../components/ResearchHistoryItem';
+import { exportResearchPdf } from '../lib/exportResearchPdf';
+import { displayAssistantPrompt, portfolioPrompt, holdingsPrompt, makeResearchPrompt } from '../lib/portfolio';
+
+import { invalidatePageData, pageDataFetch, peekPageData } from '../lib/pageDataClient';
+import { browserRequest, BrowserStream, staticHosting } from '../lib/staticResearch';
+import './Assistant.css';
+
+type RunState = 'idle' | 'connecting' | 'researching' | 'completed' | 'stopped' | 'error';
+
+type PendingSubmission = {
+  sessionId: string;
+  controller: AbortController;
+  dispatched: boolean;
+  stopRequested: boolean;
+};
+
+type ResearchMessage = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  attemptId?: string;
+  restored?: boolean;
+};
+
+type ToolProgress = {
+  stage?: string;
+  message?: string;
+  current?: number;
+  total?: number;
+};
+
+type ToolCall = {
+  id: string;
+  tool: string;
+  status: 'running' | 'ok' | 'error' | 'cancelled';
+  elapsedMs?: number;
+  elapsedSeconds?: number;
+  preview?: string;
+  progress?: ToolProgress;
+};
+
+type StoredVibeMessage = {
+  message_id: string;
+  role: string;
+  content: string;
+  linked_attempt_id?: string;
+};
+
+type VibeSession = {
+  session_id: string;
+  title: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  last_attempt_id?: string | null;
+  last_attempt_status?: string | null;
+  pinned?: boolean;
+};
+
+function scrollToQuestion(element: HTMLElement, behavior: ScrollBehavior) {
+  window.scrollTo({top: window.scrollY + element.getBoundingClientRect().top - 16, behavior});
+}
+
+function sortResearchSessions(items: VibeSession[]) {
+  return [...items].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || b.updated_at.localeCompare(a.updated_at));
+}
+
+type ResearchSnapshot = {
+  tools: ToolCall[];
+  liveText: string;
+  notice: string;
+  runState: RunState;
+  lastEventId?: string;
+};
+
+const sessionStorageKey = 'heng.assistant.session.v1';
+const sidebarStorageKey = 'heng.assistant.history-sidebar-collapsed.v1';
+const progressStoragePrefix = 'heng.assistant.progress.v1.';
+
+const starterPrompts = [
+  portfolioPrompt,
+  '汇总今日市场、资金风向与重要新闻，给出风险优先的投资观察',
+  '分析腾讯、阿里、小米和美团的长期投资价值与当前估值吸引力',
+  holdingsPrompt,
+];
+
+const toolLabels: Record<string, string> = {
+  run_swarm: '运行多智能体研究',
+  web_search: '检索公开信息',
+  search_web: '检索公开信息',
+  market_snapshot: '获取市场快照',
+  get_market_snapshot: '获取市场快照',
+  fetch_market_data: '获取市场数据',
+  company_research: '研究公司基本面',
+  search_research_reports: '检索研报',
+  run_backtest: '运行历史回测',
+  render_shadow_report: '生成策略报告',
+  calculate_metrics: '计算投资指标',
+  get_market_data: '获取市场数据',
+  get_northbound_flow: '获取北向资金',
+  get_sector_info: '分析行业板块',
+  get_stock_news: '检索个股新闻',
+  get_research_data: '读取金融研究数据',
+  read_url: '阅读来源原文',
+};
+
+function toolLabel(tool: string) {
+  return toolLabels[tool] || tool.replace(/_/g, ' ');
+}
+
+function findLastRunningToolIndex(tools: ToolCall[], tool: string) {
+  for (let index = tools.length - 1; index >= 0; index -= 1) {
+    if (tools[index].tool === tool && tools[index].status === 'running') return index;
+  }
+  return -1;
+}
+
+function parseEvent(event: Event) {
+  try {
+    return JSON.parse((event as MessageEvent<string>).data || '{}') as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+async function requestJson<T>(url: string, init?: RequestInit) {
+  if (staticHosting) return await browserRequest(url, init) as T;
+  const response = await pageDataFetch(url, init);
+  const payload = (await response.json().catch(() => ({}))) as T & { detail?: string };
+  if (!response.ok) throw new Error(payload.detail || `请求失败：HTTP ${response.status}`);
+  if ((init?.method || 'GET').toUpperCase() !== 'GET' && url.startsWith('/api/vibe/research/')) {
+    invalidatePageData('/api/vibe/research/sessions');
+  }
+  return payload;
+}
+
+function formatSessionTime(value: string) {
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) return '';
+  const difference = Date.now() - timestamp;
+  if (difference < 60_000) return '刚刚';
+  if (difference < 3_600_000) return `${Math.max(1, Math.floor(difference / 60_000))} 分钟前`;
+  if (difference < 86_400_000) return `${Math.floor(difference / 3_600_000)} 小时前`;
+  if (difference < 604_800_000) return `${Math.floor(difference / 86_400_000)} 天前`;
+  return new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' }).format(new Date(value));
+}
+
+function readResearchSnapshot(sessionId: string): ResearchSnapshot | null {
+  try {
+    const raw = window.localStorage.getItem(`${progressStoragePrefix}${sessionId}`);
+    if (!raw) return null;
+    const snapshot = JSON.parse(raw) as Partial<ResearchSnapshot>;
+    if (!Array.isArray(snapshot.tools) || typeof snapshot.liveText !== 'string' || typeof snapshot.notice !== 'string') return null;
+    return {
+      tools: snapshot.tools as ToolCall[],
+      liveText: snapshot.liveText,
+      notice: snapshot.notice,
+      runState: snapshot.runState === 'researching' || snapshot.runState === 'connecting' || snapshot.runState === 'completed' || snapshot.runState === 'stopped' || snapshot.runState === 'error'
+        ? snapshot.runState
+        : 'idle',
+      lastEventId: typeof snapshot.lastEventId === 'string' ? snapshot.lastEventId : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeResearchSnapshot(sessionId: string, snapshot: ResearchSnapshot) {
+  try {
+    window.localStorage.setItem(
+      `${progressStoragePrefix}${sessionId}`,
+      JSON.stringify({ ...snapshot, tools: snapshot.tools.slice(-80), liveText: snapshot.liveText.slice(-2400) }),
+    );
+  } catch {
+    // A live research trace is optional; storage limits should never interrupt the task itself.
+  }
+}
+
+function clearResearchSnapshot(sessionId: string) {
+  window.localStorage.removeItem(`${progressStoragePrefix}${sessionId}`);
+}
+
+function updateResearchSnapshot(
+  sessionId: string,
+  updater: (snapshot: ResearchSnapshot) => ResearchSnapshot,
+) {
+  const current = readResearchSnapshot(sessionId) || {
+    tools: [],
+    liveText: '',
+    notice: '',
+    runState: 'idle' as RunState,
+  };
+  const next = updater(current);
+  writeResearchSnapshot(sessionId, next);
+  return next;
+}
+
+function ResearchProgress({ tools, running, liveText, stopped = false, failed = false }: { tools: ToolCall[]; running: boolean; liveText: string; stopped?: boolean; failed?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const detailsId = useId();
+  if (!tools.length && !running && !liveText) return null;
+
+  const completed = tools.filter((tool) => tool.status !== 'running').length;
+  const errors = tools.filter((tool) => tool.status === 'error').length;
+  const latest = [...tools].reverse().find((tool) => tool.status === 'running') || tools[tools.length - 1];
+  const summary = running
+    ? latest
+      ? `正在${toolLabel(latest.tool)}`
+      : '正在规划研究路径'
+    : stopped ? '研究已停止' : failed ? '研究未完成' : '研究过程完成';
+
+  return (
+    <div className="research-trace" data-running={running}>
+      <button
+        type="button"
+        onClick={() => setExpanded((value) => !value)}
+        className="research-trace-toggle"
+        aria-expanded={expanded}
+        aria-controls={detailsId}
+      >
+        {running ? (
+          <Loader2 size={14} className="animate-spin text-[#d75a38]" />
+        ) : stopped ? (
+          <CircleStop size={14} className="text-white/50" />
+        ) : failed ? (
+          <XCircle size={14} className="text-red-300" />
+        ) : (
+          <CheckCircle2 size={14} className="text-emerald-300" />
+        )}
+        <span className="research-trace-heading"><strong>研究过程</strong><span>{summary}</span></span>
+        <span className="research-trace-count">{running ? `${completed} / ${tools.length}` : tools.length} 步</span>
+        {errors > 0 ? <span className="research-trace-warning">{errors} 项异常</span> : null}
+        {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+      </button>
+
+        <div id={detailsId} hidden={!expanded} className="research-trace-details" role="region" aria-label="研究步骤详情" tabIndex={expanded ? 0 : -1}>
+          {tools.map((tool, index) => {
+            const determinate =
+              typeof tool.progress?.current === 'number' &&
+              typeof tool.progress?.total === 'number' &&
+              tool.progress.total > 0;
+            const percent = determinate
+              ? Math.min(100, Math.round(((tool.progress?.current || 0) / (tool.progress?.total || 1)) * 100))
+              : 0;
+            return (
+              <div key={tool.id} className="research-trace-step" data-status={tool.status}>
+                <div className="research-trace-row">
+                  <span className="research-trace-index">{String(index + 1).padStart(2, '0')}</span>
+                  {tool.status === 'running' ? (
+                    <Loader2 size={13} className="shrink-0 animate-spin text-[#d75a38]" />
+                  ) : tool.status === 'cancelled' ? (
+                    <CircleStop size={13} className="shrink-0 text-white/40" />
+                  ) : tool.status === 'error' ? (
+                    <XCircle size={13} className="shrink-0 text-red-300" />
+                  ) : (
+                    <Check size={13} className="shrink-0 text-emerald-300/70" />
+                  )}
+                  <span className="research-trace-label">
+                    {toolLabel(tool.tool)}
+                  </span>
+                  <span className="research-trace-status">{{ running: '进行中', ok: '完成', error: '异常', cancelled: '已停止' }[tool.status]}</span>
+                  <span className="research-trace-time">{typeof tool.elapsedMs === 'number' ? `${(tool.elapsedMs / 1000).toFixed(1)}s` : typeof tool.elapsedSeconds === 'number' ? `${Math.round(tool.elapsedSeconds)}s` : '—'}</span>
+                </div>
+                {tool.progress?.stage || tool.progress?.message ? (
+                  <div className="ml-10 mt-1.5 min-w-0 text-[11px] text-white/36">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate">{tool.progress.stage || tool.progress.message}</span>
+                      {determinate ? <span className="ml-auto shrink-0 font-mono">{percent}%</span> : null}
+                    </div>
+                    {determinate ? (
+                      <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/8">
+                        <div className="h-full bg-[#d75a38] transition-[width] duration-200" style={{ width: `${percent}%` }} />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+          {liveText ? (
+            <p className="line-clamp-3 border-l border-[#83dec0]/30 pl-3 text-xs leading-6 text-white/42">
+              {liveText.slice(-360)}
+            </p>
+          ) : null}
+        </div>
+    </div>
+  );
+}
+
+function ResearchReport({ content }: { content: string }) {
+  return (
+    <div className="research-markdown min-w-0 text-[15px] leading-7 text-white/78">
+      <ReactMarkdown
+        skipHtml
+        remarkPlugins={[remarkGfm]}
+        components={{
+          img: ({ alt }) => <span>{alt}</span>,
+          a: ({ children, ...props }) => (
+            <a {...props} target="_blank" rel="noreferrer" className="text-[#83dec0] underline decoration-[#83dec0]/30 underline-offset-4 hover:text-white">
+              {children}
+            </a>
+          ),
+          table: ({ children }) => (
+            <div className="my-5 w-full overflow-x-auto">
+              <table className="w-full min-w-[620px] border-collapse text-left text-sm">{children}</table>
+            </div>
+          ),
+          th: ({ children }) => <th className="border border-white/14 bg-white/[0.045] px-3 py-2 font-semibold text-white/82">{children}</th>,
+          td: ({ children }) => <td className="border border-white/12 px-3 py-2 align-top text-white/66">{children}</td>,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+export function Assistant() {
+  const [prompt, setPrompt] = useState('');
+  const [messages, setMessages] = useState<ResearchMessage[]>([]);
+  const [tools, setTools] = useState<ToolCall[]>([]);
+  const [liveText, setLiveText] = useState('');
+  const [runState, setRunState] = useState<RunState>('idle');
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [sessionId, setSessionId] = useState('');
+  const [sessions, setSessions] = useState<VibeSession[]>(() => sortResearchSessions(peekPageData<VibeSession[]>('/api/vibe/research/sessions') || []));
+  const [sessionsLoading, setSessionsLoading] = useState(() => !peekPageData<VibeSession[]>('/api/vibe/research/sessions'));
+  const sessionsLoadVersionRef = useRef(0);
+  const deletedSessionsRef = useRef(new Set<string>());
+  const [historyCollapsed, setHistoryCollapsed] = useState(() => window.localStorage.getItem(sidebarStorageKey) === 'true');
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState('');
+  const [exportedId, setExportedId] = useState('');
+  const eventSourcesRef = useRef(new Map<string, EventSource | BrowserStream>());
+  const viewingSessionRef = useRef('');
+  const activeAttemptRef = useRef('');
+  const completedAttemptsRef = useRef(new Set<string>());
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const composerRef = useRef<HTMLFormElement | null>(null);
+  const latestQuestionRef = useRef<HTMLDivElement | null>(null);
+  const pendingQuestionScrollRef = useRef<ScrollBehavior | null>(null);
+  const [progressViewVersion, setProgressViewVersion] = useState(0);
+  const pendingSubmissionRef = useRef<PendingSubmission | null>(null);
+  const stoppingSessionsRef = useRef(new Set<string>());
+  const [stoppingSessionId, setStoppingSessionId] = useState<string | null>(null);
+
+  const isRunning = runState === 'connecting' || runState === 'researching';
+  const isStopping = isRunning && stoppingSessionId === sessionId;
+  const latestUserMessageId = [...messages].reverse().find((message) => message.role === 'user')?.id || '';
+  const resizePromptInput = useCallback(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    const composerBefore = composerRef.current?.getBoundingClientRect();
+    const keepBottomPinned = Boolean(composerBefore && composerBefore.bottom > 0 && composerBefore.top < window.innerHeight);
+    const maxHeight = Math.max(120, Math.min(320, Math.floor(window.innerHeight * 0.38)));
+    input.style.height = '0px';
+    const contentHeight = input.scrollHeight;
+    input.style.height = `${Math.max(44, Math.min(contentHeight, maxHeight))}px`;
+    input.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden';
+    const composerAfter = composerRef.current?.getBoundingClientRect();
+    if (keepBottomPinned && composerBefore && composerAfter) {
+      const shift = composerAfter.bottom - composerBefore.bottom;
+      if (Math.abs(shift) > 0.5) window.scrollBy({ top: shift, behavior: 'instant' });
+    }
+  }, []);
+
+  const applyProgressSnapshot = useCallback((sid: string, snapshot: ResearchSnapshot) => {
+    writeResearchSnapshot(sid, snapshot);
+    if (viewingSessionRef.current !== sid) return;
+    setTools(snapshot.tools);
+    setLiveText(snapshot.liveText);
+    setNotice(snapshot.notice);
+    setRunState(snapshot.runState);
+  }, []);
+
+  const persistResearchEvent = useCallback(
+    (
+      sid: string,
+      event: Event,
+      updater: (snapshot: ResearchSnapshot, data: Record<string, unknown>) => ResearchSnapshot,
+    ) => {
+      const data = parseEvent(event);
+      const eventId = (event as MessageEvent<string>).lastEventId || '';
+      const snapshot = updateResearchSnapshot(sid, (current) => ({
+        ...updater(current, data),
+        lastEventId: eventId || current.lastEventId,
+      }));
+      if (viewingSessionRef.current === sid) {
+        setTools(snapshot.tools);
+        setLiveText(snapshot.liveText);
+        setNotice(snapshot.notice);
+        setRunState(snapshot.runState);
+      }
+      return { data, snapshot };
+    },
+    [],
+  );
+
+  const loadSessions = useCallback(async () => {
+    const version = ++sessionsLoadVersionRef.current;
+    try {
+      const storedSessions = await requestJson<VibeSession[]>('/api/vibe/research/sessions');
+      if (version === sessionsLoadVersionRef.current) setSessions(sortResearchSessions(storedSessions.filter(item => !deletedSessionsRef.current.has(item.session_id))));
+      return storedSessions;
+    } catch {
+      // The research service may still be booting; submitting a question will surface a useful error if it stays unavailable.
+      return [] as VibeSession[];
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
+
+  const resetResearch = useCallback(() => {
+    viewingSessionRef.current = '';
+    activeAttemptRef.current = '';
+    completedAttemptsRef.current.clear();
+    setSessionId('');
+    setMessages([]);
+    setTools([]);
+    setLiveText('');
+    setRunState('idle');
+    setError('');
+    setNotice('');
+    pendingQuestionScrollRef.current = null;
+    window.localStorage.removeItem(sessionStorageKey);
+    setHistoryOpen(false);
+    window.setTimeout(() => inputRef.current?.focus({preventScroll:true}), 0);
+  }, []);
+
+  const openSession = useCallback(
+    async (nextSessionId: string) => {
+      if (nextSessionId === sessionId) {
+        setHistoryOpen(false);
+        setProgressViewVersion(value => value + 1);
+        if (latestQuestionRef.current) scrollToQuestion(latestQuestionRef.current, 'instant');
+        return;
+      }
+      setError('');
+      try {
+        const [history, storedSessions] = await Promise.all([
+          requestJson<StoredVibeMessage[]>(`/api/vibe/research/messages?sessionId=${encodeURIComponent(nextSessionId)}`),
+          loadSessions(),
+        ]);
+        if (deletedSessionsRef.current.has(nextSessionId)) return;
+        const nextSession = storedSessions.find((item) => item.session_id === nextSessionId);
+        const lastConversationMessage = [...history].reverse().find(
+          (message) => message.role === 'user' || message.role === 'assistant',
+        );
+        const snapshot = readResearchSnapshot(nextSessionId);
+        const snapshotIsRunning =
+          snapshot?.runState === 'researching' || snapshot?.runState === 'connecting';
+        const interrupted = staticHosting && nextSession?.last_attempt_status === 'failed';
+        const shouldResume = !interrupted && snapshot?.runState !== 'stopped' && (
+          snapshotIsRunning ||
+          nextSession?.last_attempt_status === 'running' ||
+          (nextSession?.last_attempt_status !== 'failed' &&
+            Boolean(nextSession?.last_attempt_id) &&
+            lastConversationMessage?.role === 'user'));
+        viewingSessionRef.current = nextSessionId;
+        activeAttemptRef.current = '';
+        completedAttemptsRef.current.clear();
+        setSessionId(nextSessionId);
+        setTools(snapshot?.tools || []);
+        setLiveText(snapshot?.liveText || '');
+        setNotice(snapshot?.notice || '');
+        setRunState(interrupted ? 'error' : snapshot?.runState || 'idle');
+        if (interrupted) setError('上一次研究没有完成，可以在这里重新提问。');
+        pendingQuestionScrollRef.current = 'instant';
+        setProgressViewVersion(value => value + 1);
+        setMessages(
+          history
+            .filter((message) => message.role === 'user' || message.role === 'assistant')
+            .map((message) => ({
+              id: message.message_id,
+              role: message.role as 'user' | 'assistant',
+              content: message.role === 'user' ? displayAssistantPrompt(message.content) : message.content,
+              attemptId: message.linked_attempt_id,
+              restored: true,
+            })),
+        );
+        window.localStorage.setItem(sessionStorageKey, nextSessionId);
+        setHistoryOpen(false);
+        if (shouldResume && nextSession?.last_attempt_id) {
+          activeAttemptRef.current = nextSession.last_attempt_id;
+          const resumedSnapshot: ResearchSnapshot = {
+            tools: snapshot?.tools || [],
+            liveText: snapshot?.liveText || '',
+            notice: '正在恢复研究进度',
+            runState: 'researching',
+            lastEventId: snapshot?.lastEventId,
+          };
+          applyProgressSnapshot(nextSessionId, resumedSnapshot);
+          void connectResearchStream(nextSessionId)
+            .then(() => void recoverCompletedAttempt(nextSessionId, nextSession.last_attempt_id || ''))
+            .catch((err) => {
+              if (viewingSessionRef.current === nextSessionId) {
+                setRunState('error');
+                setError(err instanceof Error ? err.message : '无法恢复研究进度');
+              }
+            });
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '无法读取这段研究记录');
+      }
+    },
+    [applyProgressSnapshot, loadSessions, sessionId],
+  );
+
+  const updateHistorySession = async (sid: string, changes: { title?: string; pinned?: boolean }) => {
+    const updated = await requestJson<VibeSession>(`/api/vibe/research/session?sessionId=${encodeURIComponent(sid)}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(changes),
+    });
+    sessionsLoadVersionRef.current += 1;
+    setSessions(items => sortResearchSessions(items.map(item => item.session_id === sid ? { ...item, ...updated } : item)));
+  };
+
+  const deleteHistorySession = async (sid: string) => {
+    if (pendingSubmissionRef.current?.sessionId === sid || (viewingSessionRef.current === sid && isRunning)) {
+      throw new Error('研究正在执行，请先停止研究后再删除。');
+    }
+    await requestJson(`/api/vibe/research/session?sessionId=${encodeURIComponent(sid)}`, { method: 'DELETE' });
+    deletedSessionsRef.current.add(sid);
+    sessionsLoadVersionRef.current += 1;
+    eventSourcesRef.current.get(sid)?.close();
+    eventSourcesRef.current.delete(sid);
+    clearResearchSnapshot(sid);
+    setSessions(items => items.filter(item => item.session_id !== sid));
+    if (viewingSessionRef.current === sid) resetResearch();
+    else if (window.localStorage.getItem(sessionStorageKey) === sid) window.localStorage.removeItem(sessionStorageKey);
+  };
+
+
+
+  useEffect(() => {
+    void loadSessions();
+  }, [loadSessions]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const restore = async () => {
+      const storedSessionId = window.localStorage.getItem(sessionStorageKey) || '';
+      if (!storedSessionId) return;
+      try {
+        await openSession(storedSessionId);
+      } catch {
+        if (!cancelled) window.localStorage.removeItem(sessionStorageKey);
+      }
+    };
+    void restore();
+    return () => {
+      cancelled = true;
+      if (!pendingSubmissionRef.current?.dispatched) pendingSubmissionRef.current?.controller.abort();
+      eventSourcesRef.current.forEach((source) => source.close());
+      eventSourcesRef.current.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(sidebarStorageKey, String(historyCollapsed));
+  }, [historyCollapsed]);
+
+  useLayoutEffect(() => {
+    resizePromptInput();
+  }, [prompt, resizePromptInput]);
+
+  useEffect(() => {
+    window.addEventListener('resize', resizePromptInput);
+    return () => window.removeEventListener('resize', resizePromptInput);
+  }, [resizePromptInput]);
+
+  useLayoutEffect(() => {
+    const behavior = pendingQuestionScrollRef.current;
+    if (!behavior || !latestQuestionRef.current) return;
+    pendingQuestionScrollRef.current = null;
+    // Anchor the question itself, before paint. Tool updates never move the reader.
+    scrollToQuestion(latestQuestionRef.current, behavior);
+  }, [messages]);
+
+  const finishAttempt = (sid: string, attemptId: string, summary: string) => {
+    const source = eventSourcesRef.current.get(sid);
+    source?.close();
+    eventSourcesRef.current.delete(sid);
+    const snapshot = updateResearchSnapshot(sid, (current) => ({
+      ...current,
+      tools: current.tools.map((tool) => (tool.status === 'running' ? { ...tool, status: 'ok' } : tool)),
+      liveText: '',
+      runState: 'completed',
+    }));
+    if (viewingSessionRef.current !== sid || !summary || completedAttemptsRef.current.has(attemptId)) {
+      void loadSessions();
+      return;
+    }
+    completedAttemptsRef.current.add(attemptId);
+    activeAttemptRef.current = '';
+    pendingQuestionScrollRef.current = 'instant';
+    setProgressViewVersion(value => value + 1);
+    setMessages((current) =>
+      current.some((message) => message.role === 'assistant' && message.attemptId === attemptId)
+        ? current
+        : [...current, { id: `assistant-${attemptId || Date.now()}`, role: 'assistant', content: summary, attemptId }],
+    );
+    applyProgressSnapshot(sid, snapshot);
+    void loadSessions();
+  };
+
+  const recoverCompletedAttempt = async (sid: string, attemptId: string) => {
+    for (let index = 0; index < 240; index += 1) {
+      if (
+        viewingSessionRef.current !== sid ||
+        completedAttemptsRef.current.has(attemptId) ||
+        activeAttemptRef.current !== attemptId
+      ) {
+        return;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 1500));
+      try {
+        const history = await requestJson<StoredVibeMessage[]>(
+          `/api/vibe/research/messages?sessionId=${encodeURIComponent(sid)}`,
+        );
+        if (viewingSessionRef.current !== sid || activeAttemptRef.current !== attemptId || completedAttemptsRef.current.has(attemptId)) return;
+        const answer = history.find(
+          (message) => message.role === 'assistant' && message.linked_attempt_id === attemptId,
+        );
+        if (answer?.content) {
+          finishAttempt(sid, attemptId, answer.content);
+          return;
+        }
+      } catch {
+        // SSE remains the primary transport; polling only repairs missed completion events.
+      }
+    }
+  };
+
+  const connectResearchStream = (sid: string, signal?: AbortSignal) =>
+    new Promise<void>((resolve, reject) => {
+      if (signal?.aborted) { reject(signal.reason); return; }
+      eventSourcesRef.current.get(sid)?.close();
+      const lastEventId = readResearchSnapshot(sid)?.lastEventId || '';
+      const source = staticHosting ? new BrowserStream(sid) : new EventSource(
+        `/api/vibe/research/events?sessionId=${encodeURIComponent(sid)}${
+          lastEventId ? `&lastEventId=${encodeURIComponent(lastEventId)}` : ''
+        }`,
+      );
+      eventSourcesRef.current.set(sid, source);
+      const closeSource = () => {
+        window.clearTimeout(timeout);
+        signal?.removeEventListener('abort', onAbort);
+        source.close();
+        if (eventSourcesRef.current.get(sid) === source) eventSourcesRef.current.delete(sid);
+      };
+      const isViewing = () => viewingSessionRef.current === sid;
+      let opened = false;
+      const timeout = window.setTimeout(() => {
+        if (!opened) {
+          closeSource();
+          reject(new Error('研究事件流连接超时'));
+        }
+      }, 30_000);
+      const onAbort = () => { closeSource(); reject(signal?.reason); };
+      signal?.addEventListener('abort', onAbort, { once: true });
+
+      source.onopen = () => {
+        opened = true;
+        signal?.removeEventListener('abort', onAbort);
+        window.clearTimeout(timeout);
+        resolve();
+      };
+      source.onerror = () => {
+        if (!opened) {
+          window.clearTimeout(timeout);
+          closeSource();
+          reject(new Error('无法连接 Vibe-Trading 研究事件流'));
+        }
+      };
+
+      source.addEventListener('attempt.created', (event) => {
+        const { data } = persistResearchEvent(sid, event, (current) => ({
+          ...current,
+          runState: 'researching',
+        }));
+        if (isViewing()) {
+          const attemptId = String(data.attempt_id || '');
+          if (attemptId) activeAttemptRef.current = attemptId;
+        }
+      });
+      source.addEventListener('attempt.started', (event) => {
+        const { data } = persistResearchEvent(sid, event, (current) => ({
+          ...current,
+          runState: 'researching',
+        }));
+        if (isViewing()) {
+          const attemptId = String(data.attempt_id || '');
+          if (attemptId) activeAttemptRef.current = attemptId;
+        }
+      });
+      source.addEventListener('reasoning_delta', (event) => {
+        persistResearchEvent(sid, event, (current) => ({ ...current, runState: 'researching' }));
+      });
+      source.addEventListener('stream_reset', (event) => {
+        persistResearchEvent(sid, event, (current) => ({ ...current, liveText: '' }));
+      });
+      source.addEventListener('text_delta', (event) => {
+        persistResearchEvent(sid, event, (current, data) => ({
+          ...current,
+          liveText: current.liveText + String(data.delta || ''),
+          runState: 'researching',
+        }));
+      });
+      source.addEventListener('tool_call', (event) => {
+        persistResearchEvent(sid, event, (current, data) => {
+          const tool = String(data.tool || 'research_tool');
+          const eventId = (event as MessageEvent<string>).lastEventId || `${Date.now()}-${current.tools.length}`;
+          return {
+            ...current,
+            tools: [...current.tools, { id: `${tool}-${eventId}`, tool, status: 'running' }],
+            runState: 'researching',
+          };
+        });
+      });
+      source.addEventListener('tool_result', (event) => {
+        persistResearchEvent(sid, event, (current, data) => {
+          const tool = String(data.tool || 'research_tool');
+          const index = findLastRunningToolIndex(current.tools, tool);
+          if (index < 0) {
+            const eventId = (event as MessageEvent<string>).lastEventId || Date.now();
+            return {
+              ...current,
+              tools: [
+                ...current.tools,
+                {
+                  id: `${tool}-${eventId}`,
+                  tool,
+                  status: data.status === 'ok' ? 'ok' : 'error',
+                  preview: String(data.preview || ''),
+                  elapsedMs: Number(data.elapsed_ms || 0),
+                },
+              ],
+            };
+          }
+          return {
+            ...current,
+            tools: current.tools.map((item, itemIndex) =>
+              itemIndex === index
+                ? {
+                    ...item,
+                    status: data.status === 'ok' ? 'ok' : 'error',
+                    preview: String(data.preview || ''),
+                    elapsedMs: Number(data.elapsed_ms || 0),
+                    progress: undefined,
+                  }
+                : item,
+            ),
+          };
+        });
+      });
+      source.addEventListener('tool_heartbeat', (event) => {
+        persistResearchEvent(sid, event, (current, data) => {
+          const tool = String(data.tool || '');
+          const index = findLastRunningToolIndex(current.tools, tool);
+          return {
+            ...current,
+            tools: current.tools.map((item, itemIndex) =>
+              itemIndex === index ? { ...item, elapsedSeconds: Number(data.elapsed_s || 0) } : item,
+            ),
+          };
+        });
+      });
+      source.addEventListener('tool_progress', (event) => {
+        persistResearchEvent(sid, event, (current, data) => {
+          const tool = String(data.tool || '');
+          const index = findLastRunningToolIndex(current.tools, tool);
+          return {
+            ...current,
+            tools: current.tools.map((item, itemIndex) =>
+              itemIndex === index
+                ? {
+                    ...item,
+                    progress: {
+                      stage: typeof data.stage === 'string' ? data.stage : undefined,
+                      message: typeof data.message === 'string' ? data.message : undefined,
+                      current: typeof data.current === 'number' ? data.current : undefined,
+                      total: typeof data.total === 'number' ? data.total : undefined,
+                    },
+                  }
+                : item,
+            ),
+          };
+        });
+      });
+      source.addEventListener('swarm.started', (event) => {
+        persistResearchEvent(sid, event, (current) => ({
+          ...current,
+          notice: '多智能体研究团队已启动',
+        }));
+      });
+      source.addEventListener('swarm.event', (event) => {
+        persistResearchEvent(sid, event, (current, data) => {
+          const swarmEvent = data.event as Record<string, unknown> | undefined;
+          return {
+            ...current,
+            notice: swarmEvent?.type
+              ? `多智能体：${String(swarmEvent.type).replace(/_/g, ' ')}`
+              : current.notice,
+          };
+        });
+      });
+      source.addEventListener('attempt.completed', (event) => {
+        const { data, snapshot } = persistResearchEvent(sid, event, (current) => ({
+          ...current,
+          tools: current.tools.map((tool) => (tool.status === 'running' ? { ...tool, status: 'ok' } : tool)),
+          runState: 'completed',
+        }));
+        const attemptId = String(data.attempt_id || (isViewing() ? activeAttemptRef.current : '') || 'completed');
+        finishAttempt(sid, attemptId, String(data.summary || snapshot.liveText));
+      });
+      source.addEventListener('attempt.failed', (event) => {
+        const failure = parseEvent(event);
+        if (/^cancelled(?: by user)?$/i.test(String(failure.error || ''))) {
+          markResearchStopped(sid);
+          closeSource();
+          void loadSessions();
+          return;
+        }
+        const { data } = persistResearchEvent(sid, event, (current) => ({
+          ...current,
+          tools: current.tools.map((tool) => (tool.status === 'running' ? { ...tool, status: 'error' } : tool)),
+          runState: 'error',
+        }));
+        if (isViewing()) {
+          const attemptId = String(data.attempt_id || activeAttemptRef.current || 'failed');
+          completedAttemptsRef.current.add(attemptId);
+          activeAttemptRef.current = '';
+          setRunState('error');
+          setError(String(data.error || '研究任务执行失败'));
+        }
+        closeSource();
+        void loadSessions();
+      });
+    });
+
+  const submit = async (value: string) => {
+    const question = value.trim();
+    if (!question || isRunning || pendingSubmissionRef.current) return;
+
+    const submission: PendingSubmission = { sessionId, controller: new AbortController(), dispatched: false, stopRequested: false };
+    pendingSubmissionRef.current = submission;
+    setStoppingSessionId(null);
+    setError('');
+    setNotice('正在连接研究引擎');
+    setTools([]);
+    setLiveText('');
+    setRunState('connecting');
+
+    let preparedSessionId = '';
+    try {
+      if (question.length > 5000) throw new Error('研究问题不能超过 5000 个字符。');
+      const researchPrompt = makeResearchPrompt(question);
+      setPrompt('');
+      setNotice('正在连接研究引擎');
+      pendingQuestionScrollRef.current = 'smooth';
+      setMessages((current) => [...current, { id: `user-${Date.now()}`, role: 'user', content: question }]);
+      const prepared = await requestJson<{
+        sessionId: string;
+      }>('/api/vibe/research/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: question, sessionId }),
+        signal: submission.controller.signal,
+      });
+      submission.controller.signal.throwIfAborted();
+      submission.sessionId = prepared.sessionId;
+      preparedSessionId = prepared.sessionId;
+      viewingSessionRef.current = prepared.sessionId;
+      clearResearchSnapshot(prepared.sessionId);
+      setSessionId(prepared.sessionId);
+      window.localStorage.setItem(sessionStorageKey, prepared.sessionId);
+      void loadSessions();
+      applyProgressSnapshot(prepared.sessionId, {
+        tools: [],
+        liveText: '',
+        notice: '研究会话已建立，正在规划任务',
+        runState: 'connecting',
+      });
+
+      await connectResearchStream(prepared.sessionId, submission.controller.signal);
+      submission.controller.signal.throwIfAborted();
+      submission.dispatched = true;
+      const sent = await requestJson<{ attempt_id: string }>('/api/vibe/research/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: prepared.sessionId, prompt: researchPrompt }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (completedAttemptsRef.current.has(sent.attempt_id)) return;
+      if (viewingSessionRef.current === prepared.sessionId) activeAttemptRef.current = sent.attempt_id;
+      if (submission.stopRequested) {
+        await stopSession(prepared.sessionId);
+        return;
+      }
+      applyProgressSnapshot(
+        prepared.sessionId,
+        updateResearchSnapshot(prepared.sessionId, (current) => ({
+          ...current,
+          runState: 'researching',
+          notice: '正在研究你的问题',
+        })),
+      );
+      void loadSessions();
+      void recoverCompletedAttempt(prepared.sessionId, sent.attempt_id);
+    } catch (err) {
+      if (submission.controller.signal.aborted) return;
+      if (submission.dispatched && submission.stopRequested) {
+        await stopSession(preparedSessionId);
+        return;
+      }
+      eventSourcesRef.current.get(preparedSessionId)?.close();
+      eventSourcesRef.current.delete(preparedSessionId);
+      activeAttemptRef.current = '';
+      setRunState('error');
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      if (pendingSubmissionRef.current === submission) pendingSubmissionRef.current = null;
+      if (submission.stopRequested && !stoppingSessionsRef.current.has(submission.sessionId)) {
+        setStoppingSessionId((current) => current === submission.sessionId ? null : current);
+      }
+      inputRef.current?.focus({preventScroll:true});
+    }
+  };
+
+  const markResearchStopped = (sid: string) => {
+    eventSourcesRef.current.get(sid)?.close();
+    eventSourcesRef.current.delete(sid);
+    if (viewingSessionRef.current === sid) {
+      if (activeAttemptRef.current) completedAttemptsRef.current.add(activeAttemptRef.current);
+      activeAttemptRef.current = '';
+      setError('');
+    }
+    const stoppedSnapshot = (current: ResearchSnapshot): ResearchSnapshot => ({
+      ...current,
+      tools: current.tools.map((tool) => tool.status === 'running' ? { ...tool, status: 'cancelled' } : tool),
+      runState: 'stopped',
+      notice: '研究已停止',
+    });
+    if (sid) applyProgressSnapshot(sid, updateResearchSnapshot(sid, stoppedSnapshot));
+    else { setRunState('stopped'); setNotice('研究已停止'); }
+  };
+
+  const stopSession = async (sid: string) => {
+    if (stoppingSessionsRef.current.has(sid)) return;
+    stoppingSessionsRef.current.add(sid);
+    setStoppingSessionId(sid);
+    try {
+      // The server may accept a message before its agent loop is registered.
+      const signal = AbortSignal.timeout(10_000);
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        const state = readResearchSnapshot(sid)?.runState;
+        if (state === 'completed' || state === 'stopped' || state === 'error') return;
+        const result = await requestJson<{ status: string }>('/api/vibe/research/cancel', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: sid }), signal,
+        });
+        if (readResearchSnapshot(sid)?.runState === 'completed') return;
+        if (result.status === 'cancelled') {
+          markResearchStopped(sid);
+          void loadSessions();
+          return;
+        }
+        if (result.status !== 'no_active_loop') throw new Error('研究引擎未确认停止，请重试。');
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+      }
+      throw new Error('暂未确认停止，任务可能仍在初始化，请再次点击停止。');
+    } catch (err) {
+      const state = readResearchSnapshot(sid)?.runState;
+      if (viewingSessionRef.current === sid && (state === 'researching' || state === 'connecting')) {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    } finally {
+      stoppingSessionsRef.current.delete(sid);
+      setStoppingSessionId((current) => current === sid ? null : current);
+    }
+  };
+
+  const cancelResearch = async () => {
+    if (isStopping) return;
+    const submission = pendingSubmissionRef.current;
+    if (submission && submission.sessionId === sessionId) {
+      submission.stopRequested = true;
+      if (!submission.dispatched) {
+        submission.controller.abort();
+        pendingSubmissionRef.current = null;
+        markResearchStopped(sessionId);
+        return;
+      }
+      // Wait for the send acknowledgement, then cancel the actual server task.
+      setStoppingSessionId(sessionId);
+      return;
+    }
+    if (sessionId) await stopSession(sessionId);
+  };
+
+  const copyReport = async (message: ResearchMessage) => {
+    await navigator.clipboard.writeText(message.content);
+    setCopiedId(message.id);
+    window.setTimeout(() => setCopiedId(''), 1400);
+  };
+
+  const exportReport = async (message: ResearchMessage) => {
+    try {
+      await exportResearchPdf(message.content);
+      setExportedId(message.id);
+      window.setTimeout(() => setExportedId(''), 1400);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'PDF 导出失败，请重试。');
+    }
+  };
+
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (!event.repeat && !isRunning) event.currentTarget.form?.requestSubmit();
+    }
+  };
+
+  return (
+      <section className="assistant-workspace relative min-h-screen overflow-x-hidden pt-[var(--nav-height)] text-white">
+        <button
+          type="button"
+          title="打开研究历史"
+          aria-label="打开研究历史"
+          onClick={() => setHistoryOpen(true)}
+          className="fixed left-3 top-[calc(var(--nav-height)+12px)] z-30 inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/12 bg-[#141b17]/95 text-white/72 shadow-lg shadow-black/30 backdrop-blur-xl transition hover:border-white/24 hover:text-white lg:hidden"
+        >
+          <History size={17} />
+        </button>
+
+        {historyOpen ? (
+          <button
+            type="button"
+            aria-label="关闭研究历史"
+            onClick={() => setHistoryOpen(false)}
+            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          />
+        ) : null}
+
+        <aside
+          aria-label="研究历史"
+          className={`fixed bottom-0 left-0 top-[var(--nav-height)] z-40 flex w-[min(84vw,19rem)] flex-col overflow-hidden border-r border-white/10 bg-[#0b100d]/97 backdrop-blur-xl transition-[transform,width] duration-200 lg:translate-x-0 ${
+            historyOpen ? 'translate-x-0' : '-translate-x-full'
+          } ${historyCollapsed ? 'lg:w-14' : 'lg:w-64'}`}
+        >
+          {historyCollapsed ? (
+            <div className="hidden h-16 shrink-0 items-center justify-center border-b border-white/8 lg:flex">
+              <button
+                type="button"
+                title="展开研究历史"
+                aria-label="展开研究历史"
+                onClick={() => setHistoryCollapsed(false)}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/52 transition hover:bg-white/[0.07] hover:text-white"
+              >
+                <PanelLeftOpen size={17} />
+              </button>
+            </div>
+          ) : null}
+          <div className={`flex min-h-0 flex-1 flex-col ${historyCollapsed ? 'lg:hidden' : ''}`}>
+              <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/8 px-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold text-white/84">
+                  <History size={16} className="shrink-0 text-[#d75a38]" />
+                  <span className="truncate">历史研究</span>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    title="新建研究"
+                    aria-label="新建研究"
+                    onClick={resetResearch}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-white/52 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    <Plus size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    title="收起研究历史"
+                    aria-label="收起研究历史"
+                    onClick={() => setHistoryCollapsed(true)}
+                    className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/52 transition hover:bg-white/[0.07] hover:text-white lg:inline-flex"
+                  >
+                    <PanelLeftClose size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    title="关闭研究历史"
+                    aria-label="关闭研究历史"
+                    onClick={() => setHistoryOpen(false)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-white/52 transition hover:bg-white/[0.07] hover:text-white lg:hidden"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="assistant-history-scroll min-h-0 flex-1 overflow-y-auto px-2 py-3">
+                {sessionsLoading ? (
+                  <div className="space-y-2 px-2 py-1">
+                    {[0, 1, 2, 3].map((item) => (
+                      <div key={item} className="h-14 animate-pulse rounded-md bg-white/[0.045]" />
+                    ))}
+                  </div>
+                ) : sessions.length ? (
+                  <div className="space-y-1">
+                    {sessions.map((item) => {
+                      const active = item.session_id === sessionId;
+                      return (
+                        <ResearchHistoryItem
+                          key={item.session_id}
+                          title={item.title || '未命名研究'}
+                          time={formatSessionTime(item.updated_at)}
+                          active={active}
+                          pinned={Boolean(item.pinned)}
+                          running={['pending', 'running'].includes(item.last_attempt_status || '') || (active && isRunning)}
+                          onOpen={() => void openSession(item.session_id)}
+                          onNew={resetResearch}
+                          onUpdate={changes => updateHistorySession(item.session_id, changes)}
+                          onDelete={() => deleteHistorySession(item.session_id)}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="px-4 py-10 text-center text-xs leading-6 text-white/36">开始一项研究后，记录会保存在这里。</div>
+                )}
+              </div>
+
+              <div className="border-t border-white/8 px-3 py-3 text-[11px] leading-5 text-white/32">研究记录保存在当前设备</div>
+          </div>
+        </aside>
+
+        <div
+          className={`relative z-10 flex min-h-[calc(100vh-var(--nav-height))] w-full flex-col transition-[padding] duration-200 ${
+            historyCollapsed ? 'lg:pl-14' : 'lg:pl-64'
+          }`}
+        >
+          <div className="mx-auto flex min-h-[calc(100vh-var(--nav-height))] w-full max-w-5xl flex-col px-4 pb-5 pt-7 md:px-8">
+          <div
+            aria-hidden="true"
+            className="assistant-signal pointer-events-none mx-auto -mb-1 mt-2 h-32 w-full max-w-[680px] md:h-36"
+          >
+            <Strands
+              colors={['#EA4F2B', '#F39C63', '#BA574A']}
+              count={3}
+              speed={isRunning ? 0.96 : 0.62}
+              amplitude={1.06}
+              waviness={1.9}
+              thickness={0.72}
+              glow={2.75}
+              taper={3}
+              spread={1}
+              intensity={0.68}
+              saturation={1.45}
+              opacity={0.8}
+              scale={1.8}
+              glass={false}
+              refraction={1}
+              dispersion={1}
+              glassSize={1}
+            />
+          </div>
+
+          <div className="flex-1 py-7 md:py-9">
+            {!messages.length ? (
+              <div className="mx-auto flex min-h-[44vh] max-w-2xl flex-col items-center justify-center text-center">
+                <Bot size={28} className="text-[#d75a38]" strokeWidth={1.5} />
+                <h2 className="mt-5 text-3xl font-semibold text-white md:text-4xl">今天想研究什么？</h2>
+                {staticHosting && <p className="mt-3 text-sm">网页版使用设置中的模型。本地版还可调用研究工具。</p>}
+                <div className="mt-7 grid w-full gap-2">
+                  {starterPrompts.map((item) => (
+                    <button
+                      key={item}
+                      data-portfolio={item === portfolioPrompt || undefined}
+                      disabled={isRunning}
+                      type="button"
+                      onClick={() => {
+                        if (item === portfolioPrompt || item === holdingsPrompt) { void submit(item); return; }
+                        setPrompt(item);
+                        inputRef.current?.focus({preventScroll:true});
+                      }}
+                      className="rounded-md border border-white/10 bg-white/[0.025] px-4 py-3 text-left text-sm leading-6 text-white/54 transition hover:border-[#d75a38]/40 hover:bg-white/[0.045] hover:text-white/82"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-9">
+                {messages.map((message) =>
+                  message.role === 'user' ? (
+                    <div key={message.id} ref={message.id === latestUserMessageId ? latestQuestionRef : undefined} className="assistant-question" data-latest-question={message.id === latestUserMessageId || undefined}>
+                      <div className="flex justify-end">
+                        <div className="assistant-question-bubble max-w-[90%] rounded-lg px-4 py-3 text-sm font-medium leading-6 md:max-w-[80%]">
+                          <span className="assistant-question-caption">研究问题</span>
+                          <p className="whitespace-pre-wrap">{message.content}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <motion.article
+                      key={message.id}
+                      className="assistant-answer grid min-w-0 grid-cols-[32px_minmax(0,1fr)] gap-3 md:grid-cols-[40px_minmax(0,1fr)] md:gap-4"
+                      initial={message.restored ? false : { opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#233a2e] text-white md:h-10 md:w-10">
+                        <Bot size={17} />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <span className="text-xs font-semibold text-white/58">AI 研究报告</span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              title="复制 Markdown"
+                              aria-label="复制 Markdown"
+                              onClick={() => void copyReport(message)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-white/36 transition hover:bg-white/[0.06] hover:text-white"
+                            >
+                              {copiedId === message.id ? <Check size={15} /> : <Copy size={15} />}
+                            </button>
+                            <button
+                              type="button"
+                              title="导出 PDF 报告"
+                              aria-label="导出 PDF 报告"
+                              onClick={() => void exportReport(message)}
+                              className="inline-flex h-8 items-center gap-1 px-2 rounded-md text-sm transition"
+                            >
+                              {exportedId === message.id ? <Check size={15} /> : <FileDown size={15} />} <span>导出 PDF</span>
+                            </button>
+                          </div>
+                        </div>
+                        <ResearchReport content={message.content} />
+                      </div>
+                    </motion.article>
+                  ),
+                )}
+
+                {isRunning ? (
+                  <div className="assistant-answer grid min-w-0 grid-cols-[32px_minmax(0,1fr)] gap-3 md:grid-cols-[40px_minmax(0,1fr)] md:gap-4">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#233a2e] text-white md:h-10 md:w-10">
+                      <Bot size={17} />
+                    </span>
+                    <div className="min-w-0 space-y-3 pt-1">
+                      <div className="flex items-center gap-2 text-sm text-white/68">
+                        <Loader2 size={15} className="animate-spin text-[#d75a38]" />
+                        <span>{isStopping ? '正在停止研究…' : notice || '正在研究'}</span>
+                      </div>
+                      <ResearchProgress key={`${sessionId}-${progressViewVersion}`} tools={tools} running liveText={liveText} />
+                    </div>
+                  </div>
+                ) : tools.length ? (
+                  <div className="ml-0 md:ml-14">
+                    <ResearchProgress key={`${sessionId}-${progressViewVersion}`} tools={tools} running={false} liveText={liveText} stopped={runState === 'stopped'} failed={runState === 'error'} />
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {runState === 'stopped' ? (
+              <p role="status" className="mt-4 flex items-center gap-2 text-xs text-white/50"><CircleStop size={14} />研究已停止</p>
+            ) : null}
+            {error ? (
+              <div className="mt-6 flex items-start gap-2 rounded-md border border-red-400/20 bg-red-400/[0.07] px-4 py-3 text-sm leading-6 text-red-100/80">
+                <XCircle size={16} className="mt-1 shrink-0" />
+                <span>{error}</span>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="assistant-composer-dock sticky bottom-0 z-20 border-t border-white/10 bg-[#090e0b]/95 pb-2 pt-4 backdrop-blur-xl">
+            <form
+              ref={composerRef}
+              onSubmit={(event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void submit(prompt); }}
+              className="flex min-h-16 items-end gap-2 rounded-[32px] border border-white/18 bg-[#141b17] py-2 pl-5 pr-2 transition focus-within:border-white/38"
+            >
+              <textarea
+                ref={inputRef}
+                value={prompt}
+                onChange={(event) => setPrompt(event.target.value)}
+                onKeyDown={handleInputKeyDown}
+                maxLength={5000}
+                rows={1}
+                className="assistant-prompt-scroll m-0 block min-h-11 min-w-0 flex-1 resize-none overflow-y-hidden border-0 bg-transparent px-0 py-2.5 text-sm leading-6 text-white outline-none placeholder:text-white/32"
+                placeholder="输入公司、市场、策略或投资问题..."
+                aria-label="深度研究问题"
+              />
+              {isRunning ? (
+                <button
+                  type="button"
+                  onClick={() => void cancelResearch()}
+                  disabled={isStopping}
+                  title={isStopping ? '正在停止研究' : '停止生成'}
+                  aria-label={isStopping ? '正在停止研究' : '停止生成'}
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/14 text-white/58 transition hover:border-red-300/40 hover:bg-red-300/[0.06] hover:text-red-200 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {isStopping ? <Loader2 size={18} className="animate-spin" /> : <CircleStop size={18} />}
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!prompt.trim()}
+                  title="开始研究"
+                  aria-label="开始研究"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#266b55] text-white transition hover:bg-[#d75a38] disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  <SendHorizontal size={18} />
+                </button>
+              )}
+            </form>
+          </div>
+          </div>
+        </div>
+      </section>
+  );
+}

@@ -13,6 +13,22 @@ export const CHAINS = {
   BND: ['VBMFX', 'BND'],
   TLT: ['VUSTX', 'TLT'],
   SHY: ['VFISX', 'SHY'],
+  VOO: ['VOO'],
+  SGOV: ['SGOV'],
+  // Individual stocks use their own history, without index or fund proxies.
+  NVDA: ['NVDA'],
+  MSFT: ['MSFT'],
+  TSLA: ['TSLA'],
+  AAPL: ['AAPL'],
+  AMZN: ['AMZN'],
+  SPCX: ['SPCX'],
+  AXP: ['AXP'],
+  'BRK-B': ['BRK-B'],
+  GOOG: ['GOOG'],
+  '600036': ['600036.SS'],
+  '600900': ['600900.SS'],
+  '600941': ['600941.SS'],
+  '601088': ['601088.SS'],
   // China and Hong Kong (priced in CNY / HKD)
   SSE: ['000001.SS'],                          // SSE Composite, a price index (no dividends)
   A500: ['000001.SS', '510300.SS', '512050.SS'], // CSI A500 ETF; before it, CSI 300 ETF, before that the SSE Composite
@@ -27,6 +43,9 @@ export const CHAINS = {
 export const FX = { CNY: 'CNY=X', HKD: 'HKD=X' };
 // before Yahoo's FX history starts (mid-2001) both currencies were pegged
 export const FX_PEG = { CNY: 8.2770, HKD: 7.7990 };
+
+// SPCX was previously used by an unrelated ETF. SpaceX began trading on 2026-06-12.
+export const HISTORY_START = { SPCX: '2026-06-12' };
 
 export const TICKERS = [...new Set([...Object.values(CHAINS).flat(), ...Object.values(FX)])];
 
