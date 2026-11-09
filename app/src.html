@@ -40,16 +40,6 @@
 </header>
 
 <main class="page">
-  <aside id="collaboration" hidden aria-label="共享账本">
-    <span id="cloudStatus" role="status"></span>
-    <button type="button" class="linkbtn" data-sync="init" hidden>用本机数据开始共享</button>
-    <button type="button" class="linkbtn" data-sync="join" hidden>加入共享账本</button>
-    <button type="button" class="linkbtn" data-sync="mine" hidden>保留本机冲突项</button>
-    <button type="button" class="linkbtn" data-sync="theirs" hidden>采用共享冲突项</button>
-    <button type="button" class="linkbtn" data-sync="download" hidden>下载本机账本</button>
-    <button type="button" class="linkbtn" data-sync="backup" hidden>下载先前版本</button>
-    <button type="button" class="linkbtn" data-sync="retry" hidden>重试</button>
-  </aside>
   <!-- ============ 00 动态再平衡（主页） ============ -->
   <section data-view="rebalance" id="rebalance" hidden>
     <header class="home-hero">
@@ -79,13 +69,26 @@
 
     <div class="section grid">
       <div class="panel" id="opsPanel" tabindex="-1">
-        <div class="panel-h"><h2>本月操作清单<span class="small" id="opsAsOf"></span></h2></div>
+        <div class="panel-h"><h2><span id="opsTitle">本月定投清单</span><span class="small" id="opsAsOf"></span></h2></div>
+        <div class="investment-controls">
+          <div class="seg investment-modes" id="investmentModes" role="group" aria-label="选择投资操作">
+            <button type="button" data-kind="monthly" aria-pressed="true">每月定投</button>
+            <button type="button" data-kind="rebalance" aria-pressed="false">检查再平衡</button>
+          </div>
+          <p class="investment-help" id="investmentHelp"></p>
+          <div class="investment-fields" id="investmentFields">
+            <div class="field"><label for="investmentAmount" id="investmentAmountLabel">本期投入金额（元）</label><input type="number" id="investmentAmount" min="0.01" max="1000000000" step="0.01" inputmode="decimal" required><span class="hint" id="investmentAmountHint"></span></div>
+            <div class="field" id="investmentDayField"><label for="investmentDay">每月计划定投日</label><input type="number" id="investmentDay" min="1" max="31" step="1" inputmode="numeric" required><span class="hint">遇到短月份，取当月最后一天。</span></div>
+          </div>
+          <p id="investmentStatus" class="investment-status" role="status"></p>
+          <p id="investmentError" class="template-error" role="alert" hidden></p>
+        </div>
         <div class="ops-sum" id="opsSum"></div>
         <div id="opsFlag"></div>
         <div class="tbl-wrap"><table id="opsTable"></table></div>
         <div class="ops-actions">
-          <button class="btn primary" type="button" id="opsCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>复制操作清单</button>
-          <button class="btn" type="button" id="opsApply">已下单，更新持仓</button>
+          <button class="btn" type="button" id="opsCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>复制操作清单</button>
+          <button class="btn primary" type="button" id="opsApply">已买入，更新定投持仓</button>
           <span class="small muted" id="opsNote"></span>
         </div>
       </div>
@@ -104,7 +107,7 @@
         <div id="readAIOut"></div>
         <div class="reads" id="readCards"></div>
       </div>
-      <p class="note">操作清单按本页内嵌的最新周线收盘价计算（每天自动更新，休市时保留最近交易日），实际下单以券商报价为准；券商不支持碎股时，可在「定投模型 → 定投与再平衡规则」中把「股数」切到「只买整数股 / 整手」，余下的钱留到下个月。按清单更新持仓且包含卖出时，会记下当天为上次再平衡日期。执行前可在日期提醒窗口中核对定投日并决定是否继续；上次再平衡日期也可以在上述设置中修改。账本的同步状态显示在页面顶部。本工具用于学习定投与再平衡方法，不构成投资建议。</p>
+      <p class="note">操作清单按本页内嵌的最新周线收盘价计算（每天自动更新，休市时保留最近交易日），实际下单以券商报价为准；券商不支持碎股时，可在「定投模型 → 定投与再平衡规则」中把「股数」切到「只买整数股 / 整手」，余下的钱留到下个月。按清单更新持仓且包含卖出时，会记下当天为上次再平衡日期。执行前可在日期提醒窗口中核对定投日并决定是否继续；上次再平衡日期也可以在上述设置中修改。公网网页版可在「设置 → 共享账本」查看同步状态及备份。本工具用于学习定投与再平衡方法，不构成投资建议。</p>
     </div>
   </section>
 
@@ -201,6 +204,10 @@
           <div class="panel-b">
             <div id="weightRows"></div>
             <div class="sum" id="sumBox"><span class="sub">合计</span><span class="num" id="sumVal">0%</span></div>
+            <div class="weight-save-footer">
+              <div class="weight-save-copy"><p class="small muted" id="weightSaveHint"></p><span class="small" id="weightSaveStatus" role="status" aria-live="polite"></span></div>
+              <button class="btn primary" id="saveWeightsBtn" type="button">保存配置</button>
+            </div>
           </div>
         </div>
         <div class="grid">
@@ -311,7 +318,8 @@
 
 <dialog class="execution-dialog ai-settings" id="aiSettings" aria-labelledby="aiSettingsTitle" aria-describedby="aiSettingsIntro">
   <form id="aiSettingsForm">
-    <div class="settings-heading"><div><span class="eyebrow">PREFERENCES</span><h2 id="aiSettingsTitle">AI 设置</h2></div><button class="dclose" type="button" id="closeSettings" aria-label="关闭设置">×</button></div>
+    <div class="settings-heading"><div><span class="eyebrow">PREFERENCES</span><h2 id="aiSettingsTitle">设置</h2></div><button class="dclose" type="button" id="closeSettings" aria-label="关闭设置">×</button></div>
+    <h3 class="h3s">AI 模型</h3>
     <p class="execution-intro" id="aiSettingsIntro">AI 配置由本机服务加密保存。留空密钥可继续使用已有密钥。</p>
     <div class="field"><label for="aiBaseUrl">API 地址</label><input id="aiBaseUrl" type="url" required></div>
     <div class="field"><label for="aiModel">模型名称</label><input id="aiModel" required></div>
@@ -319,6 +327,19 @@
     <p id="aiSettingsMessage" role="status"></p>
     <div class="hero-buttons"><button id="saveAI" type="submit" class="btn primary">保存配置</button><button type="button" class="btn" id="clearAI" hidden>移除本机密钥</button><button type="button" class="btn" id="accountLogout">退出登录</button></div>
   </form>
+  <aside id="collaboration" hidden aria-labelledby="collaborationTitle">
+    <h3 class="h3s" id="collaborationTitle">共享账本</h3>
+    <div class="sync-controls">
+      <span id="cloudStatus" role="status"></span>
+      <button type="button" class="linkbtn" data-sync="init" hidden>用本机数据开始共享</button>
+      <button type="button" class="linkbtn" data-sync="join" hidden>加入共享账本</button>
+      <button type="button" class="linkbtn" data-sync="mine" hidden>保留本机冲突项</button>
+      <button type="button" class="linkbtn" data-sync="theirs" hidden>采用共享冲突项</button>
+      <button type="button" class="linkbtn" data-sync="download" hidden>下载本机账本</button>
+      <button type="button" class="linkbtn" data-sync="backup" hidden>下载先前版本</button>
+      <button type="button" class="linkbtn" data-sync="retry" hidden>重试</button>
+    </div>
+  </aside>
 </dialog>
 
 <dialog class="template-dialog" id="templateDialog" aria-labelledby="templateTitle" aria-describedby="templateIntro">
@@ -361,6 +382,7 @@
       </div>
     </div>
     <p class="execution-reminder" id="opsDateReminder" role="status"></p>
+    <p class="template-error" id="opsConfirmError" role="alert" hidden></p>
     <dl class="execution-amounts">
       <div><dt>买入合计（元）</dt><dd id="opsConfirmBuy"></dd></div>
       <div><dt>卖出合计（元）</dt><dd id="opsConfirmSell"></dd></div>
@@ -369,6 +391,34 @@
       <button class="btn" id="opsConfirmCancel" type="button" autofocus>暂不执行</button>
       <button class="btn primary" id="opsConfirmContinue" type="submit">继续更新持仓</button>
     </div>
+  </form>
+</dialog>
+
+<dialog class="execution-dialog" id="investmentDoneDialog" aria-labelledby="investmentDoneTitle" aria-describedby="investmentDoneMessage">
+  <h2 id="investmentDoneTitle">本期已经定投</h2>
+  <p class="execution-intro" id="investmentDoneMessage"></p>
+  <p class="execution-today" id="investmentDoneToday"></p>
+  <div class="execution-calendar">
+    <div class="execution-date-card" aria-hidden="true"><span id="investmentDoneMonth"></span><strong id="investmentDoneDay"></strong><span id="investmentDoneWeekday"></span></div>
+    <div class="execution-date-fields">
+      <div class="field"><label for="investmentDoneDate">下次计划定投日期</label><input type="date" id="investmentDoneDate" readonly><span class="hint">根据每月计划定投日计算，与定期再平衡周期独立。</span></div>
+      <p class="execution-previous" id="investmentDonePrevious"></p>
+    </div>
+  </div>
+  <p class="execution-reminder" id="investmentDoneReminder"></p>
+  <div class="execution-actions"><button class="btn" type="button" id="investmentDoneClose" autofocus>知道了</button><button class="btn primary" type="button" id="investmentDoneBonus">确认，继续加仓</button></div>
+</dialog>
+
+<dialog class="execution-dialog bonus-dialog" id="bonusDialog" aria-labelledby="bonusTitle" aria-describedby="bonusIntro">
+  <form id="bonusForm">
+    <h2 id="bonusTitle">确认本次加仓</h2>
+    <p class="execution-intro" id="bonusIntro">输入加仓总金额，核对每个标的的买入比例、金额和股数。在券商完成买入后，再确认更新持仓。</p>
+    <div class="field"><label for="bonusAmount">本次加仓金额（元）</label><input id="bonusAmount" type="number" min="0.01" max="1000000000" step="0.01" inputmode="decimal" required autocomplete="off" autofocus><span class="hint" id="bonusAmountHint"></span></div>
+    <div class="bonus-totals"><div><span>买入合计（元）</span><strong id="bonusBuyTotal">—</strong></div><div><span>未投入现金（元）</span><strong id="bonusCashTotal">—</strong></div></div>
+    <div class="tbl-wrap"><table id="bonusTable"><caption class="sr-only">本次加仓买入清单</caption><thead><tr><th>标的</th><th class="r">买入比例</th><th class="r">金额（元）</th><th class="r">股数</th></tr></thead><tbody></tbody></table></div>
+    <p class="small muted" id="bonusPlanStatus" role="status"></p>
+    <p class="template-error" id="bonusError" role="alert" hidden></p>
+    <div class="execution-actions"><button class="btn" type="button" id="bonusCancel">取消</button><button class="btn primary" type="submit" id="bonusConfirm" disabled>已买入，更新持仓</button></div>
   </form>
 </dialog>
 
@@ -402,6 +452,7 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script id="pricedata" type="application/json">__DATA__</script>
+<script src="investment.js"></script>
 <script src="ledger.js"></script>
 <script src="ledger-ui.js"></script>
 <script src="ai.js"></script>
@@ -873,7 +924,7 @@ function bindAssets() {
 }
 function toggleAsset(id) {
   if (S.weights[id] != null) delete S.weights[id]; else S.weights[id] = 0;
-  S.preset = null; S.label = '自定义'; save(); renderAssets(); renderStrategy();
+  markStrategyChanged(); save(); renderAssets(); renderStrategy();
   if (!$('#drawer').hidden && dState.id === id) setAddBtn();
 }
 
@@ -958,7 +1009,7 @@ function renderPresets() {
   const mm = $('#mineMdd'); if (mm) mm.textContent = fmtPct(presetStats.mine.mdd, 0) + `（同期均衡模板为 ${fmtPct(presetStats.balanced.mdd, 0)}）`;
 }
 function renderStrategy() {
-  $('#strategySaveStatus').textContent = '';
+  strategySaveStatus('');
   const ids = Object.keys(S.weights);
   $('#weightRows').innerHTML = ids.length ? ids.map(id => `<div class="wrow" data-id="${id}"><div class="tk" style="min-width:0">${assetLogo(id)}<div><b>${id}</b><span>${A[id].cn}</span></div></div>
     <input type="range" min="0" max="100" step="1" value="${S.weights[id]}" aria-label="${id} 目标权重" id="r-${id}">
@@ -972,16 +1023,46 @@ function renderStrategy() {
   [...document.querySelectorAll('.preset')].forEach(b => b.setAttribute('aria-pressed', S.preset === b.dataset.p));
 }
 function sumW() { return Object.values(S.weights).reduce((a, b) => a + (+b || 0), 0); }
-function updateSum() { const s = sumW(); $('#sumVal').textContent = s + '%'; $('#sumBox').classList.toggle('bad', s !== 100); $('#sumVal').title = s === 100 ? '' : '合计须为 100% 才能保存或回测'; $('#runBtn').disabled = s !== 100; $('#saveStrategyBtn').disabled = s !== 100; $('#quickStat').textContent = s === 100 ? '' : `合计须为 100%，当前 ${s}%`; }
+function updateSum() {
+  const s = sumW(), custom = customPresets.find(p => p.key === S.preset);
+  $('#sumVal').textContent = s + '%'; $('#sumBox').classList.toggle('bad', s !== 100); $('#sumVal').title = s === 100 ? '' : '合计须为 100% 才能保存或回测';
+  $('#runBtn').disabled = s !== 100;
+  for (const id of ['#saveStrategyBtn', '#saveWeightsBtn']) { $(id).disabled = s !== 100; $(id).textContent = custom ? '保存修改' : '保存配置'; }
+  $('#weightSaveHint').textContent = s !== 100 ? `权重合计需为 100%，当前为 ${s}%。` : custom ? `正在编辑「${custom.name}」，保存后更新此模板。` : '保存当前目标权重与再平衡配置。';
+  $('#quickStat').textContent = s === 100 ? '' : `合计须为 100%，当前 ${s}%`;
+}
+function strategySaveStatus(message) {
+  $('#strategySaveStatus').textContent = message;
+  $('#weightSaveStatus').textContent = message;
+}
+function markStrategyChanged() {
+  // Keep the destination when editing a named custom template; built-in templates stay unchanged.
+  if (!customPresets.some(p => p.key === S.preset)) { S.preset = null; S.label = '自定义'; }
+}
 
 function saveStrategy() {
-  const status = $('#strategySaveStatus');
   if (sumW() !== 100 || !$('#ruleForm').reportValidity()) {
-    status.textContent = '请检查目标权重和表单中的配置。';
+    strategySaveStatus('请检查目标权重和表单中的配置。');
     return;
   }
+  const custom = customPresets.find(p => p.key === S.preset);
+  if (custom) {
+    try {
+      const stored = JSON.parse(localStorage.getItem('heng.templates') || '[]');
+      if (JSON.stringify(stored) !== JSON.stringify(customPresets)) { strategySaveStatus('模板已在其他页面或设备变更，请刷新页面后重新选择再保存。'); return; }
+    } catch { strategySaveStatus('模板未能读取，请检查浏览器存储后重试。'); return; }
+  }
   ensureRebalanceState();
-  status.textContent = save() ? '配置已保存' : '保存失败，请检查浏览器存储空间后重试。';
+  if (!save()) { strategySaveStatus('保存失败，请核对当前持仓或浏览器存储后重试。'); return; }
+  if (custom) {
+    const p = { ...custom, w: Object.fromEntries(Object.entries(S.weights).filter(([, weight]) => weight > 0)), rule: { mode: S.mode, abs: S.abs, rel: S.rel, period: S.period } };
+    const next = customPresets.map(item => item.key === p.key ? p : item);
+    try { localStorage.setItem('heng.templates', JSON.stringify(next)); }
+    catch { strategySaveStatus('模板未能保存，请检查浏览器存储空间后重试。'); return; }
+    customPresets = next; computePresetStats([p]); renderPresets();
+    window.privateAccount?.sync?.changed();
+  }
+  strategySaveStatus(custom ? `模板「${custom.name}」已保存` : '配置已保存');
 }
 function renderTiers() {
   const groups = [['低', [1, 2]], ['中', [3]], ['中高', [4]], ['高', [5, 6]]]; const s = sumW() || 1;
@@ -1076,10 +1157,10 @@ function bindTemplateEditor() {
   });
 }
 function bindStrategy() {
-  $('#saveStrategyBtn').onclick = saveStrategy;
-  $('#strategy').addEventListener('input', () => { $('#strategySaveStatus').textContent = ''; });
+  $('#saveStrategyBtn').onclick = $('#saveWeightsBtn').onclick = saveStrategy;
+  $('#strategy').addEventListener('input', () => { strategySaveStatus(''); });
   $('#ruleForm').addEventListener('click', event => {
-    if (event.target.closest('.seg button, #rbLastClear')) $('#strategySaveStatus').textContent = '';
+    if (event.target.closest('.seg button, #rbLastClear')) strategySaveStatus('');
   });
   bindTemplateEditor();
   $('#presets').addEventListener('click', e => {
@@ -1090,10 +1171,10 @@ function bindStrategy() {
     const b = e.target.closest('.preset'); if (!b) return;
     const p = allPresets().find(x => x.key === b.dataset.p); if (p) applyPreset(p);
   });
-  $('#weightRows').addEventListener('input', e => { const row = e.target.closest('.wrow'); if (!row) return; const id = row.dataset.id; let v = Math.max(0, Math.min(100, Math.round(+e.target.value || 0))); S.weights[id] = v; S.preset = null; S.label = '自定义'; if (e.target.type === 'range') $('#n-' + id).value = v; else $('#r-' + id).value = v; updateSum(); renderTiers(); save(); [...document.querySelectorAll('.preset')].forEach(b => b.setAttribute('aria-pressed', 'false')); });
+  $('#weightRows').addEventListener('input', e => { const row = e.target.closest('.wrow'); if (!row) return; const id = row.dataset.id; let v = Math.max(0, Math.min(100, Math.round(+e.target.value || 0))); S.weights[id] = v; markStrategyChanged(); if (e.target.type === 'range') $('#n-' + id).value = v; else $('#r-' + id).value = v; updateSum(); renderTiers(); save(); [...document.querySelectorAll('.preset')].forEach(b => b.setAttribute('aria-pressed', b.dataset.p === S.preset)); });
   $('#weightRows').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) toggleAsset(b.dataset.rm); });
   $('#addAsset').addEventListener('change', e => { if (e.target.value) toggleAsset(e.target.value); });
-  $('#normBtn').onclick = () => { const s = sumW(); const ids = Object.keys(S.weights); if (!ids.length) return; if (!s) ids.forEach(id => S.weights[id] = Math.floor(100 / ids.length)); else ids.forEach(id => S.weights[id] = Math.round(S.weights[id] * 100 / s)); let d = 100 - sumW(); const big = ids.sort((a, b) => S.weights[b] - S.weights[a])[0]; S.weights[big] += d; S.preset = null; S.label = '自定义'; save(); renderStrategy(); };
+  $('#normBtn').onclick = () => { const s = sumW(); const ids = Object.keys(S.weights); if (!ids.length) return; if (!s) ids.forEach(id => S.weights[id] = Math.floor(100 / ids.length)); else ids.forEach(id => S.weights[id] = Math.round(S.weights[id] * 100 / s)); let d = 100 - sumW(); const big = ids.sort((a, b) => S.weights[b] - S.weights[a])[0]; S.weights[big] += d; markStrategyChanged(); save(); renderStrategy(); };
   const map = { pMonthly: 'monthly', pInitial: 'initial', pStart: 'start', pMode: 'mode', pAbs: 'abs', pRel: 'rel', pPeriod: 'period', pFee: 'fee' };
   $('#ruleForm').addEventListener('input', e => { const k = map[e.target.id]; if (k) S[k] = ['start', 'mode', 'period'].includes(k) ? e.target.value : +e.target.value; if (e.target.id === 'pCash') S.cashflow = e.target.checked; save(); });
   $('#rbFx').addEventListener('input', e => { const v = +e.target.value; if (v > 0) { S.fx = v; S.fxManual = true; save(); syncTradeSettings(); } });
@@ -1307,9 +1388,12 @@ function ensureRebalanceState() {
 }
 
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const INVESTMENT_LABELS = { monthly: '本月定投', bonus: '奖金加仓', rebalance: '再平衡检查' };
+let investmentIntent = { kind: 'monthly', amountCny: null, period: todayStr().slice(0, 7), id: '' };
+let bonusDraft = null;
 
 function contributionApplied() {
-  return S.contributionMonth === todayStr().slice(0, 7);
+  return Investment.monthlyDone(S, todayStr());
 }
 
 function opsContext(state = S) {
@@ -1319,19 +1403,66 @@ function opsContext(state = S) {
     state.mode, state.abs, state.rel, state.period, state.cashflow,
     state.allowSell !== false, !!state.wholeShares, state.lastRebalance || null,
     state.contributionMonth || null,
+    state.lastBalanceCheckDate || null,
+    investmentIntent.kind, investmentIntent.amountCny, investmentIntent.id, todayStr(),
   ]);
 }
 
 function currentOpsApplied() {
-  return S.lastAppliedOps?.context === opsContext();
+  return Investment.operationDone(S, investmentIntent, todayStr()) || S.lastAppliedOps?.context === opsContext();
+}
+
+function showInvestmentDone() {
+  const today = todayStr(), next = Investment.monthlyDate(S, today, true), date = new Date(next + 'T12:00:00');
+  const days = Math.round((Date.parse(next) - Date.parse(today)) / 864e5);
+  $('#investmentDoneMessage').textContent = `本期已经定投，下次定投时间在 ${next}。`;
+  $('#investmentDoneToday').textContent = '今天 · ' + new Intl.DateTimeFormat('zh-CN', {dateStyle:'full'}).format(new Date(today + 'T12:00:00'));
+  $('#investmentDoneMonth').textContent = new Intl.DateTimeFormat('zh-CN', {year:'numeric',month:'long'}).format(date);
+  $('#investmentDoneDay').textContent = String(date.getDate()).padStart(2, '0');
+  $('#investmentDoneWeekday').textContent = new Intl.DateTimeFormat('zh-CN', {weekday:'long'}).format(date);
+  $('#investmentDoneDate').value = next;
+  const record = (S.ledger?.entries || []).slice().reverse().find(entry => entry.investmentType === 'monthly' && entry.period === today.slice(0, 7));
+  $('#investmentDonePrevious').textContent = record ? `本期定投记录 · ${record.date}` : '本期常规定投已完成';
+  $('#investmentDoneReminder').textContent = `距离下次计划定投还有 ${days} 天。发了奖金或有额外资金？可以继续加仓，每月定投计划保持原样。`;
+  if (!$('#investmentDoneDialog').open) $('#investmentDoneDialog').showModal();
+}
+function selectInvestmentKind(kind) {
+  if ($('#opsConfirm').open) $('#opsConfirm').close();
+  investmentIntent = { kind, amountCny: kind === 'monthly' ? null : 0, period: todayStr().slice(0, 7), id: kind === 'monthly' ? '' : crypto.randomUUID() };
+  $('#investmentError').hidden = true;
+  refreshRebalance();
+  if (kind === 'bonus') $('#investmentAmount').focus();
+}
+function renderInvestmentControls(plan) {
+  const kind = plan.kind, monthly = kind === 'monthly';
+  $('#opsTitle').textContent = `${INVESTMENT_LABELS[kind]}清单`;
+  for (const button of $('#investmentModes').children) button.setAttribute('aria-pressed', button.dataset.kind === kind);
+  $('#investmentHelp').textContent = monthly ? '每月发薪后，按本期金额生成买入清单；在券商买入后，点击下方按钮更新持仓。每个自然月完成一次常规定投。'
+    : kind === 'bonus' ? '输入本次奖金或额外资金的总金额，按当前模型分配买入。加仓独立记账，每月计划保持原样；再次加仓可从本期定投提示中的「继续加仓」进入。'
+    : '单独按模型的阈值与定期检查规则计算买卖，不叠加本月定投资金。';
+  $('#investmentFields').hidden = kind === 'rebalance';
+  $('#investmentDayField').hidden = !monthly;
+  $('#investmentAmountLabel').textContent = monthly ? plan.completed ? '每月预算（元）' : '本期定投金额（元）' : '本次加仓总金额（元）';
+  $('#investmentAmount').disabled = plan.completed;
+  if (document.activeElement !== $('#investmentAmount')) $('#investmentAmount').value = monthly && plan.completed ? S.monthly : plan.amountCny > 0 ? plan.amountCny : '';
+  if (document.activeElement !== $('#investmentDay')) $('#investmentDay').value = Investment.preferredDay(S, todayStr());
+  $('#investmentAmountHint').textContent = monthly && plan.completed ? '本期已完成，此处为模型的每月预算；额外投入可从下方完成提示中继续加仓。' : plan.amountCny > 0 ? `按当前汇率约 ${usd(plan.amountCny / S.fx)}。实际成交以券商为准。` : '填写金额后自动计算各标的买入金额与股数。';
+  $('#investmentStatus').textContent = monthly ? contributionApplied()
+    ? `本期已经定投，下次定投时间在 ${Investment.monthlyDate(S, todayStr(), true)}。额外投入可点击下方「查看下次日期」，在弹窗中选择继续加仓。`
+    : `本期：${todayStr().slice(0, 7)} · 计划定投日 ${Investment.monthlyDate(S, todayStr(), false)} · 每月预算 ${Math.max(0, +S.monthly || 0).toLocaleString('zh-CN')} 元。`
+    : plan.completed ? kind === 'bonus' ? '本次加仓已记账。再加一笔请切回「每月定投」，从下方完成提示进入继续加仓。' : '本次检查已记账。需要重新检查时，请点击上方「检查再平衡」。'
+    : kind === 'bonus' ? '本笔加仓只在你确认已买入后记账，预览不会改变持仓。' : '再平衡检查独立于每月定投日期。';
 }
 // the month's plan, following the model's rules (section 5.3 of the design doc)
-function planRebalance() {
+function planRebalance(options = investmentIntent) {
+  if (options === investmentIntent && options.period !== todayStr().slice(0, 7)) investmentIntent = options = { kind: 'monthly', amountCny: null, period: todayStr().slice(0, 7), id: '' };
+  const kind = options.kind, completed = Investment.operationDone(S, options, todayStr());
+  const amountCny = kind === 'rebalance' ? 0 : Math.max(0, Number(options.amountCny ?? S.monthly) || 0);
   const ids = modelIds(); const tot = ids.reduce((a, id) => a + S.weights[id], 0);
   const tw = Object.fromEntries(ids.map(id => [id, S.weights[id] / tot]));
   const v = Object.fromEntries(ids.map(id => [id, (+S.holdings[id] || 0) * px(id)]));
   const V = ids.reduce((a, id) => a + v[id], 0);
-  const A = contributionApplied() ? 0 : Math.max(0, +S.monthly || 0) / S.fx;
+  const A = completed ? 0 : amountCny / S.fx;
   const T = V + A;
   const cur = Object.fromEntries(ids.map(id => [id, V > 0 ? v[id] / V : 0]));
   const alloc = {};
@@ -1344,25 +1475,26 @@ function planRebalance() {
   const overNow = V > 0 ? ids.filter(id => Math.abs(cur[id] - tw[id]) >= bandOf(tw[id]) - 1e-9) : [];
   const month = new Date().getMonth() + 1;
   const calMonth = S.period === 'Q' ? [1, 4, 7, 10].includes(month) : month === 1;
-  const thr = (S.mode === 'threshold' || S.mode === 'hybrid') && over.length > 0 && V > 0;
-  const cal = (S.mode === 'calendar' || S.mode === 'hybrid') && calMonth && V > 0;
+  const thr = kind === 'rebalance' && !completed && (S.mode === 'threshold' || S.mode === 'hybrid') && over.length > 0 && V > 0;
+  const cal = kind === 'rebalance' && !completed && (S.mode === 'calendar' || S.mode === 'hybrid') && calMonth && V > 0;
   const needSell = thr || cal;
   const rebalance = needSell && S.allowSell;
   const delta = Object.fromEntries(ids.map(id => [id, rebalance ? tw[id] * T - v[id] : alloc[id]]));
   const intended = { ...delta };
   let leftover = 0; for (const id of ids) if (Math.abs(delta[id]) < 1) { if (delta[id] > 0) leftover += delta[id]; delta[id] = 0; }
   const shares = Object.fromEntries(ids.map(id => [id, delta[id] / px(id)]));
-  if (S.wholeShares && ids.length) {
+  if (ids.length) {
     // whole lots only (one share for US listings, a board lot for A-shares and Hong Kong): round sells and buys down,
     // then spend what is left one lot at a time on the asset furthest below target
-    let cash = A; const lp = id => px(id) * lotOf(id);
-    for (const id of ids) { const n = delta[id] < 0 ? -Math.floor(-delta[id] / lp(id) + 1e-9) : Math.floor(delta[id] / lp(id) + 1e-9); shares[id] = n * lotOf(id); cash -= n * lp(id); }
+    const unit = id => S.wholeShares ? lotOf(id) : 0.001;
+    let cash = A; const lp = id => px(id) * unit(id);
+    for (const id of ids) { let n = delta[id] < 0 ? -Math.floor(-delta[id] / lp(id) + 1e-9) : Math.floor(delta[id] / lp(id) + 1e-9); if (Math.abs(n * lp(id)) < 1) n = 0; shares[id] = n * unit(id); cash -= n * lp(id); }
     const gap = id => tw[id] * T - (v[id] + shares[id] * px(id));
-    for (let guard = 0; cash < -1e-9 && guard < 500; guard++) { const id = ids.filter(i => shares[i] > 0).sort((a, b) => gap(a) - gap(b))[0]; if (!id) break; shares[id] -= lotOf(id); cash += lp(id); }
+    for (let guard = 0; cash < -1e-9 && guard < 500; guard++) { const id = ids.filter(i => shares[i] > 0).sort((a, b) => gap(a) - gap(b))[0]; if (!id) break; shares[id] -= unit(id); cash += lp(id); }
     // only buy a lot when it brings the asset closer to target than not buying (remaining gap > half a lot)
-    for (let guard = 0; guard < 2000; guard++) { const id = ids.filter(i => lp(i) <= cash + 1e-9 && gap(i) > lp(i) / 2).sort((a, b) => gap(b) - gap(a))[0]; if (!id) break; shares[id] += lotOf(id); cash -= lp(id); }
-    for (const id of ids) delta[id] = shares[id] * px(id);
-    leftover = Math.max(0, cash);
+    for (let guard = 0; guard < 2000; guard++) { const id = ids.filter(i => intended[i] >= 1 && lp(i) <= cash + 1e-9 && gap(i) > lp(i) / 2).sort((a, b) => gap(b) - gap(a))[0]; if (!id) break; shares[id] += unit(id); cash -= lp(id); }
+    for (const id of ids) { shares[id] = +shares[id].toFixed(3); if (Math.abs(shares[id] * px(id)) < 1) shares[id] = 0; delta[id] = shares[id] * px(id); }
+    leftover = Math.max(0, A - ids.reduce((sum, id) => sum + delta[id], 0));
   }
   // Match the holdings shown after execution; unspent cash is reported separately as leftover.
   const afterV = ids.reduce((sum, id) => sum + v[id] + delta[id], 0);
@@ -1370,7 +1502,7 @@ function planRebalance() {
   const buy = ids.reduce((a, id) => a + Math.max(0, delta[id]), 0), sell = ids.reduce((a, id) => a + Math.max(0, -delta[id]), 0);
   const maxAfter = ids.reduce((m, id) => Math.max(m, Math.abs(after[id] - tw[id])), 0);
   const worstNow = ids.slice().sort((a, b) => Math.abs(cur[b] - tw[b]) - Math.abs(cur[a] - tw[a]))[0];
-  return { ids, tw, v, V, A, T, cur, alloc, delta, intended, shares, after, afterV, over, overNow, thr, cal, calMonth, needSell, rebalance, buy, sell, leftover, maxAfter, worstNow };
+  return { kind, completed, amountCny, operationId: kind === 'monthly' ? `monthly:${todayStr().slice(0, 7)}` : options.id, ids, tw, v, V, A, T, cur, alloc, delta, intended, shares, after, afterV, over, overNow, thr, cal, calMonth, needSell, rebalance, buy, sell, leftover, maxAfter, worstNow };
 }
 
 function marketRead(id) {
@@ -1392,12 +1524,16 @@ function readingAction(plan) {
   const buys = plan.ids.filter(id => plan.delta[id] > 0), sells = plan.ids.filter(id => plan.delta[id] < 0);
   const afterOver = plan.afterV > 0 ? plan.ids.filter(id => Math.abs(plan.after[id] - plan.tw[id]) >= bandOf(plan.tw[id]) - 1e-9) : [];
   if (currentOpsApplied()) return { title: '本次操作已记账', detail: '持仓已按清单更新，无需重复执行同一笔操作。', tone: 'good' };
+  if (plan.kind === 'monthly' || plan.kind === 'bonus') {
+    return { title: !plan.A ? '填写本次投入金额' : !buys.length ? '本次暂不成交' : plan.kind === 'monthly' ? '本月定投买入' : '奖金加仓买入',
+      detail: !plan.A ? '输入投入总金额后查看买入清单。' : `按模型${S.cashflow ? '优先补充低配资产' : '目标比例分配新增资金'}，本次只买入。${buys.length ? `买入 ${buys.length} 个标的，共 ${usd(plan.buy)}。` : '当前金额与股数限制下没有可成交的买入。'}${afterOver.length ? `操作后仍有 ${afterOver.length} 个标的超出阈值，可在「检查再平衡」中单独处理。` : ''}${plan.leftover >= 0.01 ? `未投入现金 ${usd(plan.leftover)}。` : ''}`, tone: afterOver.length ? 'warn' : 'good' };
+  }
   const trades = [buys.length ? `买入 ${buys.length} 个标的，共 ${usd(plan.buy)}` : '', sells.length ? `卖出 ${sells.length} 个标的，共 ${usd(plan.sell)}` : ''].filter(Boolean).join('；');
   const reason = plan.V <= 0 ? '按目标比例开始建仓。' : plan.rebalance ? `${plan.thr ? '新钱分配后仍触及偏离阈值' : `本月是${S.period === 'Q' ? '季度' : '年度'}定期检查月`}，按模型调整配置。` : plan.needSell ? '模型已触发再平衡，但设置为「只买不卖」。' : plan.overNow.length && !afterOver.length ? '当前有标的超出阈值，按清单投入新钱后可回到范围内。' : plan.overNow.length ? '当前有标的超出阈值，按现有规则本月不触发卖出。' : '当前配置在阈值内，本月按模型分配新钱。';
   const residual = afterOver.length ? `操作后仍有 ${afterOver.length} 个标的超出阈值${S.wholeShares ? '（已考虑整股 / 整手限制）' : ''}。` : '';
   const cash = plan.leftover >= 0.01 ? `剩余 ${usd(plan.leftover)} 作为未投入现金。` : '';
   if (!buys.length && !sells.length) return { title: plan.A > 0 ? '本月暂不成交' : '本月无需交易',
-    detail: (plan.needSell ? reason : '') + (plan.A > 0 ? '按当前股数限制与金额，清单没有可成交交易。' : contributionApplied() ? '本月定投已记账，当前清单没有新增买卖。' : '本月没有新增资金，当前清单没有买卖。') + residual + cash, tone: afterOver.length ? 'warn' : 'good' };
+    detail: (plan.needSell || plan.kind === 'rebalance' ? reason : '') + (plan.A > 0 ? '按当前股数限制与金额，清单没有可成交交易。' : contributionApplied() ? '本月定投已记账，当前清单没有新增买卖。' : '本次没有新增资金，当前清单没有买卖。') + residual + cash, tone: afterOver.length ? 'warn' : 'good' };
   return { title: sells.length ? '按规则再平衡' : plan.V <= 0 ? '按比例建仓' : '本月只需买入', detail: reason + trades + '。' + residual + cash, tone: afterOver.length ? 'warn' : 'good' };
 }
 
@@ -1411,6 +1547,7 @@ function assetReading(id, plan) {
 }
 
 function renderOps(plan) {
+  renderInvestmentControls(plan);
   const applied = currentOpsApplied();
   const cny = (amount, decimals = 2) => '¥' + (amount * S.fx).toLocaleString('zh-CN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   $('#opsAsOf').textContent = `按 ${D.asOf || ym(LAST)} 收盘价`;
@@ -1419,30 +1556,36 @@ function renderOps(plan) {
   else if (plan.V <= 0) flag = `<div class="flag good ops-flag"><b>✓</b><span>还没有持仓：本月的钱直接按目标比例分配，开始建仓。</span></div>`;
   else if (plan.rebalance) flag = `<div class="flag warn ops-flag"><b>!</b><span>${plan.thr ? `${plan.over.slice().sort((a, b) => Math.abs(plan.cur[b] - plan.tw[b]) - Math.abs(plan.cur[a] - plan.tw[a])).slice(0, 2).map(id => `${id}（${pp(plan.cur[id] - plan.tw[id])}）`).join('、')}${plan.over.length > 2 ? ` 等 ${plan.over.length} 个资产` : ''} 超出了阈值` : `本月是${S.period === 'Q' ? '季度' : '年度'}定期检查月`}：按模型规则，本月把整个组合调回目标，需要卖出 ${usd0(plan.sell)}，连同新钱一起买入低配资产。</span></div>`;
   else if (plan.needSell) flag = `<div class="flag warn ops-flag"><b>!</b><span>按规则本月需要再平衡，但你选了「只买不卖」：只用新钱补低配，操作后最大偏离仍有 ${(plan.maxAfter * 100).toFixed(1)} 个百分点。</span></div>`;
-  else if (plan.overNow.length) flag = `<div class="flag good ops-flag"><b>✓</b><span>${plan.overNow.join('、')} 目前超出阈值，但本月新钱补进去后就能回到范围内，所以不用卖出。</span></div>`;
+  else if (plan.overNow.length) flag = `<div class="flag warn ops-flag"><b>!</b><span>当前有标的偏离目标，请核对本次清单与操作后占比。</span></div>`;
   else flag = `<div class="flag good ops-flag"><b>✓</b><span>所有资产都在阈值内：本月不用卖出，只需用新钱补足偏低的资产。</span></div>`;
   if (applied) flag = '<div class="flag good ops-flag"><b>✓</b><span>本次操作已记入持仓，本月新增定投不会重复计入。</span></div>';
+  if (plan.kind !== 'rebalance' && plan.ids.length) {
+    const action = readingAction(plan);
+    flag = `<div class="flag ${action.tone === 'warn' ? 'warn' : 'good'} ops-flag"><b>${action.tone === 'warn' ? '!' : '✓'}</b><span>${esc(plan.completed ? (plan.kind === 'monthly' ? `本期已经定投，下次定投时间在 ${Investment.monthlyDate(S, todayStr(), true)}。` : '本次加仓已经记账。再加一笔可从月度定投的完成提示进入。') : action.detail)}</span></div>`;
+  }
   $('#opsFlag').innerHTML = flag;
-  $('#opsSum').innerHTML = `<div><div class="l">买入合计</div><div class="v">${cny(plan.buy, 0)}</div><div class="c">${plan.ids.filter(id => plan.delta[id] > 0).length} 笔${plan.leftover >= 0.01 ? ` · 剩余 ${cny(plan.leftover)} 留到下月` : ''}</div></div>
+  $('#opsSum').innerHTML = `<div><div class="l">买入合计</div><div class="v">${cny(plan.buy, 0)}</div><div class="c">${plan.ids.filter(id => plan.delta[id] > 0).length} 笔${plan.leftover >= 0.01 ? ` · 未投入现金 ${cny(plan.leftover)}` : ''}</div></div>
     <div><div class="l">卖出合计</div><div class="v">${cny(plan.sell, 0)}</div><div class="c">${plan.ids.filter(id => plan.delta[id] < 0).length} 笔</div></div>
     <div><div class="l">最大偏离</div><div class="v">${(plan.maxAfter * 100).toFixed(1)} <small>百分点</small></div><div class="c">操作前 ${plan.V > 0 ? (Math.abs(plan.cur[plan.worstNow] - plan.tw[plan.worstNow]) * 100).toFixed(1) : '0.0'} 个百分点</div></div>`;
   const rows = plan.ids.slice().sort((a, b) => Math.abs(plan.delta[b]) - Math.abs(plan.delta[a])).map(id => {
     const d = plan.delta[id], sh = plan.shares[id]; const kind = d > 0 ? 'buy' : d < 0 ? 'sell' : 'hold';
     const tooSmall = S.wholeShares && !d && plan.intended[id] > 0;
-    const why = tooSmall ? `计划买 ${usd(plan.intended[id])}，不够买 1 ${lotOf(id) > 1 ? `手（${lotOf(id)} 股）` : '股'}，留到下月` : plan.V <= 0 ? '按目标比例建仓' : kind === 'sell' ? (plan.over.includes(id) ? '超出阈值，卖回目标' : '整体再平衡，卖回目标') : kind === 'buy' ? (plan.cur[id] < plan.tw[id] ? `低于目标 ${pp(plan.cur[id] - plan.tw[id]).replace('-', '')}，优先补` : plan.rebalance ? '整体再平衡，买回目标' : '按比例分配剩余新钱') : '高于目标，本月不买';
+    const why = plan.completed ? '本次操作已完成' : tooSmall ? `计划买 ${usd(plan.intended[id])}，不够买 1 ${lotOf(id) > 1 ? `手（${lotOf(id)} 股）` : '股'}，保留现金` : kind === 'sell' ? (plan.over.includes(id) ? '超出阈值，卖回目标' : '整体再平衡，卖回目标') : kind === 'buy' ? (plan.V <= 0 ? '按目标比例建仓' : plan.cur[id] < plan.tw[id] - READ_EPS ? `低于目标 ${readingPp(plan.cur[id] - plan.tw[id])}，优先补` : plan.rebalance ? '整体再平衡，买回目标' : '按模型分配新增资金') : plan.kind !== 'rebalance' && !plan.A ? '等待本次投入金额' : '本次未分配买卖金额';
     return `<tr><td><div class="tk" style="min-width:150px">${assetLogo(id)}<div><b>${id}</b><span>${A[id].cn}</span></div></div></td>
       <td><span class="op ${kind}">${{ buy: '买入', sell: '卖出', hold: '不动' }[kind]}</span></td>
-      <td class="r"><span class="amt">${d ? usd(Math.abs(d)) : '—'}</span>${d && CUR(id) !== 'USD' ? `<div class="small muted">≈ ${CUR_SYM[CUR(id)]}${Math.round(Math.abs(d) * fxNow(CUR(id))).toLocaleString('en-US')}</div>` : ''}</td>
-      <td class="r num">${d ? (S.wholeShares ? `${Math.abs(sh)} 股${lotOf(id) > 1 ? `<div class="small muted">${Math.abs(sh) / lotOf(id)} 手</div>` : ''}` : `${Math.abs(sh).toFixed(2)} 股<div class="small muted">${lotOf(id) > 1 ? `按手 ${Math.floor(Math.abs(sh) / lotOf(id) + 1e-9) * lotOf(id)} 股（每手 ${lotOf(id)}）` : `整数股 ${Math.floor(Math.abs(sh) + 1e-9)}`}</div>`) : '—'}</td>
+      <td class="r"><span class="amt">${d ? usd(Math.abs(d)) : '—'}</span>${d && CUR(id) !== 'USD' ? `<div class="small muted">≈ ${CUR_SYM[CUR(id)]}${Math.round(Math.abs(d) * fxNow(CUR(id))).toLocaleString('en-US')}</div>` : ''}${d > 0 && plan.kind !== 'rebalance' ? `<div class="small muted">占本次买入 ${fmtPct(d / plan.buy)}</div>` : ''}</td>
+      <td class="r num">${d ? (S.wholeShares ? `${Math.abs(sh)} 股${lotOf(id) > 1 ? `<div class="small muted">${Math.abs(sh) / lotOf(id)} 手</div>` : ''}` : `${Math.abs(sh).toFixed(3)} 股<div class="small muted">${lotOf(id) > 1 ? `按手 ${Math.floor(Math.abs(sh) / lotOf(id) + 1e-9) * lotOf(id)} 股（每手 ${lotOf(id)}）` : `整数股 ${Math.floor(Math.abs(sh) + 1e-9)}`}</div>`) : '—'}</td>
       <td><span class="wto">${fmtPct(plan.cur[id])} → <b>${fmtPct(plan.after[id])}</b><span class="muted"> / 目标 ${fmtPct(plan.tw[id])}</span></span></td>
       <td class="why">${why}</td></tr>`;
   }).join('');
   $('#opsTable').innerHTML = `<thead><tr><th>标的</th><th>操作</th><th class="r">金额</th><th class="r">${S.wholeShares ? '股数' : '约合股数'}</th><th>占比变化</th><th>原因</th></tr></thead><tbody>${rows}</tbody>`;
   const nBuy = plan.ids.filter(id => plan.delta[id] > 0).length, nSell = plan.ids.filter(id => plan.delta[id] < 0).length;
   $('#rbOps').textContent = `买 ${nBuy} · 卖 ${nSell}`;
-  $('#opsApply').disabled = !plan.ids.length;
-  $('#opsApply').textContent = applied || contributionApplied() ? '再次更新持仓' : '已下单，更新持仓';
-  $('#opsNote').textContent = applied ? S.lastAppliedOps.note : contributionApplied() ? '本月新增定投已记账，当前清单只调整现有持仓。' : '';
+  $('#opsApply').disabled = !plan.ids.length || sumW() !== 100 || (plan.completed && plan.kind !== 'monthly');
+  $('#opsApply').textContent = plan.kind === 'monthly' ? plan.completed ? '本期已定投，查看下次日期' : '已买入，更新定投持仓'
+    : plan.kind === 'bonus' ? plan.completed ? '本次加仓已记账' : '已加仓，更新持仓' : plan.completed ? '本次检查已记账' : '已执行，更新再平衡持仓';
+  $('#opsNote').textContent = plan.completed ? (plan.kind === 'monthly' ? '本期常规定投已完成，额外投入可在此按钮的弹窗中选择继续加仓。' : '本次操作已记录，无需重复确认。')
+    : plan.kind !== 'rebalance' ? '先在券商完成买入，再点击更新；此按钮只更新账本与持仓。' : '仅记录本次再平衡操作，月度定投名额保持原样。';
 }
 
 function renderHoldings(plan, rebuild) {
@@ -1561,10 +1704,10 @@ function withCurrentHoldings(action) {
 }
 async function copyOps() {
   const plan = window.__plan; if (!plan) return;
-  const lines = [`Dynamic Rebalancing · 本月操作清单（${new Date().toISOString().slice(0, 10)}，按 ${D.asOf} 收盘价）`, `模型：${S.label || '自定义'}；本月新增 ${usd(plan.A)}`];
-  for (const id of plan.ids) { const d = plan.delta[id]; if (!d) continue; lines.push(`${d > 0 ? '买入' : '卖出'} ${id}  ${usd(Math.abs(d))}  ${S.wholeShares ? '' : '≈ '}${S.wholeShares ? Math.abs(plan.shares[id]) : Math.abs(plan.shares[id]).toFixed(2)} 股`); }
-  if (lines.length === 2) lines.push('本月无需操作');
-  if (plan.leftover >= 0.01) lines.push(`剩余现金 ${usd(plan.leftover)} 留到下月`);
+  const lines = [`Dynamic Rebalancing · ${INVESTMENT_LABELS[plan.kind]}清单（${todayStr()}，按 ${D.asOf} 收盘价）`, `模型：${S.label || '自定义'}；本次新增 ${usd(plan.A)}`];
+  for (const id of plan.ids) { const d = plan.delta[id]; if (!d) continue; lines.push(`${d > 0 ? '买入' : '卖出'} ${id}  ${usd(Math.abs(d))}  ${S.wholeShares ? '' : '≈ '}${S.wholeShares ? Math.abs(plan.shares[id]) : Math.abs(plan.shares[id]).toFixed(3)} 股`); }
+  if (lines.length === 2) lines.push(plan.completed ? '本次操作已记账，无需重复执行' : '当前没有可成交操作');
+  if (plan.leftover >= 0.01) lines.push(`未投入现金 ${usd(plan.leftover)}`);
   const text = lines.join('\n');
   try { await navigator.clipboard.writeText(text); toast('已复制操作清单'); }
   catch (e) { const ta = document.createElement('textarea'); ta.className = 'copy-area'; ta.value = text; document.body.append(ta); ta.select(); try { document.execCommand('copy'); toast('已复制操作清单'); } catch (_) { toast('复制失败，请手动选中表格内容'); } ta.remove(); }
@@ -1578,7 +1721,7 @@ function nextRebalanceDate(today, preferredDay) {
     const interval = S.period === 'Q' ? 3 : 12;
     const periodMonth = Math.floor(currentMonth / interval) * interval;
     const dueDate = `${year}-${String(periodMonth + 1).padStart(2, '0')}-01`;
-    const lastConfirmed = S.lastAppliedOps?.confirmedOn || S.lastExecutionDate || S.lastRebalance || '';
+  const lastConfirmed = Investment.lastBalanceCheck(S, false) || '';
     if (dueDate === today && lastConfirmed !== today) return dueDate;
     const next = new Date(year, periodMonth + interval, 1);
     return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-01`;
@@ -1598,6 +1741,14 @@ function updateInvestmentReminder() {
     $('#opsDateReminder').textContent = '请选择下次平衡日期。';
     return;
   }
+  if (pendingOps.kind === 'monthly') {
+    $('#opsDateReminder').textContent = `本期为 ${pendingOps.period}。确认后，本期常规定投将标记为已完成，下次定投时间为 ${pendingOps.scheduledDate}。`;
+    return;
+  }
+  if (pendingOps.kind === 'bonus' || !pendingOps.calendarBased) {
+    $('#opsDateReminder').textContent = pendingOps.kind === 'bonus' ? '只记录本笔奖金加仓，每月预算与本期定投状态保持原样。' : '本次按模型阈值检查，不占用月度定投名额。';
+    return;
+  }
   const date = new Date(field.value + 'T12:00:00');
   $('#opsConfirmMonth').textContent = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long' }).format(date);
   $('#opsConfirmDay').textContent = String(date.getDate()).padStart(2, '0');
@@ -1613,97 +1764,164 @@ function updateInvestmentReminder() {
   $('#opsDateReminder').textContent = reminder;
 }
 
+function investmentError(message, confirmation = false) {
+  const field = $(confirmation ? '#opsConfirmError' : '#investmentError');
+  field.textContent = message; field.hidden = !message;
+}
+function bonusError(message) {
+  $('#bonusError').textContent = message;
+  $('#bonusError').hidden = !message;
+}
+function openBonusDialog() {
+  $('#investmentDoneDialog').close();
+  bonusDraft = { intent: {kind:'bonus', amountCny:0, period:todayStr().slice(0,7), id:crypto.randomUUID()}, plan:null, context:'', today:todayStr() };
+  $('#bonusAmount').value = ''; $('#bonusAmount').disabled = false; bonusError('');
+  renderBonusPreview(); $('#bonusDialog').showModal(); $('#bonusAmount').focus();
+}
+function renderBonusPreview() {
+  if (!bonusDraft) return;
+  const amount = $('#bonusAmount'), valid = amount.validity.valid && +amount.value > 0;
+  bonusDraft.intent.amountCny = valid ? +amount.value : 0;
+  bonusDraft.plan = planRebalance(bonusDraft.intent);
+  bonusDraft.context = opsContext(); bonusDraft.today = todayStr();
+  const plan = bonusDraft.plan, cny = value => '¥' + value.toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  $('#bonusAmountHint').textContent = valid ? `按当前汇率约 ${usd(plan.A)} · 每月预算保持 ${S.monthly.toLocaleString('zh-CN')} 元。` : '只计算本笔额外投入，不改变常规定投计划。';
+  $('#bonusBuyTotal').textContent = valid ? cny(plan.buy * S.fx) : '—';
+  $('#bonusCashTotal').textContent = valid ? cny(plan.leftover * S.fx) : '—';
+  $('#bonusTable tbody').innerHTML = !valid ? '<tr><td colspan="4" class="muted">输入金额后，买入清单将在这里显示。</td></tr>' : plan.ids.map(id => {
+    const money = Math.max(0, plan.delta[id]), shares = Math.max(0, plan.shares[id]);
+    return `<tr><td><b>${esc(id)}</b><span class="small muted bonus-asset-name">${esc(A[id].cn)}</span></td><td class="r" data-label="买入比例">${plan.buy > 0 ? fmtPct(money / plan.buy) : '—'}</td><td class="r" data-label="金额（元）">${cny(money * S.fx)}<span class="small muted bonus-asset-name">约 ${usd(money)}</span></td><td class="r" data-label="股数">${S.wholeShares ? shares : shares.toFixed(3)} 股${S.wholeShares && lotOf(id) > 1 ? `<span class="small muted bonus-asset-name">${shares / lotOf(id)} 手</span>` : ''}</td></tr>`;
+  }).join('');
+  $('#bonusPlanStatus').textContent = !valid ? '请先输入有效的加仓金额。' : !plan.ids.length ? '请先在模型中配置标的。' : !(plan.buy > 0) ? '当前金额与股数设置下没有可成交买入；可以调整金额后重新计算。' : `按 ${D.asOf} 参考价估算，${S.wholeShares ? '按整股 / 整手' : '按 0.001 股精度'}计算。比例以本次分配的买入合计为基数；未投入现金单独列出。确认已买入前，持仓保持原样。`;
+  $('#bonusConfirm').disabled = !valid || !(plan.buy > 0) || sumW() !== 100 || plan.completed;
+}
+function recordInvestment(plan, request) {
+  const previous = structuredClone(S), executionDate = todayStr(), hasTrades = plan.buy > 0 || plan.sell > 0;
+  if (!S.ledger) S.ledger = Ledger.open(S.holdings, executionDate, D.asOf, px, null, S.lastAppliedOps);
+  for (const id of plan.ids) if (plan.shares[id]) S.holdings[id] = +(((+S.holdings[id] || 0) + plan.shares[id])).toFixed(3);
+  if (request.kind === 'monthly' && hasTrades) { S.contributionMonth = request.period; S.investmentDay = Investment.preferredDay(S, executionDate); }
+  if (request.kind === 'rebalance') S.lastBalanceCheckDate = executionDate;
+  if (plan.rebalance && plan.sell > 0) S.lastRebalance = executionDate;
+  if (hasTrades) S.lastExecutionDate = executionDate;
+  const trades = Ledger.changes(previous.holdings, S.holdings, px);
+  Ledger.append(S.ledger, S.holdings, {
+    kind: request.kind === 'monthly' ? '月度定投' : request.kind === 'bonus' ? '奖金加仓' : '再平衡检查',
+    investmentType: request.kind, operationId: request.operationId, period: request.period,
+    date: executionDate, priceDate: D.asOf, model: S.label, trades, flow: Ledger.net(trades),
+    budgetCny: plan.amountCny, budgetUsd: plan.A, unspentUsd: plan.leftover,
+  });
+  S.lastAppliedOps = { context: request.kind === investmentIntent.kind ? opsContext() : JSON.stringify([opsContext(), request.operationId]), confirmedOn:executionDate, investmentType:request.kind, operationId:request.operationId,
+    note:`${INVESTMENT_LABELS[request.kind]}已于 ${executionDate} 记账，持仓已更新。` };
+  return saveLedgerChange(previous);
+}
+async function confirmBonus(event) {
+  event.preventDefault();
+  const dialog = $('#bonusDialog'), submit = $('#bonusConfirm'), amount = $('#bonusAmount'), draft = bonusDraft;
+  if (!draft || submit.disabled || !event.currentTarget.reportValidity()) return;
+  submit.disabled = true; amount.disabled = true;
+  let checked = false;
+  try {
+    await withCurrentHoldings(() => {
+      checked = true;
+      if (!dialog.open || bonusDraft !== draft) return;
+      if (Investment.operationDone(S, draft.intent, todayStr())) { dialog.close(); renderRebalance(); toast('本笔加仓已记账，无需重复确认。'); return; }
+      if (draft.today !== todayStr() || draft.context !== opsContext()) {
+        amount.disabled = false; renderBonusPreview(); bonusError('日期、持仓或模型已变化，已重新计算，请核对清单后再次确认。'); return;
+      }
+      if (S.holdingsExample) { bonusError('请先填入真实持仓后再确认加仓。'); return; }
+      if (S.ledger && holdingChanges().length) { bonusError('持仓股数与账本有差异，请先核对后再加仓。'); return; }
+      const plan = planRebalance(draft.intent);
+      if (!(plan.buy > 0) || sumW() !== 100) { bonusError('当前没有可成交买入，或模型权重合计不是 100%。'); return; }
+      if (!recordInvestment(plan, {kind:'bonus', operationId:plan.operationId, period:todayStr().slice(0,7)})) {
+        bonusError('加仓未能保存，持仓已恢复。请检查浏览器存储后重试。'); return;
+      }
+      dialog.close(); renderRebalance(); toast('加仓已记账，持仓已更新');
+    });
+    if (!checked && dialog.open && bonusDraft === draft) {
+      amount.disabled = false; renderBonusPreview(); bonusError('持仓已在其他页面更新，已重算本笔加仓，请核对后再次确认。');
+    }
+  } finally {
+    amount.disabled = false;
+    if (dialog.open && bonusDraft === draft) submit.disabled = !(draft.plan?.buy > 0) || sumW() !== 100;
+  }
+}
 function applyOps() {
   return withCurrentHoldings(() => {
-    const plan = planRebalance();
-    const dialog = $('#opsConfirm');
+    const plan = planRebalance(), dialog = $('#opsConfirm');
     if (dialog.open || !plan.ids.length) return;
-    if (S.holdingsExample) { toast('请先填入实际股数；首次定投可清空示例持仓后记账。'); return; }
-    if (currentOpsApplied()) { toast('这笔操作已记账。'); return; }
-    if (S.ledger && !S.holdingsExample && holdingChanges().length) {
-      go('history'); toast('请先核对手动修改的持仓股数。'); return;
-    }
-    const today = todayStr();
-    const lastExecution = S.lastExecutionDate || S.lastRebalance;
-    const fallbackDay = lastExecution ? +lastExecution.slice(8) : +today.slice(8);
-    const preferredDay = Math.min(31, Math.max(1, Number(S.investmentDay) || fallbackDay));
-    const scheduledDate = nextRebalanceDate(today, preferredDay);
-    const year = +scheduledDate.slice(0, 4), month = +scheduledDate.slice(5, 7);
-    const lastDay = new Date(year, month, 0).getDate();
-    const calendarBased = S.mode === 'hybrid' || S.mode === 'calendar';
-    pendingOps = { context: opsContext(), today, preferredDay, scheduledDate, calendarBased, thresholdTriggered: plan.thr };
+    if (plan.kind === 'monthly' && contributionApplied()) { showInvestmentDone(); return; }
+    if (currentOpsApplied()) { toast('这笔操作已记账，请新建一笔后再确认。'); return; }
+    if (sumW() !== 100) { investmentError('请先将模型的目标权重合计调整到 100%。'); return; }
+    if (plan.kind !== 'rebalance' && (!$('#investmentAmount').reportValidity() || !(plan.A > 0))) { investmentError('请输入大于 0 的本次投入金额。'); return; }
+    if (plan.kind === 'monthly' && !$('#investmentDay').reportValidity()) return;
+    if (S.holdingsExample) { investmentError('请先填入实际股数；首次定投可清空示例持仓后买入并记账。'); return; }
+    if (S.ledger && holdingChanges().length) { go('history'); toast('请先核对手动修改的持仓股数。'); return; }
+    if (plan.kind !== 'rebalance' && !(plan.buy > 0)) { investmentError('当前金额不足以生成可成交买入，请调整金额或股数设置；本期尚未记为完成。'); return; }
+    const today = todayStr(), calendarBased = plan.kind === 'rebalance' && ['calendar', 'hybrid'].includes(S.mode);
+    const scheduledDate = plan.kind === 'monthly' ? Investment.monthlyDate(S, today, true) : calendarBased ? nextRebalanceDate(today, 1) : today;
+    pendingOps = { context: opsContext(), today, kind: plan.kind, operationId: plan.operationId, period: today.slice(0, 7), scheduledDate, calendarBased, thresholdTriggered: plan.thr };
     const field = $('#opsInvestmentDate');
-    field.readOnly = calendarBased;
-    $('#opsScheduleHint').textContent = calendarBased
-      ? S.period === 'Q' ? '按定期检查规则，每季度首月 1 日提醒。' : '按定期检查规则，每年 1 月 1 日提醒。'
-      : S.mode === 'threshold' ? '按月提醒定投，平衡由偏离阈值触发。' : '按月提醒定投。';
-    $('label[for="opsInvestmentDate"]').textContent = calendarBased ? '下次计划平衡日期' : '下次计划定投日期';
-    field.min = scheduledDate.slice(0, 8) + '01';
-    field.max = scheduledDate.slice(0, 8) + String(lastDay).padStart(2, '0');
-    field.value = scheduledDate;
-    $('#opsConfirmToday').textContent = '今天 · ' + new Intl.DateTimeFormat('zh-CN', { dateStyle: 'full' }).format(new Date(today + 'T12:00:00'));
-    const previous = S.lastExecutionDate || S.lastRebalance;
-    $('#opsConfirmPrevious').textContent = previous ? `上次执行记录 · ${previous}` : '暂无执行记录';
-    const cny = value => '¥' + Math.round(value * S.fx).toLocaleString('zh-CN');
-    $('#opsConfirmBuy').textContent = cny(plan.buy);
-    $('#opsConfirmSell').textContent = cny(plan.sell);
-    $('#opsConfirmIntro').textContent = plan.buy || plan.sell
-      ? '确认后，将按当前操作清单更新持仓。'
-      : '当前清单无需买卖，可确认核对本次持仓。';
+    field.value = scheduledDate; field.readOnly = true; field.removeAttribute('min'); field.removeAttribute('max');
+    $('#opsConfirm .execution-calendar').hidden = plan.kind === 'bonus' || (plan.kind === 'rebalance' && !calendarBased);
+    $('#opsConfirmTitle').textContent = plan.kind === 'monthly' ? '确认本期定投已买入' : plan.kind === 'bonus' ? '确认奖金加仓已买入' : '确认本次再平衡';
+    $('label[for="opsInvestmentDate"]').textContent = plan.kind === 'monthly' ? '下次计划定投日期' : '下次计划平衡日期';
+    $('#opsScheduleHint').textContent = plan.kind === 'monthly' ? '每月一次，和季度 / 年度平衡周期独立。' : '根据模型的定期检查规则计算。';
+    $('#opsConfirmToday').textContent = '今天 · ' + new Intl.DateTimeFormat('zh-CN', {dateStyle:'full'}).format(new Date(today+'T12:00:00'));
+    $('#opsConfirmPrevious').textContent = S.lastExecutionDate ? `上次执行记录 · ${S.lastExecutionDate}` : '暂无执行记录';
+    const cny = value => '¥' + (value*S.fx).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    $('#opsConfirmBuy').textContent = cny(plan.buy); $('#opsConfirmSell').textContent = cny(plan.sell);
+    $('#opsConfirmIntro').textContent = plan.kind === 'rebalance' ? '请核对本次买卖，确认后记录再平衡检查并更新持仓。' : `确认你已在券商完成本次买入后，将更新持仓并写入${plan.kind === 'monthly' ? '本期定投' : '奖金加仓'}记录。`;
+    $('#opsConfirmContinue').textContent = '确认，更新持仓';
     $('#opsConfirmContinue').disabled = false;
-    updateInvestmentReminder();
-    dialog.showModal();
+    investmentError(''); investmentError('', true); updateInvestmentReminder(); dialog.showModal();
   });
 }
 
 async function confirmOps(event) {
   event.preventDefault();
-  const dialog = $('#opsConfirm');
-  const submit = $('#opsConfirmContinue');
-  if (!pendingOps || submit.disabled || !event.currentTarget.reportValidity()) return;
-  const request = pendingOps;
-  const selectedDate = $('#opsInvestmentDate').value;
+  const dialog = $('#opsConfirm'), submit = $('#opsConfirmContinue'), request = pendingOps;
+  if (!request || submit.disabled || !event.currentTarget.reportValidity()) return;
   submit.disabled = true;
+  let checked = false;
   try {
     await withCurrentHoldings(() => {
+      checked = true;
       if (!dialog.open || pendingOps !== request) return;
-      if (request.context !== opsContext() || request.today !== todayStr()) {
-        renderRebalance();
-        toast('日期或操作清单已变化，请重新核对后再确认。');
-        return;
-      }
+      if (request.today !== todayStr() || request.context !== opsContext()) { dialog.close(); renderRebalance(); toast('日期或清单已变化，请重新核对后确认。'); return; }
+      if (request.kind === 'monthly' && contributionApplied()) { dialog.close(); renderRebalance(); return; }
+      if (currentOpsApplied() || S.holdingsExample) { dialog.close(); renderRebalance(); return; }
       const plan = planRebalance();
-      if (!plan.ids.length) return;
+      if (!plan.ids.length || plan.operationId !== request.operationId) return;
       const hasTrades = plan.buy > 0 || plan.sell > 0;
-      const executionDate = todayStr();
-      if (S.holdingsExample || currentOpsApplied()) return;
-      const previous = structuredClone(S);
-      if (!S.ledger) S.ledger = Ledger.open(S.holdings,executionDate,D.asOf,px,null,S.lastAppliedOps);
-      for (const id of plan.ids) {
-        if (plan.shares[id]) S.holdings[id] = +(((+S.holdings[id] || 0) + plan.shares[id])).toFixed(3);
-      }
-      if (plan.rebalance && plan.sell > 0) S.lastRebalance = todayStr();
-      if (plan.A > 0 && hasTrades) S.contributionMonth = executionDate.slice(0, 7);
-      if (!request.calendarBased) S.investmentDay = selectedDate === request.scheduledDate ? request.preferredDay : +selectedDate.slice(8);
-      if (hasTrades) S.lastExecutionDate = executionDate;
-      S.lastAppliedOps = {
-        context: opsContext(), confirmedOn: executionDate, example: !!S.holdingsExample,
-        note: `${hasTrades ? `持仓已于 ${executionDate} 按清单更新。` : `持仓已于 ${executionDate} 核对，当前清单无需买卖。`}${contributionApplied() ? '本月新增定投已记账。' : ''}实际成交股数不同时，可直接修改持有股数。`,
-      };
-      const trades = Ledger.changes(previous.holdings,S.holdings,px);
-      const kind = !trades.length ? '持仓核对' : plan.rebalance && plan.sell>0 ? (plan.A>0?'定投与再平衡':'动态再平衡') : '定投';
-      Ledger.append(S.ledger,S.holdings,{kind,date:executionDate,priceDate:D.asOf,model:S.label,trades,flow:Ledger.net(trades)});
-      saveLedgerChange(previous);
-      renderRebalance();
+      if (request.kind !== 'rebalance' && !hasTrades) { investmentError('当前没有可成交买入，本期不会记为完成。', true); return; }
+      if (!recordInvestment(plan, request)) { investmentError('本次记录未能保存，持仓已恢复。请检查存储空间后重试。', true); return; }
+      dialog.close(); renderRebalance();
+      toast(`${INVESTMENT_LABELS[request.kind]}已记账，持仓已更新`);
     });
-  } finally {
-    if (dialog.open) dialog.close();
-    submit.disabled = false;
-  }
+    if (!checked && dialog.open) {
+      dialog.close();
+    }
+  } finally { submit.disabled = false; }
 }
 
 function bindRebalance() {
   bindLedger();
+  $('#investmentModes').addEventListener('click', event => { const button = event.target.closest('[data-kind]'); if (button) selectInvestmentKind(button.dataset.kind); });
+  $('#investmentAmount').addEventListener('input', event => {
+    investmentIntent.amountCny = event.target.validity.valid ? +event.target.value : 0;
+    investmentError(''); refreshRebalance();
+  });
+  $('#investmentDay').addEventListener('input', event => {
+    if (!event.target.validity.valid) return;
+    S.investmentDay = +event.target.value; save(); investmentError(''); refreshRebalance();
+  });
+  $('#investmentDoneClose').onclick = () => $('#investmentDoneDialog').close();
+  $('#investmentDoneBonus').onclick = openBonusDialog;
+  $('#bonusAmount').addEventListener('input', () => { bonusError(''); renderBonusPreview(); });
+  $('#bonusAmount').addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); if (!$('#bonusConfirm').disabled) $('#bonusConfirm').focus(); } });
+  $('#bonusForm').addEventListener('submit', confirmBonus);
+  $('#bonusCancel').onclick = () => $('#bonusDialog').close();
+  $('#bonusDialog').addEventListener('close', () => { bonusDraft = null; if (current === 'rebalance') $('#opsApply').focus({preventScroll:true}); });
   $('#rebalance').addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go); });
   $('#holdTable').addEventListener('input', e => { const inp = e.target.closest('.hold-in'); if (!inp) return; const id = inp.id.slice(2); S.holdings[id] = Math.max(0, +inp.value || 0); S.holdingsExample = false; delete S.beforeExample; $('#holdExample').textContent='填入示例持仓'; save(); refreshRebalance(); $('#exampleNote').innerHTML = ''; });
   $('#holdExample').onclick = () => {
@@ -1786,7 +2004,7 @@ function balanceHeadlineState(plan, today = todayStr()) {
   if (m.status === 'level') return { state: 'level', text: '目前已经平衡，正如他应有的样子' };
   if (S.mode === 'hybrid' || S.mode === 'calendar') {
     // A previous confirmation establishes the schedule; a first visit is not a missed deadline.
-    const anchor = [S.lastAppliedOps?.confirmedOn, S.lastExecutionDate, S.lastRebalance, S.ledger?.date]
+    const anchor = [Investment.lastBalanceCheck(S)]
       .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date || '') && Number.isFinite(Date.parse(date)) && date <= today).sort().at(-1);
     if (anchor) {
       const interval = S.period === 'Q' ? 3 : 12;
@@ -2119,12 +2337,13 @@ window.assistantPortfolio = function(includePlan) {
     }))
   };
   if (includePlan) report.定投计划 = {
-    名称: S.label || '自定义', 每月预算人民币: S.monthly, 本月尚待投入美元: money(p.A),
+    名称: S.label || '自定义', 每月预算人民币: S.monthly, 本次尚待投入美元: money(p.A),
+    当前操作: INVESTMENT_LABELS[p.kind], 本次投入预算人民币: p.amountCny,
     每美元折合人民币: S.fx, 本次清单已记账: booked, 本月资金已记账: contributionApplied(),
-    允许卖出: S.allowSell !== false, 整股整手: !!S.wholeShares, 优先补低配: !!S.cashflow,
+    允许卖出: p.kind === 'rebalance' && S.allowSell !== false, 整股整手: !!S.wholeShares, 优先补低配: !!S.cashflow,
     调整规则: {方式: S.mode, 周期: S.period, 绝对偏离阈值: S.abs, 相对偏离阈值: S.rel},
     清单说明: readingAction(p),
-    本月清单: p.ids.map(id => ({
+    本次清单: p.ids.map(id => ({
       代码: id, 名称: A[id].cn, 目标占比百分数: money(100 * p.tw[id]),
       计划买入美元: booked ? 0 : money(Math.max(0, p.delta[id])),
       计划卖出美元: booked ? 0 : money(Math.max(0, -p.delta[id]))
@@ -2145,6 +2364,8 @@ function go(v, push = true) {
   if (v === 'research' || v === 'ai') { v = 'assistant'; history.replaceState(null, '', '#assistant'); }
   if (!VIEWS.includes(v)) v = 'rebalance';
   if ($('#opsConfirm').open) $('#opsConfirm').close();
+  if ($('#investmentDoneDialog').open) $('#investmentDoneDialog').close();
+  if ($('#bonusDialog').open) $('#bonusDialog').close();
   if (!$('#drawer').hidden) closeDrawer();
   const changingView = current && current !== v;
   current = v;
@@ -2167,7 +2388,9 @@ function go(v, push = true) {
 function bindSharedBook() {
   const sync = window.privateAccount?.sync;
   const bar = $('#collaboration');
-  if (!window.privateAccount?.pages) return;
+  const host = location.hostname;
+  const local = host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host === '[::1]' || /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+  if (!window.privateAccount?.pages || local || !['http:', 'https:'].includes(location.protocol)) return;
   bar.hidden=false;
   if (!sync) { $('#cloudStatus').textContent='当前仅保存在此浏览器，共享服务尚未连接。'; return; }
   $('#cloudStatus').textContent='正在连接共享账本…';
@@ -2199,15 +2422,21 @@ function bindSharedBook() {
       const state=book.state;
       const holdingsValid=o=>o && typeof o==='object' && Object.entries(o).every(([id,n])=>IDS.includes(id) && Number.isFinite(n) && n>=0);
       if (['weights','holdings','beforeExample'].some(k=>state[k] && !holdingsValid(state[k]))) throw Error('共享持仓格式错误');
-      if (state.lastRebalance && !/^\d{4}-\d{2}-\d{2}$/.test(state.lastRebalance)) throw Error('日期格式错误');
+      if (['lastRebalance','lastBalanceCheckDate','lastExecutionDate'].some(key => state[key] && !/^\d{4}-\d{2}-\d{2}$/.test(state[key]))) throw Error('日期格式错误');
+      if (state.contributionMonth && !/^\d{4}-\d{2}$/.test(state.contributionMonth)) throw Error('定投期次格式错误');
       const numeric = ['monthly','initial','fee','fx','investmentDay','abs','rel'];
       if(numeric.some(k=>state[k]!=null && !Number.isFinite(state[k]))) throw Error('共享定投金额或设置格式错误');
       if(state.favorites && (!Array.isArray(state.favorites)||state.favorites.some(id=>!IDS.includes(id)))) throw Error('共享收藏格式错误');
       if(state.mode && !['none','threshold','hybrid','calendar'].includes(state.mode)) throw Error('共享策略格式错误');
       if(state.ledger && (!Array.isArray(state.ledger.entries)||!Array.isArray(state.ledger.positions)||!holdingsValid(state.ledger.holdings))) throw Error('投资记录格式错误');
       for(const r of state.ledger?.positions || []) if(!IDS.includes(r.id)||!Number.isFinite(r.quantity)||!Number.isFinite(r.price))throw Error('期初持仓格式错误');
+      const operationIds = new Set();
       for(const entry of state.ledger?.entries || []) {
         if(!Number.isFinite(entry.flow)||!Array.isArray(entry.trades)||entry.trades.some(r=>!IDS.includes(r.id)||!Number.isFinite(r.price)||!Number.isFinite(r.quantity)))throw Error('成交记录格式错误');
+        if(entry.investmentType) {
+          if(!['monthly','bonus','rebalance'].includes(entry.investmentType)||typeof entry.operationId!=='string'||!entry.operationId||operationIds.has(entry.operationId)||!/^\d{4}-\d{2}$/.test(entry.period)||!/^\d{4}-\d{2}-\d{2}$/.test(entry.date))throw Error('定投或加仓记录格式错误');
+          operationIds.add(entry.operationId);
+        }
       }
       if(state.ledger?.past?.some(r=>!IDS.includes(r.id)||!Number.isFinite(r.flow)||!Number.isFinite(r.quantity)))throw Error('历史成交格式错误');
       if(Object.entries(book.templates).some(([id,p])=>!/^custom-[a-z0-9-]+$/i.test(id)||p.key!==id||typeof p.name!=='string'||!holdingsValid(p.w)))throw Error('自建模型格式错误');
@@ -2247,7 +2476,16 @@ function boot() {
   window.addEventListener('hashchange', () => go(location.hash.slice(1), false));
   $('#heroRun').onclick = () => { if (sumW() === 100) go('backtest'); else $('#weightRows').scrollIntoView({ behavior: 'smooth' }); };
   go((location.hash || '#rebalance').slice(1), false);
-  const refreshHeadline = () => { if (current === 'rebalance' && window.__plan) renderBalanceHeadline(window.__plan); };
+  const refreshHeadline = () => {
+    if (current !== 'rebalance' || !window.__plan) return;
+    if (investmentIntent.period !== todayStr().slice(0, 7)) {
+      if ($('#opsConfirm').open) $('#opsConfirm').close();
+      if ($('#investmentDoneDialog').open) $('#investmentDoneDialog').close();
+      if ($('#bonusDialog').open) $('#bonusDialog').close();
+      investmentIntent = {kind:'monthly',amountCny:null,period:todayStr().slice(0,7),id:''};
+      refreshRebalance();
+    } else renderBalanceHeadline(window.__plan);
+  };
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHeadline(); });
   setInterval(refreshHeadline, 60000);
   const mq = matchMedia('(prefers-color-scheme: dark)'); const onTheme = () => { rethemeCharts(); renderAssets(); if (current === 'backtest' && bt.r) renderStack(bt.r); };

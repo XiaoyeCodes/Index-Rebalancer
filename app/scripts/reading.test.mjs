@@ -5,6 +5,7 @@ import vm from 'node:vm';
 
 // Exercise the actual planner and reading code together, without browser/CDN dependencies.
 const source = fs.readFileSync(new URL('../src.html', import.meta.url), 'utf8');
+const Investment = vm.runInNewContext(fs.readFileSync(new URL('../investment.js', import.meta.url), 'utf8') + '\nInvestment');
 const section = (from, to) => source.slice(source.indexOf(from), source.indexOf(to, source.indexOf(from)));
 function fixture() {
   const elements = new Map();
@@ -19,6 +20,7 @@ function fixture() {
     A: { AAA: { cn: 'Asset A', risk: 4 }, BBB: { cn: 'Asset B', risk: 3 } },
     D: { n: 131, asOf: '2026-11-06', assets: { AAA: { first: 0, c: Array(131).fill(100) }, BBB: { first: 0, c: Array(131).fill(100) } } },
     N: 131, ST: { AAA: { vol: 0.2 }, BBB: { vol: 0.1 } },
+    Investment, investmentIntent: { kind: 'monthly', amountCny: null, period: '2026-11', id: '' }, todayStr: () => '2026-11-08',
     receiptApplied: false, appliedContribution: false, backtests: [],
     fmtPct: (v, digits = 1, sign = false) => v == null || !Number.isFinite(v) ? '—' : (sign && v > 0 ? '+' : '') + (v * 100).toFixed(digits) + '%',
     usd: v => '$' + v.toFixed(2), assetLogo: () => '', ym: () => '2024-05',
@@ -33,7 +35,7 @@ function fixture() {
     const contributionApplied = () => appliedContribution;
     const opsContext = () => JSON.stringify([S,receiptApplied,appliedContribution]);
     let readCtl = null;
-    ${section('function planRebalance()', 'function marketRead(')}
+    ${section('function planRebalance(', 'function marketRead(')}
     ${section('function marketRead(', 'function renderOps(')}
     ${section('let modelBt = null', 'function renderRebalance(')}
   `, sandbox);
@@ -72,7 +74,7 @@ test('no cash means hold, even for an underweight asset', () => {
   const f = fixture();
   Object.assign(f.sandbox.S, { monthly: 0, holdings: { AAA: 49, BBB: 51 } });
   assert.match(f.evaluate('assetReading("AAA",planRebalance())'), /保持不动/);
-  assert.match(f.evaluate('readingAction(planRebalance()).title'), /无需交易/);
+  assert.match(f.evaluate('readingAction(planRebalance()).title'), /填写本次投入金额/);
 });
 
 test('an overweight asset that actually receives money is correctly described as bought', () => {
@@ -84,6 +86,7 @@ test('an overweight asset that actually receives money is correctly described as
 
 test('sell restrictions retain residual warnings instead of promising correction', () => {
   const f = fixture();
+  f.sandbox.investmentIntent.kind = 'rebalance';
   Object.assign(f.sandbox.S, { allowSell: false, monthly: 100, holdings: { AAA: 90, BBB: 10 } });
   const detail = f.evaluate('readingAction(planRebalance()).detail');
   assert.match(detail, /只买不卖/);
@@ -93,6 +96,7 @@ test('sell restrictions retain residual warnings instead of promising correction
 
 test('calendar-only mode does not claim a threshold crossing caused a rebalance', () => {
   const f = fixture();
+  f.sandbox.investmentIntent.kind = 'rebalance';
   Object.assign(f.sandbox.S, { mode: 'calendar', monthly: 100, holdings: { AAA: 90, BBB: 10 } });
   const detail = f.evaluate('readingAction(planRebalance()).detail');
   assert.match(detail, /按现有规则本月不触发卖出/);
@@ -101,6 +105,7 @@ test('calendar-only mode does not claim a threshold crossing caused a rebalance'
 
 test('whole-share constraints are reflected in actual post-trade deviations', () => {
   const f = fixture();
+  f.sandbox.investmentIntent.kind = 'rebalance';
   Object.assign(f.sandbox.S, { wholeShares: true, abs: 3, monthly: 40, holdings: { AAA: 1, BBB: 0 } });
   const plan = f.evaluate('planRebalance()');
   assert.ok(plan.delta.AAA === 0);

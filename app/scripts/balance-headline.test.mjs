@@ -4,11 +4,12 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const source = fs.readFileSync(new URL('../src.html', import.meta.url), 'utf8');
+const Investment = vm.runInNewContext(fs.readFileSync(new URL('../investment.js', import.meta.url), 'utf8') + '\nInvestment');
 const code = source.slice(source.indexOf('function balanceView('), source.indexOf('function renderBalanceHeadline('));
 function fixture() {
   const ctx = vm.createContext({
     S: { mode: 'threshold', abs: 5, rel: 25, period: 'Q' },
-    A: { H: { risk: 4 }, H2: { risk: 5 }, L: { risk: 3 } }, READ_EPS: 0.0005,
+    Investment, A: { H: { risk: 4 }, H2: { risk: 5 }, L: { risk: 3 } }, READ_EPS: 0.0005,
     todayStr: () => '2026-11-09',
   });
   vm.runInContext('const bandOf = w => Math.min(S.abs/100,S.rel/100*w);' + code, ctx);

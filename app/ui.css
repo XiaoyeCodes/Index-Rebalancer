@@ -570,6 +570,49 @@ tr.group td {
   backdrop-filter: blur(4px);
 }
 
+.bonus-dialog {
+  width: min(720px, calc(100% - 32px));
+}
+.bonus-dialog .execution-actions .btn {
+  padding-inline: 10px;
+}
+.bonus-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 16px;
+  margin: 20px 0 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--sunken);
+}
+.bonus-totals span, .bonus-asset-name {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.bonus-totals strong {
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+#bonusTable {
+  width: 100%;
+}
+#bonusTable td, #bonusTable th {
+  padding: 12px 8px;
+}
+#bonusPlanStatus {
+  line-height: 1.7;
+  margin-top: 12px;
+}
+@media (max-width:520px) {
+  #bonusTable thead { display:none; }
+  #bonusTable tbody { display:block; }
+  #bonusTable tr { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; padding:14px 0; border-bottom:1px solid var(--line); }
+  #bonusTable td { display:block; padding:0; border:0; text-align:left; overflow-wrap:anywhere; }
+  #bonusTable td:first-child { grid-column:1/-1; }
+  #bonusTable td[data-label]::before { content:attr(data-label); display:block; margin-bottom:4px; font-size:11px; color:var(--ink-3); }
+}
+
 .execution-dialog h2 {
   font-size: 25px;
   font-weight: 650;
@@ -897,6 +940,68 @@ tr.group td {
 
 .sum.bad .num {
   color: var(--bad);
+}
+
+.weight-save-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.investment-controls {
+  padding: 0 22px 20px;
+}
+.investment-modes {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+.investment-help, .investment-status {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--ink-2);
+  margin: 12px 0;
+}
+.investment-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 18px;
+  max-width: 650px;
+}
+.investment-status {
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--sunken);
+}
+@media (max-width:520px) {
+  .investment-controls { padding-inline:16px; }
+  .investment-fields { grid-template-columns:1fr; }
+  .investment-fields input { font-size:16px; }
+}
+
+.weight-save-copy {
+  flex: 1 1 190px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.weight-save-copy p {
+  margin: 0;
+}
+
+#weightSaveStatus:not(:empty) {
+  display: block;
+  margin-top: 5px;
+}
+
+@media (max-width:520px) {
+  .weight-save-footer .btn { width: 100%; }
 }
 
 .tiers {
@@ -3663,4 +3768,5 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
 .ledger-method summary {cursor:pointer;}
 @media(max-width:740px){.ledger-totals.kpis {grid-template-columns:repeat(2,minmax(0,1fr));}.ledger-row summary {gap:.4rem;}}
 
-#collaboration{display:flex;align-items:center;flex-wrap:wrap;gap:.7rem;padding:.65rem 0;font-size:.85rem;color:var(--ink-3)}
+#collaboration{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);font-size:.85rem;color:var(--ink-3)}
+#collaboration .sync-controls{display:flex;align-items:center;flex-wrap:wrap;gap:.7rem}
