@@ -15,6 +15,8 @@ for (const entry of fs.readdirSync(output, {withFileTypes:true})) {
   }
 }
 const assistant = path.join(root, 'assistant');
+fs.mkdirSync(path.join(output,'assets'),{recursive:true});
+fs.copyFileSync(path.join(app,'assets/favicon.png'),path.join(output,'assets/favicon.png'));
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const options = {cwd:assistant,stdio:'inherit',shell:process.platform==='win32'};
 if (!fs.existsSync(path.join(assistant,'node_modules/vite/bin/vite.js'))) execFileSync(npm,['ci'],options);
