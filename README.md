@@ -27,7 +27,7 @@ node app/scripts/publish.mjs
 
 第一次从有原始记录的设备登录，选择「用本机数据开始共享」。新浏览器会读取同一份持仓、交易记录、定投设置、收藏和自建模型。已有独立记录的设备会先提示备份，再加入共享账本。相互独立的修改自动合并，同一份持仓或同一项设置冲突时需选择要保留的版本，可下载另一版。
 
-Cloudflare Worker 使用一个 SQLite Durable Object，通过版本号检查并串行保存加密账本。网页在可见时约每 5 秒拉取一次，断网修改在恢复连接后重试。只有页面显示「共享账本已同步」表示已完成同步。后台部署使用 `npm ci --prefix sync` 和 `npm run deploy --prefix sync`。把 HTTPS 服务的 `/workspace` 地址填入 `app/sync-deployment.json` 后重新发布 Pages。访问凭证的服务端校验值保存在 `sync/access.json`。此文件只包含摘要。
+Cloudflare Worker 使用一个 SQLite Durable Object，通过版本号检查并串行保存加密账本。网页在可见时约每 5 秒拉取一次，断网修改在恢复连接后重试。只有页面显示「共享账本已同步」表示已完成同步。推送到 `main` 的提交包含 `sync/` 变更时，GitHub Actions 的 [Deploy Cloudflare sync](.github/workflows/deploy-sync.yml) 会发布 Worker。每次发布都会标记 Git 提交并检查网页跨域请求和未登录访问控制。部署令牌保存在仓库 Secret `CLOUDFLARE_API_TOKEN`，账户 ID 保存在仓库变量 `CLOUDFLARE_ACCOUNT_ID`。把 HTTPS 服务的 `/workspace` 地址填入 `app/sync-deployment.json` 后重新发布 Pages。访问凭证的服务端校验值保存在 `sync/access.json`。此文件只包含摘要。
 
 ## AI 助手
 
