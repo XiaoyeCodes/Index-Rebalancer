@@ -6,11 +6,11 @@
 
 ## 登录
 
-本机入口为 [打开 Dynamic Rebalancing](http://127.0.0.1:5178/)。先启动本地服务，再输入账户密码。
+打开 [GitHub Pages 登录页](https://xiaoyecodes.github.io/Index-Rebalancer/) 或 [本机登录页](http://127.0.0.1:5178/)。两处入口都需要先在当前设备上启动本地服务，再输入账户密码。
 
 ## 网站部署
 
-当前 GitHub 套餐不支持从这个私有源码仓库发布 Pages，原项目网址已停用。若通过支持 Pages 的仓库托管登录页，只需发布 `dist/index.html` 和 `dist/.nojekyll`。浏览器可能会提示允许访问本地网络。账户验证、模型调用和应用页面均由当前设备的本地服务提供。
+公开源码仓库通过 GitHub Actions 部署 Pages。部署文件只有 `dist/index.html` 和 `dist/.nojekyll`。浏览器可能会提示允许访问本地网络。账户验证、模型调用和应用页面均由当前设备的本地服务提供。
 
 本地生成部署文件：
 
