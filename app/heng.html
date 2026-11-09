@@ -3964,7 +3964,7 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
 
       <div class="panel" id="holdPanel" tabindex="-1">
         <div class="panel-h"><h2>我的持仓<span class="small">按最新收盘价计算，单位美元</span></h2>
-          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" type="button" id="holdExample">填入示例持仓</button><button class="btn sm ghost" type="button" id="holdClear">清空</button></div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" type="button" id="holdExample">填入示例持仓</button></div></div>
         <div id="exampleNote"></div>
         <div class="tbl-wrap" style="margin-top:8px"><table id="holdTable"></table></div>
         <div id="outsideNote"></div>
@@ -6026,7 +6026,7 @@ function applyOps() {
     if (sumW() !== 100) { investmentError('请先将模型的目标权重合计调整到 100%。'); return; }
     if (plan.kind !== 'rebalance' && (!$('#investmentAmount').reportValidity() || !(plan.A > 0))) { investmentError('请输入大于 0 的本次投入金额。'); return; }
     if (plan.kind === 'monthly' && !$('#investmentDay').reportValidity()) return;
-    if (S.holdingsExample) { investmentError('请先填入实际股数；首次定投可清空示例持仓后买入并记账。'); return; }
+    if (S.holdingsExample) { investmentError('请先填入实际股数；首次定投可将各标的股数设为 0 后买入并记账。'); return; }
     if (S.ledger && holdingChanges().length) { go('history'); toast('请先核对手动修改的持仓股数。'); return; }
     if (plan.kind !== 'rebalance' && !(plan.buy > 0)) { investmentError('当前金额不足以生成可成交买入，请调整金额或股数设置；本期尚未记为完成。'); return; }
     const today = todayStr(), calendarBased = plan.kind === 'rebalance' && ['calendar', 'hybrid'].includes(S.mode);
@@ -6105,7 +6105,6 @@ function bindRebalance() {
     }
     save(); renderRebalance();
   };
-  $('#holdClear').onclick = () => { S.holdings = Object.fromEntries(modelIds().map(id => [id, 0])); S.holdingsExample = false; delete S.beforeExample; save(); renderRebalance(); };
   $('#holdPanel').addEventListener('click', e => { if (e.target.closest('#outsideClear')) { for (const id of Object.keys(S.holdings)) if (!modelIds().includes(id)) delete S.holdings[id]; save(); renderRebalance(); } });
   segBind('#balWhen', b => { balWhen = b.dataset.v; updateBalance(window.__plan); });
   $('#opsCopy').onclick = copyOps;
