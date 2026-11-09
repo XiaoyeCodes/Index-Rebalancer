@@ -3,6 +3,7 @@
   "main": "worker.js",
   "compatibility_date": "2025-12-01",
   "workers_dev": true,
+  "vars": {"WORKSPACE_ID":"portfolio"},
   "durable_objects": {"bindings":[{"name":"BOOKS","class_name":"SharedBook"}]},
   "migrations": [{"tag":"v1","new_sqlite_classes":["SharedBook"]}]
 }
