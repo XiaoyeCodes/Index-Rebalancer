@@ -3634,3 +3634,19 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
   .view-nav a {flex:0 0 auto}
 }
 @media(max-width:720px){#assistantFrame{border-radius:15px}}
+
+.ledger-totals.kpis {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:1.5rem 0;}
+.ledger-totals .v {display:block;font-variant-numeric:tabular-nums;}
+.ledger-panel .panel-h,.ledger-actions {display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
+.ledger-panel form {margin:1rem 0;padding:1rem;background:var(--paper);border:1px solid var(--line);border-radius:12px;}
+.ledger-panel input,.ledger-panel select {padding:.5rem;max-width:100%;}
+.ledger-fields {display:flex;flex-wrap:wrap;gap:.8rem;margin:1rem 0;}
+.ledger-fields label {display:grid;gap:.3rem;}
+.ledger-row {border-top:1px solid var(--line);padding:.85rem 0;}
+.ledger-row summary {cursor:pointer;display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
+.ledger-row summary::before {content:'▸';color:var(--ink-3);}
+.ledger-row[open] summary::before {content:'▾';}
+.ledger-row summary span:last-child {margin-inline-start:auto;}
+.ledger-method {margin-top:1rem;}
+.ledger-method summary {cursor:pointer;}
+@media(max-width:740px){.ledger-totals.kpis {grid-template-columns:repeat(2,minmax(0,1fr));}.ledger-row summary {gap:.4rem;}}

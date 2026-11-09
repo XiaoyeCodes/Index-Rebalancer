@@ -16,6 +16,8 @@ const page = read('src.html')
   .replace(/(["'])assets\/([^"']+\.(png|webp|svg))\1/g,
     (_, quote, name, extension) => quote + embeddedAsset(name, 'image/' + (extension === 'svg' ? 'svg+xml' : extension)) + quote)
   .replace('__DATA__', () => read('data/prices-weekly.json'))
+  .replace('<script src="ledger.js"></script>', () => '<script>\n' + read('ledger.js') + '\n</script>')
+  .replace('<script src="ledger-ui.js"></script>', () => '<script>\n' + read('ledger-ui.js') + '\n</script>')
   .replace('<script src="ai.js"></script>', () => '<script>\n' + read('ai.js') + '\n</script>');
 fs.writeFileSync(new URL('heng.html', app), page);
 console.log('built heng.html', Math.round(Buffer.byteLength(page) / 1024), 'KB');

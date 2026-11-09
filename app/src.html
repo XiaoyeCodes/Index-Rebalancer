@@ -29,6 +29,7 @@
     </a>
     <nav class="view-nav" aria-label="主导航">
       <a href="#rebalance" data-tab="rebalance">本月计划</a>
+      <a href="#history" data-tab="history">投资记录</a>
       <a href="#assets" data-tab="assets">标的库</a>
       <a href="#strategy" data-tab="strategy">定投模型</a>
       <a href="#assistant" data-tab="assistant">AI 助手</a>
@@ -95,6 +96,41 @@
         <div class="reads" id="readCards"></div>
       </div>
       <p class="note">操作清单按本页内嵌的最新周线收盘价计算（每天自动更新，休市时保留最近交易日），实际下单以券商报价为准；券商不支持碎股时，可在「定投模型 → 定投与再平衡规则」中把「股数」切到「只买整数股 / 整手」，余下的钱留到下个月。按清单更新持仓且包含卖出时，会记下当天为上次再平衡日期。执行前可在日期提醒窗口中核对定投日并决定是否继续；上次再平衡日期也可以在上述设置中修改。持仓只保存在这台设备的浏览器里。本工具用于学习定投与再平衡方法，不构成投资建议。</p>
+    </div>
+  </section>
+
+  <section data-view="history" id="history" hidden>
+    <header class="view-heading"><div><h1>投资记录</h1><p id="ledgerPeriod"></p></div></header>
+    <div class="kpis ledger-totals" aria-label="持仓收益">
+      <div><span class="l">总收益 · USD</span><strong class="v" id="ledgerProfit">—</strong></div>
+      <div><span class="l">累计收益率</span><strong class="v" id="ledgerRate">—</strong></div>
+      <div><span class="l">累计投入 · USD</span><strong class="v" id="ledgerInvested">—</strong></div>
+      <div><span class="l">当前持仓市值 · USD</span><strong class="v" id="ledgerValue">—</strong></div>
+    </div>
+    <div class="panel ledger-panel">
+      <div class="panel-h"><h2>记账明细</h2><div class="ledger-actions"><button class="btn sm" id="ledgerBackfill" type="button">补录历史成交</button><button class="btn sm" id="ledgerSetup" type="button">设置期初成本</button></div></div>
+      <p id="ledgerInfo" class="small muted"></p>
+      <button class="btn sm" id="ledgerAdjust" type="button" hidden>核对股数变动</button>
+      <form id="ledgerForm" hidden>
+        <label id="ledgerLabel" for="ledgerAmount"></label>
+        <input id="ledgerAmount" type="number" step="0.01" required>
+        <p class="small muted" id="ledgerHelp"></p>
+        <button type="submit" class="btn primary">确认记账</button>
+        <button type="button" id="ledgerCancel" class="btn">取消</button>
+      </form>
+      <form id="pastTradeForm" hidden>
+        <p>补录建账前已经成交的买卖，当前持有股数不会再次增减。</p>
+        <div class="ledger-fields">
+          <label>成交日期<input type="date" id="pastDate" required></label>
+          <label>标的<select id="pastSymbol"></select></label>
+          <label>交易方向<select id="pastSide"><option value="1">买入</option><option value="-1">卖出</option></select></label>
+          <label>成交股数<input type="number" id="pastQty" min="0.00000001" step="any" required></label>
+          <label>实际收付金额（美元，含费用）<input type="number" id="pastMoney" min="0.01" step="0.01" required></label>
+        </div>
+        <button type="submit" class="btn primary">保存成交</button> <button type="button" id="pastCancel" class="btn">取消</button>
+      </form>
+      <div id="ledgerList"></div>
+      <details class="small ledger-method"><summary>收益怎么算？</summary><p>总收益 = 当前持仓市值 + 累计净卖出回款 − 累计投入。累计投入包含期初成本，以及每次买入超过卖出的金额。累计收益率 = 总收益 ÷ 累计投入。金额按美元估算，涵盖模型外持仓，不含闲置现金、单独派发的现金股息和未录入的费用。</p></details>
     </div>
   </section>
 
@@ -357,6 +393,8 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script id="pricedata" type="application/json">__DATA__</script>
+<script src="ledger.js"></script>
+<script src="ledger-ui.js"></script>
 <script src="ai.js"></script>
 <script>
 "use strict";
@@ -638,9 +676,18 @@ function migrateExecutionState(state) {
 let S = { weights: { ...PRESETS[1].w }, favorites: [], preset: 'balanced', monthly: 3000, initial: 0, start: '2000-01', mode: 'hybrid', abs: 5, rel: 30, period: 'Y', fee: 0.05, cashflow: true, label: '均衡' };
 try { const saved = JSON.parse(localStorage.getItem('heng.state') || 'null'); if (saved && saved.weights) S = { ...S, ...migrateExecutionState(saved) }; } catch (e) { }
 S.favorites = [...new Set(Array.isArray(S.favorites) ? S.favorites.filter(id => IDS.includes(id)) : [])];
+let ledgerRevision = S.ledger?.revision || '';
 const save = () => {
   try {
+    const latest = JSON.parse(localStorage.getItem('heng.state') || 'null');
+    if ((latest?.ledger?.revision || '') !== ledgerRevision && latest?.weights) {
+      S = {...S,...latest};
+      ledgerRevision = latest.ledger?.revision || '';
+      toast('其他页面已更新持仓，本次修改未保存。');
+      return false;
+    }
     localStorage.setItem('heng.state', JSON.stringify(S));
+    ledgerRevision = S.ledger?.revision || '';
     return true;
   } catch (e) {
     return false;
@@ -1455,6 +1502,7 @@ function renderReading(plan) {
 
 function renderRebalance() {
   ensureRebalanceState();
+  $('#holdExample').textContent = S.holdingsExample && S.beforeExample ? '恢复我的持仓' : '填入示例持仓';
   const plan = planRebalance();
   $('#rbModel').textContent = S.label || '自定义';
   syncTradeSettings();
@@ -1479,10 +1527,11 @@ function withCurrentHoldings(action) {
     let latest;
     try { latest = migrateExecutionState(JSON.parse(localStorage.getItem('heng.state') || 'null')); } catch (e) { }
     const receiptChanged = JSON.stringify(latest?.lastAppliedOps || null) !== JSON.stringify(S.lastAppliedOps || null);
-    if (latest?.weights && (receiptChanged || (latest.holdings && opsContext({ ...S, ...latest }) !== opsContext()))) {
+    if (latest?.weights && ((latest.ledger?.revision || '') !== ledgerRevision || receiptChanged || (latest.holdings && opsContext({ ...S, ...latest }) !== opsContext()))) {
       S = { ...S, ...latest };
+      ledgerRevision = latest.ledger?.revision || '';
       renderRebalance();
-      save();
+      if (current === 'history') renderLedger();
       toast('持仓已在其他页面变更，请核对当前清单后再操作。');
       return;
     }
@@ -1551,6 +1600,11 @@ function applyOps() {
     const plan = planRebalance();
     const dialog = $('#opsConfirm');
     if (dialog.open || !plan.ids.length) return;
+    if (S.holdingsExample) { toast('请先填入实际股数；首次定投可清空示例持仓后记账。'); return; }
+    if (currentOpsApplied()) { toast('这笔操作已记账。'); return; }
+    if (S.ledger && !S.holdingsExample && holdingChanges().length) {
+      go('history'); toast('请先核对手动修改的持仓股数。'); return;
+    }
     const today = todayStr();
     const lastExecution = S.lastExecutionDate || S.lastRebalance;
     const fallbackDay = lastExecution ? +lastExecution.slice(8) : +today.slice(8);
@@ -1604,21 +1658,24 @@ async function confirmOps(event) {
       if (!plan.ids.length) return;
       const hasTrades = plan.buy > 0 || plan.sell > 0;
       const executionDate = todayStr();
+      if (S.holdingsExample || currentOpsApplied()) return;
+      const previous = structuredClone(S);
+      if (!S.ledger) S.ledger = Ledger.open(S.holdings,executionDate,D.asOf,px,null,S.lastAppliedOps);
       for (const id of plan.ids) {
         if (plan.shares[id]) S.holdings[id] = +(((+S.holdings[id] || 0) + plan.shares[id])).toFixed(3);
       }
       if (plan.rebalance && plan.sell > 0) S.lastRebalance = todayStr();
       if (plan.A > 0 && hasTrades) S.contributionMonth = executionDate.slice(0, 7);
       if (!request.calendarBased) S.investmentDay = selectedDate === request.scheduledDate ? request.preferredDay : +selectedDate.slice(8);
-      if (hasTrades) {
-        S.lastExecutionDate = executionDate;
-        S.holdingsExample = false;
-      }
+      if (hasTrades) S.lastExecutionDate = executionDate;
       S.lastAppliedOps = {
-        context: opsContext(), confirmedOn: executionDate,
+        context: opsContext(), confirmedOn: executionDate, example: !!S.holdingsExample,
         note: `${hasTrades ? `持仓已于 ${executionDate} 按清单更新。` : `持仓已于 ${executionDate} 核对，当前清单无需买卖。`}${contributionApplied() ? '本月新增定投已记账。' : ''}实际成交股数不同时，可直接修改持有股数。`,
       };
-      save();
+      const trades = Ledger.changes(previous.holdings,S.holdings,px);
+      const kind = !trades.length ? '持仓核对' : plan.rebalance && plan.sell>0 ? (plan.A>0?'定投与再平衡':'动态再平衡') : '定投';
+      Ledger.append(S.ledger,S.holdings,{kind,date:executionDate,priceDate:D.asOf,model:S.label,trades,flow:Ledger.net(trades)});
+      saveLedgerChange(previous);
       renderRebalance();
     });
   } finally {
@@ -1628,10 +1685,19 @@ async function confirmOps(event) {
 }
 
 function bindRebalance() {
+  bindLedger();
   $('#rebalance').addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go); });
-  $('#holdTable').addEventListener('input', e => { const inp = e.target.closest('.hold-in'); if (!inp) return; const id = inp.id.slice(2); S.holdings[id] = Math.max(0, +inp.value || 0); S.holdingsExample = false; save(); refreshRebalance(); $('#exampleNote').innerHTML = ''; });
-  $('#holdExample').onclick = () => { S.holdings = exampleHoldings(); S.holdingsExample = true; S.exampleKey = JSON.stringify(S.weights); save(); renderRebalance(); };
-  $('#holdClear').onclick = () => { S.holdings = Object.fromEntries(modelIds().map(id => [id, 0])); S.holdingsExample = false; save(); renderRebalance(); };
+  $('#holdTable').addEventListener('input', e => { const inp = e.target.closest('.hold-in'); if (!inp) return; const id = inp.id.slice(2); S.holdings[id] = Math.max(0, +inp.value || 0); S.holdingsExample = false; delete S.beforeExample; $('#holdExample').textContent='填入示例持仓'; save(); refreshRebalance(); $('#exampleNote').innerHTML = ''; });
+  $('#holdExample').onclick = () => {
+    if (S.holdingsExample && S.beforeExample) {
+      S.holdings=S.beforeExample; S.holdingsExample=false; delete S.beforeExample;
+    } else {
+      if (!S.holdingsExample) S.beforeExample={...S.holdings};
+      S.holdings=exampleHoldings(); S.holdingsExample=true; S.exampleKey=JSON.stringify(S.weights);
+    }
+    save(); renderRebalance();
+  };
+  $('#holdClear').onclick = () => { S.holdings = Object.fromEntries(modelIds().map(id => [id, 0])); S.holdingsExample = false; delete S.beforeExample; save(); renderRebalance(); };
   $('#holdPanel').addEventListener('click', e => { if (e.target.closest('#outsideClear')) { for (const id of Object.keys(S.holdings)) if (!modelIds().includes(id)) delete S.holdings[id]; save(); renderRebalance(); } });
   segBind('#balWhen', b => { balWhen = b.dataset.v; updateBalance(window.__plan); });
   $('#opsCopy').onclick = copyOps;
@@ -2015,7 +2081,7 @@ function mountAssistant() {
 }
 
 /* ---------------- routing ---------------- */
-const VIEWS = ['rebalance', 'assets', 'strategy', 'assistant', 'backtest'];
+const VIEWS = ['rebalance', 'history', 'assets', 'strategy', 'assistant', 'backtest'];
 let current = null;
 function go(v, push = true) {
   if (v === 'research' || v === 'ai') { v = 'assistant'; history.replaceState(null, '', '#assistant'); }
@@ -2029,6 +2095,7 @@ function go(v, push = true) {
   if (push && location.hash !== '#' + v) history.pushState(null, '', '#' + v);
   window.scrollTo(0, 0);
   if (v === 'rebalance') renderRebalance();
+  if (v === 'history') { ensureRebalanceState(); renderLedger(); }
   if (v === 'assistant') mountAssistant();
   if (v === 'assets') renderAssets();
   if (v === 'backtest') renderBacktest();
