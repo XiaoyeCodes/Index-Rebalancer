@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>衡 · 再平衡天平</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <title>Dynamic Rebalancing · 再平衡天平</title>
+  <link rel="icon" type="image/png" href="../app/assets/favicon.png" />
 </head>
 <body>
+  <header class="brand">
+    <img class="mark" src="../app/assets/dynamic-rebalancing-logo.webp" width="40" height="40" alt="" />
+    <div><h1>再平衡天平</h1><small>Dynamic Rebalancing</small></div>
+    <span class="muted" id="asOf"></span>
+  </header>
   <main class="stage" id="stage">
-    <header class="brand">
-      <span class="mark">衡</span>
-      <div><b>再平衡天平</b><small>Steady by design</small></div>
-    </header>
     <div class="hint">拖动托盘上下 · 拖动空白处旋转 · 滚轮缩放</div>
     <div class="tip" id="tip" hidden></div>
   </main>
 
-  <aside class="panel">
+  <aside class="panel" aria-label="模型与持仓设置">
     <section class="status" id="status"></section>
 
     <section>
@@ -28,7 +28,7 @@
     <section>
       <div class="row-head">
         <h2>我的持仓</h2>
-        <span class="muted" id="asOf"></span>
+
       </div>
       <table class="holdings">
         <thead><tr><th>标的</th><th class="r">持有股数</th><th class="r">占比 / 目标</th></tr></thead>

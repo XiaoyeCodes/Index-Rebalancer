@@ -55,8 +55,7 @@
     <header class="home-hero">
       <div class="home-intro">
         <time id="planMonth" class="section-label"></time>
-        <h1>本月再平衡</h1>
-        <p>用本月的新投入补足低配资产。对照持仓和目标权重，查看每笔买卖的金额与股数。</p>
+        <h1 id="balanceHeadline" aria-live="polite" aria-atomic="true">正在查看当前天平…</h1>
       </div>
       <div class="portfolio-card">
         <div class="portfolio-balance" role="group" aria-label="交互式持仓天平">
@@ -1773,12 +1772,51 @@ function balanceView(plan, when) {
   const side = high => { const r = rows.filter(x => x.high === high); return { rows: r, cur: r.reduce((s, x) => s + x.cur, 0), tgt: r.reduce((s, x) => s + x.tgt, 0) }; };
   const hi = side(true), lo = side(false), held = tot > 0;
   const outCount = held ? rows.filter(r => Math.abs(r.dev) >= bandOf(r.tgt) - 1e-9).length : 0;
-  const drift = held && rows.some(r => Math.abs(r.dev) >= bandOf(r.tgt) / 2);
-  return { rows, hi, lo, held, total: tot, tilt: held ? hi.cur - hi.tgt : 0, outCount, status: !held ? 'empty' : outCount ? 'out' : drift ? 'drift' : 'level' };
+  const tilt = held ? hi.cur - hi.tgt : 0;
+  // The beam represents the two groups, including offsets between assets on the same pan.
+  const band = Math.min(...[hi.tgt, lo.tgt].filter(w => w > 0).map(bandOf));
+  const magnitude = Math.abs(tilt);
+  const status = !held ? 'empty' : magnitude < READ_EPS ? 'level' : magnitude >= band - 1e-9 ? 'out' : magnitude >= band / 2 - 1e-9 ? 'drift' : 'level';
+  return { rows, hi, lo, held, total: tot, tilt, band, outCount, status };
+}
+function balanceHeadlineState(plan, today = todayStr()) {
+  // Always describe actual holdings, even while previewing the proposed trades.
+  const m = balanceView(plan, 'now');
+  if (!m.held) return { state: 'empty', text: '还没有持仓，先填入你的持仓吧。' };
+  if (m.status === 'level') return { state: 'level', text: '目前已经平衡，正如他应有的样子' };
+  if (S.mode === 'hybrid' || S.mode === 'calendar') {
+    // A previous confirmation establishes the schedule; a first visit is not a missed deadline.
+    const anchor = [S.lastAppliedOps?.confirmedOn, S.lastExecutionDate, S.lastRebalance, S.ledger?.date]
+      .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date || '') && Number.isFinite(Date.parse(date)) && date <= today).sort().at(-1);
+    if (anchor) {
+      const interval = S.period === 'Q' ? 3 : 12;
+      const next = new Date(+anchor.slice(0, 4), Math.floor((+anchor.slice(5, 7) - 1) / interval) * interval + interval, 1);
+      const due = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-01`;
+      if (today > due) return { state: 'overdue', text: '当前已过平衡时间，快来再平衡一下吧。' };
+    }
+  }
+  return m.status === 'out'
+    ? { state: 'out', text: '当前天平要翻啦，赶紧再平衡一下吧。' }
+    : { state: 'drift', text: `当前有点向${m.tilt > 0 ? '高波动' : '低波动'}倾斜哦` };
+}
+function renderBalanceHeadline(plan) {
+  const message = balanceHeadlineState(plan), heading = $('#balanceHeadline');
+  if (heading.textContent !== message.text) {
+    const clauses = message.text.split('，');
+    heading.replaceChildren(...clauses.map((clause, index) => {
+      const line = document.createElement('span');
+      line.textContent = clause + (index < clauses.length - 1 ? '，' : '');
+      return line;
+    }));
+  }
+  heading.dataset.state = message.state;
+  const today = todayStr();
+  $('#planMonth').dateTime = today.slice(0, 7);
+  $('#planMonth').textContent = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long' }).format(new Date(today + 'T12:00:00'));
 }
 function renderBalanceSide(m, plan) {
-  const word = { empty: ['还没有持仓', '在下方「我的持仓」填入股数，天平会按你的真实持仓倾斜。'], level: ['平衡', '每个标的都在目标附近。'],
-    drift: ['轻微偏离', '还在阈值内，新钱会慢慢把它补齐。'], out: ['超出阈值', `${m.outCount} 个标的的偏离超过了模型的再平衡阈值。`] }[m.status];
+  const word = { empty: ['还没有持仓', '在下方「我的持仓」填入股数，天平会按你的真实持仓倾斜。'], level: ['平衡', '两盘占比都接近目标。'],
+    drift: ['轻微偏离', '两盘占比有些偏离，还在阈值内。'], out: ['超出阈值', '两盘占比的偏离超过了模型的再平衡阈值。'] }[m.status];
   const t = m.tilt * 100;
   const tiltTxt = !m.held ? '' : Math.abs(t) < 0.05 ? '两盘持平，天平水平。' : `${t > 0 ? '左盘（高波动）' : '右盘（低波动）'}偏重 ${Math.abs(t).toFixed(1)} 个百分点，天平往${t > 0 ? '左' : '右'}沉。`;
   $('#balStatus').textContent = word[0];
@@ -1789,6 +1827,7 @@ function renderBalanceSide(m, plan) {
 }
 function updateBalance(plan) {
   if (!$('#balStage') || !plan) return;
+  renderBalanceHeadline(plan);
   const m = balanceView(plan, balWhen);
   renderBalanceSide(m, plan);
   if (bal) return bal.set(m);
@@ -2208,6 +2247,9 @@ function boot() {
   window.addEventListener('hashchange', () => go(location.hash.slice(1), false));
   $('#heroRun').onclick = () => { if (sumW() === 100) go('backtest'); else $('#weightRows').scrollIntoView({ behavior: 'smooth' }); };
   go((location.hash || '#rebalance').slice(1), false);
+  const refreshHeadline = () => { if (current === 'rebalance' && window.__plan) renderBalanceHeadline(window.__plan); };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHeadline(); });
+  setInterval(refreshHeadline, 60000);
   const mq = matchMedia('(prefers-color-scheme: dark)'); const onTheme = () => { rethemeCharts(); renderAssets(); if (current === 'backtest' && bt.r) renderStack(bt.r); };
   mq.addEventListener && mq.addEventListener('change', onTheme);
   new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });

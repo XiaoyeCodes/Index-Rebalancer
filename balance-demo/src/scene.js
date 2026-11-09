@@ -16,11 +16,11 @@ const STOP = MAX_ANGLE + 0.08; // mechanical stop: the beam can't swing past thi
 const STIFF = 3.2, DAMP = 1.5; // slow, slightly under-damped settle
 
 const mat = {
-  brass: new THREE.MeshStandardMaterial({ color: '#B39859', metalness: 0.85, roughness: 0.32 }),
-  ink: new THREE.MeshStandardMaterial({ color: '#413F35', metalness: 0.3, roughness: 0.55 }),
-  stone: new THREE.MeshStandardMaterial({ color: '#E6E1D5', metalness: 0, roughness: 0.85 }),
-  accent: new THREE.MeshStandardMaterial({ color: '#BF6B50', metalness: 0.2, roughness: 0.4 }),
-  tick: new THREE.MeshStandardMaterial({ color: '#8E897D', roughness: 0.6 }),
+  brass: new THREE.MeshStandardMaterial({ color: '#B7B8C8', metalness: 0.85, roughness: 0.32 }),
+  ink: new THREE.MeshStandardMaterial({ color: '#282B37', metalness: 0.3, roughness: 0.55 }),
+  stone: new THREE.MeshStandardMaterial({ color: '#D9DCEA', metalness: 0, roughness: 0.85 }),
+  accent: new THREE.MeshStandardMaterial({ color: '#F65C34', metalness: 0.2, roughness: 0.4 }),
+  tick: new THREE.MeshStandardMaterial({ color: '#676D7A', roughness: 0.6 }),
 };
 
 export function createBalance(container, { onHover, onDragChange }) {
@@ -37,8 +37,8 @@ export function createBalance(container, { onHover, onDragChange }) {
   container.appendChild(labels.domElement);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#F7F5F0');
-  scene.fog = new THREE.Fog('#F7F5F0', 16, 34);
+  scene.background = new THREE.Color('#F6F7FB');
+  scene.fog = new THREE.Fog('#F6F7FB', 16, 34);
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
@@ -54,8 +54,8 @@ export function createBalance(container, { onHover, onDragChange }) {
   controls.maxPolarAngle = 1.48;
   controls.autoRotateSpeed = 0.4;
 
-  scene.add(new THREE.HemisphereLight('#FFFBF2', '#D8D2C2', 0.7));
-  const sun = new THREE.DirectionalLight('#FFF6E8', 2.2);
+  scene.add(new THREE.HemisphereLight('#FFFFFF', '#C7CAD8', 0.7));
+  const sun = new THREE.DirectionalLight('#FFF9F4', 2.2);
   sun.position.set(4, 9, 6);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -157,7 +157,7 @@ export function createBalance(container, { onHover, onDragChange }) {
     stack.position.y = -HANG + 0.035;
     swing.add(stack);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(STACK_R + 0.05, 0.008, 6, 72),
-      new THREE.MeshBasicMaterial({ color: '#413F35', transparent: true, opacity: 0.45 }));
+      new THREE.MeshBasicMaterial({ color: '#282B37', transparent: true, opacity: 0.45 }));
     ring.rotation.x = Math.PI / 2;
     ring.position.y = TARGET_H;
     stack.add(ring);
@@ -284,7 +284,7 @@ export function createBalance(container, { onHover, onDragChange }) {
   resize();
 
   const clock = new THREE.Clock();
-  const levelColor = new THREE.Color('#5E8466'), offColor = new THREE.Color('#BF6B50');
+  const levelColor = new THREE.Color('#5E8466'), offColor = new THREE.Color('#F65C34');
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 1 / 30);
     const t = clock.elapsedTime;

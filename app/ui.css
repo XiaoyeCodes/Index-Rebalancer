@@ -2142,6 +2142,18 @@ button, summary, a {
   margin: 13px 0 14px;
 }
 
+.home-intro #balanceHeadline {
+  font-size: clamp(28px, 3.2vw, 46px);
+  line-height: 1.45;
+  letter-spacing: -.035em;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.home-intro #balanceHeadline>span {
+  display: block;
+}
+
 .home-intro p, .view-heading p {
   color: var(--ink-2);
   font-size: clamp(14px, 1.15vw, 17px);

@@ -1,42 +1,67 @@
 /* tokens from app/src.html */
 :root {
-  --bg: #F7F5F0; --surface: #FCFBF8; --sunken: #EFECE4; --line: #DFDDD5; --line-2: #CFCBC0;
-  --ink: #2B2B25; --ink-2: #5F5B51; --ink-3: #8E897D; --stroke: #413F35;
-  --accent: #BF6B50; --accent-dark: #A6523A; --accent-soft: #F3E7DF;
-  --brass: #8F8A5C; --warn: #B07A35; --warn-soft: #F4ECDD; --bad: #AF4936; --bad-soft: #F3E3DC; --good: #5E8466; --good-soft: #E5ECE2;
-  --f-display: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
-  --f-body: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --r: 12px; --shadow: 0 1px 2px rgba(60, 48, 36, .04), 0 10px 30px rgba(60, 48, 36, .06);
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --sunken: #f1f2f5;
+  --band: #e8eafd;
+  --ink: #121316;
+  --ink-2: #444751;
+  --ink-3: #626671;
+  --line: #e2e3e8;
+  --line-2: #b7bac4;
+  --stroke: #202127;
+  --accent: #ea4f2b;
+  --accent-dark: #a33720;
+  --accent-soft: #fff0e9;
+  --brass: #6251bb;
+  --brass-soft: #f1efff;
+  --up: #b23b28;
+  --down: #167357;
+  --warn: #89520b;
+  --warn-soft: #fff3dd;
+  --bad: #a63029;
+  --bad-soft: #ffedeb;
+  --good: #146b50;
+  --good-soft: #eaf6ef;
+  --f-body: "DM Sans", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --f-display: var(--f-body);
+  --f-latin: var(--f-body);
+  --f-mono: var(--f-body);
+  --r: 14px;
+  --r-lg: 24px;
+  --shadow: 0 8px 28px rgb(20 24 38 / 8%);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
   background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-body);
-  display: grid; grid-template-columns: 1fr 380px; overflow: hidden;
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(340px,400px); grid-template-rows: auto minmax(0,1fr);
+  gap: 16px; padding: 0 20px 20px; overflow: hidden; background: #f6f7fa;
 }
 body.dragging { user-select: none; }
 button { font: inherit; }
 
 /* ---- stage ---- */
-.stage { position: relative; min-height: 0; overflow: hidden; }
+.stage { position: relative; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; }
 .stage canvas { display: block; touch-action: none; }
 .labels { position: absolute; inset: 0; pointer-events: none; }
-.brand { position: absolute; top: 22px; left: 26px; display: flex; gap: 12px; align-items: center; z-index: 2; pointer-events: none; }
+.brand { grid-column: 1/-1; display: flex; align-items: center; gap: 12px; min-height: 70px; border-bottom: 1px solid var(--line); }
+.brand #asOf { margin-left: auto; }
 .brand .mark {
-  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--stroke); color: var(--bg); font: 700 20px var(--f-display);
+  width: 40px; height: 40px; display: block; object-fit: contain; flex: none;
 }
-.brand b { display: block; font: 700 18px var(--f-display); letter-spacing: .04em; }
-.brand small { color: var(--ink-3); font: italic 12px Georgia, serif; }
+.brand h1 { margin: 0; font: 700 24px/1.15 var(--f-display); letter-spacing: -.04em; }
+.brand small { color: var(--ink-3); font: 600 12px var(--f-body); }
 .hint {
   position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 2; pointer-events: none;
-  padding: 6px 14px; border-radius: 999px; background: rgba(252, 251, 248, .85); border: 1px solid var(--line);
+  padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, .85); border: 1px solid var(--line);
   color: var(--ink-2); font-size: 12px; white-space: nowrap;
 }
 
 .pan-label {
   display: grid; justify-items: center; gap: 1px; padding: 6px 12px; border-radius: 10px;
-  background: rgba(252, 251, 248, .9); border: 1px solid var(--line); box-shadow: var(--shadow);
+  background: rgba(255, 255, 255, .9); border: 1px solid var(--line); box-shadow: var(--shadow);
   font-size: 12px; color: var(--ink-2); white-space: nowrap;
 }
 .pan-label b { color: var(--ink); font: 700 13px var(--f-display); }
@@ -55,7 +80,7 @@ button { font: inherit; }
 
 /* ---- panel ---- */
 .panel {
-  background: var(--surface); border-left: 1px solid var(--line); overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 24px; overflow-y: auto;
   padding: 22px 22px 28px; display: flex; flex-direction: column; gap: 22px;
 }
 h2 { margin: 0 0 10px; font: 700 15px var(--f-display); letter-spacing: .02em; }
@@ -104,12 +129,12 @@ tr.out .v { color: var(--bad); }
 
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .btn {
-  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface);
+  padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface);
   color: var(--ink); cursor: pointer; transition: all .15s;
 }
 .btn:hover { border-color: var(--stroke); }
-.btn.primary { grid-column: 1 / -1; background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-.btn.primary:hover { background: var(--accent-dark); }
+.btn.primary { grid-column: 1 / -1; background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 600; }
+.btn.primary:hover { background: #343640; }
 .btn.ghost { color: var(--ink-2); }
 .ops { margin: -10px 0 0; font-size: 12px; color: var(--ink-2); line-height: 2; }
 .ops span { display: inline-block; margin: 0 4px; padding: 0 8px; border-radius: 999px; line-height: 20px; font-variant-numeric: tabular-nums; }
@@ -117,8 +142,10 @@ tr.out .v { color: var(--bad); }
 .ops .sell { background: var(--accent-soft); color: var(--accent-dark); }
 
 @media (max-width: 860px) {
-  body { grid-template-columns: 1fr; grid-template-rows: 58vh auto; overflow: auto; height: auto; }
-  .panel { border-left: 0; border-top: 1px solid var(--line); padding: 18px 16px 24px; }
-  .brand { top: 14px; left: 16px; }
+  body { grid-template-columns: 1fr; grid-template-rows: auto minmax(290px,52svh) auto; overflow: auto; height: auto; padding: 0 12px 12px; gap: 10px; }
+  .panel { padding: 18px 14px 24px; overflow: visible; }
+  .brand { min-height: 61px; }
   .hint { font-size: 11px; bottom: 12px; }
 }
+
+.btn:focus-visible, .chip:focus-visible, .holdings input:focus-visible { outline: 3px solid #405aea; outline-offset: 2px; }

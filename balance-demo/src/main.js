@@ -48,7 +48,11 @@ function render() {
   const a = analyze(S.holdings, p.w, S.price, p);
   balance.setPortfolio(a);
 
-  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.key === S.preset));
+  document.querySelectorAll('.chip').forEach(button => {
+    const selected = button.dataset.key === S.preset;
+    button.classList.toggle('on', selected);
+    button.setAttribute('aria-pressed', selected);
+  });
   const word = { level: ['平衡', '每个标的都在目标附近'], drift: ['轻微偏离', '还在容忍带内，可以用新钱慢慢补'], out: ['需要再平衡', `${a.outCount} 个标的超出容忍带（±${p.abs} pp 或 ±${p.rel}%）`] }[a.status];
   const tiltPp = a.tilt * 100;
   $('#status').className = `status ${a.status}`;

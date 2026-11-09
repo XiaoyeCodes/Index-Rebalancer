@@ -2,7 +2,7 @@
 
 **Goal:** Remove dependence on a public repository's scheduled workflow so its 60-day inactivity rule cannot stop market-data updates.
 
-**Architecture:** A private repository runs the existing real-data updater every Saturday, with a Sunday fallback. A dedicated SSH deploy key restricted to the public app repository permits committing validated data. That push triggers the existing Pages workflow. No personal access token, empty commits, or keepalive action is used.
+**Architecture:** A private repository runs the existing real-data updater daily at 09:17 Asia/Shanghai, with an independent 11:47 same-day fallback. A dedicated SSH deploy key restricted to the public app repository permits committing validated data. That push triggers the existing Pages workflow. No personal access token, empty commits, or keepalive action is used. Holidays retain the latest available trading date.
 
 ## Implementation and verification
 
