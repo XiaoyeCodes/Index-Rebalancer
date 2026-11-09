@@ -40,6 +40,16 @@
 </header>
 
 <main class="page">
+  <aside id="collaboration" hidden aria-label="共享账本">
+    <span id="cloudStatus" role="status"></span>
+    <button type="button" class="linkbtn" data-sync="init" hidden>用本机数据开始共享</button>
+    <button type="button" class="linkbtn" data-sync="join" hidden>加入共享账本</button>
+    <button type="button" class="linkbtn" data-sync="mine" hidden>保留本机冲突项</button>
+    <button type="button" class="linkbtn" data-sync="theirs" hidden>采用共享冲突项</button>
+    <button type="button" class="linkbtn" data-sync="download" hidden>下载本机账本</button>
+    <button type="button" class="linkbtn" data-sync="backup" hidden>下载先前版本</button>
+    <button type="button" class="linkbtn" data-sync="retry" hidden>重试</button>
+  </aside>
   <!-- ============ 00 动态再平衡（主页） ============ -->
   <section data-view="rebalance" id="rebalance" hidden>
     <header class="home-hero">
@@ -95,7 +105,7 @@
         <div id="readAIOut"></div>
         <div class="reads" id="readCards"></div>
       </div>
-      <p class="note">操作清单按本页内嵌的最新周线收盘价计算（每天自动更新，休市时保留最近交易日），实际下单以券商报价为准；券商不支持碎股时，可在「定投模型 → 定投与再平衡规则」中把「股数」切到「只买整数股 / 整手」，余下的钱留到下个月。按清单更新持仓且包含卖出时，会记下当天为上次再平衡日期。执行前可在日期提醒窗口中核对定投日并决定是否继续；上次再平衡日期也可以在上述设置中修改。持仓只保存在这台设备的浏览器里。本工具用于学习定投与再平衡方法，不构成投资建议。</p>
+      <p class="note">操作清单按本页内嵌的最新周线收盘价计算（每天自动更新，休市时保留最近交易日），实际下单以券商报价为准；券商不支持碎股时，可在「定投模型 → 定投与再平衡规则」中把「股数」切到「只买整数股 / 整手」，余下的钱留到下个月。按清单更新持仓且包含卖出时，会记下当天为上次再平衡日期。执行前可在日期提醒窗口中核对定投日并决定是否继续；上次再平衡日期也可以在上述设置中修改。账本的同步状态显示在页面顶部。本工具用于学习定投与再平衡方法，不构成投资建议。</p>
     </div>
   </section>
 
@@ -673,7 +683,8 @@ function migrateExecutionState(state) {
   return state;
 }
 
-let S = { weights: { ...PRESETS[1].w }, favorites: [], preset: 'balanced', monthly: 3000, initial: 0, start: '2000-01', mode: 'hybrid', abs: 5, rel: 30, period: 'Y', fee: 0.05, cashflow: true, label: '均衡' };
+const defaultState = { weights: { ...PRESETS[1].w }, favorites: [], preset: 'balanced', monthly: 3000, initial: 0, start: '2000-01', mode: 'hybrid', abs: 5, rel: 30, period: 'Y', fee: 0.05, cashflow: true, label: '均衡' };
+let S = structuredClone(defaultState);
 try { const saved = JSON.parse(localStorage.getItem('heng.state') || 'null'); if (saved && saved.weights) S = { ...S, ...migrateExecutionState(saved) }; } catch (e) { }
 S.favorites = [...new Set(Array.isArray(S.favorites) ? S.favorites.filter(id => IDS.includes(id)) : [])];
 let ledgerRevision = S.ledger?.revision || '';
@@ -688,6 +699,7 @@ const save = () => {
     }
     localStorage.setItem('heng.state', JSON.stringify(S));
     ledgerRevision = S.ledger?.revision || '';
+    window.privateAccount?.sync?.changed();
     return true;
   } catch (e) {
     return false;
@@ -696,6 +708,8 @@ const save = () => {
 
 // Templates have their own storage so saving a template cannot overwrite holdings or execution receipts.
 let customPresets = [];
+function loadTemplates() {
+customPresets = [];
 try {
   const stored = JSON.parse(localStorage.getItem('heng.templates') || '[]');
   const keys = new Set();
@@ -707,6 +721,8 @@ try {
     customPresets.push({ key: p.key, name: p.name.trim().slice(0, 30), w, rule }); keys.add(p.key);
   }
 } catch (e) { }
+}
+loadTemplates();
 const allPresets = () => [...PRESETS, ...customPresets];
 
 /* ---------------- backtest engine ---------------- */
@@ -991,7 +1007,7 @@ function updateTemplateSummary() {
 }
 function openTemplateEditor(key = null) {
   const p = customPresets.find(item => item.key === key);
-  templateDraft = { key: p?.key || null, w: { ...(p?.w || {}) }, rule: p ? { ...p.rule } : { mode: S.mode, abs: S.abs, rel: S.rel, period: S.period } };
+  templateDraft = { source:JSON.stringify(p), key: p?.key || null, w: { ...(p?.w || {}) }, rule: p ? { ...p.rule } : { mode: S.mode, abs: S.abs, rel: S.rel, period: S.period } };
   $('#templateTitle').textContent = p ? '编辑模板' : '新建模板';
   $('#templateName').value = p?.name || ''; $('#templateSearch').value = ''; templateError('');
   $('#templateAssets').innerHTML = LAYERS.flatMap(layer => layer.ids).map(id => {
@@ -1005,7 +1021,7 @@ function deleteCustomPreset(key) {
   const p = customPresets.find(item => item.key === key);
   if (!p || !confirm(`删除模板“${p.name}”？当前组合和持仓会保留。`)) return;
   const next = customPresets.filter(item => item.key !== key);
-  try { localStorage.setItem('heng.templates', JSON.stringify(next)); }
+  try { localStorage.setItem('heng.templates', JSON.stringify(next)); window.privateAccount?.sync?.changed(); }
   catch (e) { toast('删除未保存，请重试。'); return; }
   customPresets = next; delete presetStats[key];
   if (S.preset === key) { S.preset = null; S.label = '自定义'; save(); }
@@ -1043,6 +1059,9 @@ function bindTemplateEditor() {
   $('#templateForm').addEventListener('submit', e => {
     e.preventDefault();
     const name = $('#templateName').value.trim(), values = Object.values(templateDraft.w);
+    if (templateDraft.key && templateDraft.source!==JSON.stringify(customPresets.find(p=>p.key===templateDraft.key))) {
+      templateError('此模型已在其他设备修改，请重新打开后核对。');return;
+    }
     if (!name) { templateError('请填写模板名称。'); $('#templateName').focus(); return; }
     if (!values.length) { templateError('请至少选择一个标的。'); return; }
     if (values.some(value => !Number.isInteger(value) || value < 1 || value > 100) || values.reduce((a, b) => a + b, 0) !== 100) { templateError('请将所有已选标的的权重设为正整数，合计 100%。'); return; }
@@ -1050,7 +1069,7 @@ function bindTemplateEditor() {
     const key = templateDraft.key || `custom-${crypto.randomUUID()}`;
     const p = { key, name, w: { ...templateDraft.w }, rule: { ...templateDraft.rule } };
     const next = templateDraft.key ? customPresets.map(item => item.key === key ? p : item) : [...customPresets, p];
-    try { localStorage.setItem('heng.templates', JSON.stringify(next)); }
+    try { localStorage.setItem('heng.templates', JSON.stringify(next)); window.privateAccount?.sync?.changed(); }
     catch (error) { templateError('模板未能保存，请检查浏览器存储空间后重试。'); return; }
     customPresets = next; computePresetStats([p]); renderPresets(); applyPreset(p);
     $('#templateDialog').close(); document.querySelector(`.preset[data-p="${key}"]`).focus({ preventScroll: true });
@@ -2106,6 +2125,63 @@ function go(v, push = true) {
   }
 }
 
+function bindSharedBook() {
+  const sync = window.privateAccount?.sync;
+  const bar = $('#collaboration');
+  if (!window.privateAccount?.pages) return;
+  bar.hidden=false;
+  if (!sync) { $('#cloudStatus').textContent='当前仅保存在此浏览器，共享服务尚未连接。'; return; }
+  $('#cloudStatus').textContent='正在连接共享账本…';
+  bar.onclick=event=>{
+    const action=event.target.closest('[data-sync]')?.dataset.sync;
+    if (!action) return;
+    if (action==='download' || action==='backup') sync.download(action==='backup');
+    else sync.act(action);
+  };
+  function paintSharedBook() {
+    const stored=JSON.parse(localStorage.getItem('heng.state') || '{}');
+    S = {...structuredClone(defaultState), ...migrateExecutionState(stored)};
+    ledgerRevision = S.ledger?.revision || '';
+    const prior=new Map(customPresets.map(p=>[p.key,JSON.stringify(p)]));
+    loadTemplates();
+    computePresetStats(customPresets.filter(p=>prior.get(p.key)!==JSON.stringify(p)));
+    renderPresets(); ensureRebalanceState(); renderStrategy(); renderAssets();
+    if(current==='rebalance')renderRebalance();
+    if(current==='history')renderLedger();
+    if(current==='backtest')renderBacktest();
+  }
+  sync.bind({
+    status(text,action){
+      if ($('#cloudStatus').textContent!==text) $('#cloudStatus').textContent=text;
+      const show={init:['init'],join:['join','download'],conflict:['mine','theirs','download'],retry:['retry']}[action] || [];
+      for (const button of bar.querySelectorAll('[data-sync]')) button.hidden=button.dataset.sync==='backup' ? !localStorage.getItem('heng.shared.backup') : !show.includes(button.dataset.sync);
+    },
+    validate(book){
+      const state=book.state;
+      const holdingsValid=o=>o && typeof o==='object' && Object.entries(o).every(([id,n])=>IDS.includes(id) && Number.isFinite(n) && n>=0);
+      if (['weights','holdings','beforeExample'].some(k=>state[k] && !holdingsValid(state[k]))) throw Error('共享持仓格式错误');
+      if (state.lastRebalance && !/^\d{4}-\d{2}-\d{2}$/.test(state.lastRebalance)) throw Error('日期格式错误');
+      const numeric = ['monthly','initial','fee','fx','investmentDay','abs','rel'];
+      if(numeric.some(k=>state[k]!=null && !Number.isFinite(state[k]))) throw Error('共享定投金额或设置格式错误');
+      if(state.favorites && (!Array.isArray(state.favorites)||state.favorites.some(id=>!IDS.includes(id)))) throw Error('共享收藏格式错误');
+      if(state.mode && !['none','threshold','hybrid','calendar'].includes(state.mode)) throw Error('共享策略格式错误');
+      if(state.ledger && (!Array.isArray(state.ledger.entries)||!Array.isArray(state.ledger.positions)||!holdingsValid(state.ledger.holdings))) throw Error('投资记录格式错误');
+      for(const r of state.ledger?.positions || []) if(!IDS.includes(r.id)||!Number.isFinite(r.quantity)||!Number.isFinite(r.price))throw Error('期初持仓格式错误');
+      for(const entry of state.ledger?.entries || []) {
+        if(!Number.isFinite(entry.flow)||!Array.isArray(entry.trades)||entry.trades.some(r=>!IDS.includes(r.id)||!Number.isFinite(r.price)||!Number.isFinite(r.quantity)))throw Error('成交记录格式错误');
+      }
+      if(state.ledger?.past?.some(r=>!IDS.includes(r.id)||!Number.isFinite(r.flow)||!Number.isFinite(r.quantity)))throw Error('历史成交格式错误');
+      if(Object.entries(book.templates).some(([id,p])=>!/^custom-[a-z0-9-]+$/i.test(id)||p.key!==id||typeof p.name!=='string'||!holdingsValid(p.w)))throw Error('自建模型格式错误');
+    },
+    apply(book){
+      localStorage.setItem('heng.state',JSON.stringify(book.state));
+      localStorage.setItem('heng.templates',JSON.stringify(Object.values(book.templates)));
+      paintSharedBook();
+    }
+  });
+  window.addEventListener('storage',event=>{if(event.key==='heng.shared.v1' && event.newValue && !JSON.parse(event.newValue).install)paintSharedBook();});
+}
+
 /* ---------------- boot ---------------- */
 function boot() {
   const last = D.asOf || ymd(wDate(N - 1));
@@ -2136,6 +2212,7 @@ function boot() {
   mq.addEventListener && mq.addEventListener('change', onTheme);
   new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   AI.bindSettings();
+  bindSharedBook();
   if (window.claude && claude.use) claude.use('sample').then(fn => { sampleFn = fn; }).catch(() => {});
 }
 boot();

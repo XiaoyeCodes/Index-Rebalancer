@@ -1,3 +1,4 @@
+import { workspaceSync } from './workspace-sync.js';
 import { browserModel } from './browser-model.js';
 
 const access = JSON.parse(document.getElementById('access').textContent);
@@ -25,7 +26,7 @@ form.onsubmit = async event => {
     const html = await subtle.decrypt({name:'AES-GCM',iv:bytes(access.appIv)},appKey,await response.arrayBuffer());
     const unlockSeed = await subtle.digest('SHA-256',privateBytes);
     new Uint8Array(privateBytes).fill(0);
-    window.privateAccount = {pages:true, model:browserModel(unlockSeed), logout:async () => location.reload()};
+    window.privateAccount = {pages:true, model:browserModel(unlockSeed), sync:await workspaceSync(access.syncEndpoint,unlockSeed), logout:async () => location.reload()};
     document.open(); document.write(new TextDecoder().decode(html)); document.close();
   } catch (error) {
     status.textContent = error.name === 'OperationError' ? '网页版本已更新，请刷新并重新登录。' : error.message;

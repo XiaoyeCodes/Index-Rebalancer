@@ -20,3 +20,5 @@ assistant/services/vibe-trading/agent/runs/
 assistant/services/vibe-trading/agent/sessions/
 
 .private/
+
+sync/.wrangler/

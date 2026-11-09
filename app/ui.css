@@ -3650,3 +3650,5 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
 .ledger-method {margin-top:1rem;}
 .ledger-method summary {cursor:pointer;}
 @media(max-width:740px){.ledger-totals.kpis {grid-template-columns:repeat(2,minmax(0,1fr));}.ledger-row summary {gap:.4rem;}}
+
+#collaboration{display:flex;align-items:center;flex-wrap:wrap;gap:.7rem;padding:.65rem 0;font-size:.85rem;color:var(--ink-3)}

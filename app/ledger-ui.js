@@ -27,7 +27,7 @@ function renderLedger() {
     changed ? '当前股数和账本有差异。请核对这次变动的金额，再查看收益。' :
     !book ? '可以从现有持仓开始，也可以在确认第一笔真实操作时自动建账。' :
     book.usePast ? '期初成本按已核对的历史成交流水计算。' :
-    book.cost == null ? '填入期初持仓成本后，即可看到总收益和累计收益率。' : '按清单确认后的买卖会自动保存在这个浏览器。';
+    book.cost == null ? '填入期初持仓成本后，即可看到总收益和累计收益率。' : window.privateAccount?.sync ? '已确认的买卖会计入共享账本。' : '按清单确认后的买卖会保存在这个浏览器。';
   const legacy = book ? book.legacy : S.lastAppliedOps;
   const rows = (book?.entries || []).slice().reverse().map(entry =>
     '<details class="ledger-row"><summary><span>'+esc(entry.date)+'</span><b>'+esc(entry.kind)+'</b><span>净投入 '+formatLedgerMoney(entry.flow)+'</span></summary>'+
