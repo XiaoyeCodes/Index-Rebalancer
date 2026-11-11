@@ -4,11 +4,11 @@
 
 SVG 保留矢量，PNG 导出为保留透明通道的本地 WebP，发布时内嵌以便独立页面使用。
 
-- IBIT, TLT, SHY 使用 iShares · 基金发行商。[官方素材](https://www.ishares.com/blk-one02-c-assets/cache-1765926417000/images/media-bin/web/global/logos/logo-ishares.svg)
+- IBIT, TLT, SHY, SOXX 使用 iShares · 基金发行商。[官方素材](https://www.ishares.com/blk-one02-c-assets/cache-1765926417000/images/media-bin/web/global/logos/logo-ishares.svg)
 - QQQM 使用 Invesco · 基金发行商。[官方素材](https://www.invesco.com/content/dam/invesco/global/en/images/invesco-blue.svg)
-- SPY, GLD 使用 State Street · SPDR 基金发行商。[官方素材](https://www.ssga.com/library-content/images/site/state-street-investment-management-logo.svg)
+- SPY, GLD, GLDM 使用 State Street · SPDR 基金发行商。[官方素材](https://www.ssga.com/library-content/images/site/state-street-investment-management-logo.svg)
 - SCHD 使用 Charles Schwab · 基金发行商。[官方素材](https://www.schwab.com/)
-- VTI, VXUS, VWO, VNQ, BND 使用 Vanguard · 基金发行商。[官方素材](https://investor.vanguard.com/corporate-portal/assets/vanguard.svg)
+- VTI, VXUS, VWO, VNQ, BND, VGT 使用 Vanguard · 基金发行商。[官方素材](https://investor.vanguard.com/corporate-portal/assets/vanguard.svg)
 - A500 使用 华夏基金 · 基金发行商。[官方素材](https://www.chinaamc.com/images/jgindex/logo.png)
 - BANK 使用 华宝基金 · 基金发行商。[官方素材](https://www.fsfund.com/static/images/home/logo.png)
 - SOEDIV 使用 华泰柏瑞基金 · 基金发行商。[官方素材](https://www.huatai-pb.com/assets/logo.png)

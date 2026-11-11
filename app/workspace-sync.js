@@ -1,6 +1,6 @@
 // Only portfolio fields are shared. Keep ledger, holdings and receipts atomic.
 const groups = {
-  portfolio:'holdings holdingsExample exampleKey beforeExample ledger lastAppliedOps contributionMonth lastExecutionDate lastRebalance'.split(' '),
+  portfolio:'holdings holdingsExample exampleKey beforeExample ledger lastAppliedOps contributionMonth lastExecutionDate lastRebalance lastBalanceCheckDate investmentResets'.split(' '),
   strategy:'weights preset label mode abs rel period'.split(' '),
   settings:'monthly initial start fee cashflow allowSell fx fxManual wholeShares investmentDay favorites'.split(' ')
 };

@@ -2,6 +2,8 @@
 // The last ticker is the asset itself; earlier ones fill the years before it existed and are spliced on in turn.
 export const CHAINS = {
   QQQM: ['QQQ', 'QQQM'],
+  VGT: ['VGT'],
+  SOXX: ['SOXX'],
   IBIT: ['BTC-USD', 'IBIT'],
   SPY: ['SPY'],
   VTI: ['VTSMX', 'VTI'],
@@ -10,6 +12,7 @@ export const CHAINS = {
   SCHD: ['SCHD'],
   VNQ: ['VGSIX', 'VNQ'],
   GLD: ['GC=F', 'GLD'],
+  GLDM: ['GLDM'],
   BND: ['VBMFX', 'BND'],
   TLT: ['VUSTX', 'TLT'],
   SHY: ['VFISX', 'SHY'],

@@ -1,7 +1,18 @@
 // Scheduling and receipts are independent of the portfolio allocation algorithm.
 const Investment = (() => {
   const period = today => today.slice(0, 7);
+  function pendingReset(state, kind, today) {
+    const reset = state.investmentResets?.[kind];
+    if (!reset || typeof reset.id !== 'string' || !reset.id || reset.period !== period(today)) return null;
+    const id = `${kind}:${reset.period}:reset:${reset.id}`;
+    return (state.ledger?.entries || []).some(entry => (entry.investmentType === kind && entry.resetId === reset.id) || entry.operationId === id) ? null : reset;
+  }
+  function operationId(state, intent, today) {
+    const reset = pendingReset(state, intent.kind, today);
+    return reset ? `${intent.kind}:${period(today)}:reset:${reset.id}` : intent.kind === 'monthly' ? `monthly:${period(today)}` : intent.id;
+  }
   function monthlyDone(state, today) {
+    if (pendingReset(state, 'monthly', today)) return false;
     const month = period(today);
     return state.contributionMonth === month || (state.ledger?.entries || []).some(entry =>
       entry.operationId === `monthly:${month}` ||
@@ -19,9 +30,16 @@ const Investment = (() => {
     const day = Math.min(preferredDay(state, today), new Date(year, month, 0).getDate());
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
+  function rebalanceDone(state, today) {
+    if (pendingReset(state, 'rebalance', today)) return false;
+    const month = period(today);
+    return [state.lastBalanceCheckDate, state.lastRebalance].some(date => typeof date === 'string' && date.slice(0, 7) === month) ||
+      (state.ledger?.entries || []).some(entry => (entry.investmentType === 'rebalance' || (!entry.investmentType && entry.kind === '再平衡检查')) &&
+        (entry.period === month || (typeof entry.date === 'string' && entry.date.slice(0, 7) === month)));
+  }
   function operationDone(state, intent, today) {
     return intent.kind === 'monthly' ? monthlyDone(state, today)
-      : !!intent.id && (state.ledger?.entries || []).some(entry => entry.operationId === intent.id);
+      : (intent.kind === 'rebalance' && rebalanceDone(state, today)) || !!intent.id && (state.ledger?.entries || []).some(entry => entry.operationId === intent.id);
   }
   function lastBalanceCheck(state, includeOpening = true) {
     const legacy = !state.lastAppliedOps?.investmentType;
@@ -30,5 +48,5 @@ const Investment = (() => {
       legacy ? state.lastAppliedOps?.confirmedOn : null, legacy ? state.lastExecutionDate : null]
       .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date || '') && Number.isFinite(Date.parse(date))).sort().at(-1);
   }
-  return { period, monthlyDone, preferredDay, monthlyDate, operationDone, lastBalanceCheck };
+  return { period, pendingReset, operationId, monthlyDone, rebalanceDone, preferredDay, monthlyDate, operationDone, lastBalanceCheck };
 })();
