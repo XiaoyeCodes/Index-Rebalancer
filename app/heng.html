@@ -5952,7 +5952,7 @@ const AI = window.hengAI;
 let sampleFn = null;
 
 /* ---------------- 04 backtest view ---------------- */
-let bt = { nav: null, navS: null, b1: null, asset: null, assetS: null, val: null, valS: null, invS: null, sel: null, syncing: false };
+let bt = { nav: null, navS: null, b1: null, asset: null, assetS: null, val: null, valS: null, invS: null, sel: null };
 function navMonthly(r) { const out = []; let cur = null; for (const p of r.nav) { const m = ym(p.i); if (!cur || cur.m !== m) { if (cur) out.push(cur); cur = { m, time: m + '-01', open: p.o, high: p.h, low: p.l, close: p.c }; } else { cur.high = Math.max(cur.high, p.h); cur.low = Math.min(cur.low, p.l); cur.close = p.c; } } if (cur) out.push(cur); return out.map(({ time, open, high, low, close }) => ({ time, open, high, low, close })); }
 function navLine(r) { const out = []; let lastM = null; for (const p of r.nav) { const m = ym(p.i); if (m !== lastM) { out.push({ time: m + '-01', value: p.c }); lastM = m; } else out[out.length - 1].value = p.c; } return out; }
 function navMonthStats(r) {
@@ -6018,8 +6018,6 @@ function renderBacktest() {
       rows.sort((a, b) => b[1] - a[1]);
       return rows.length ? `<div class="ctip-d">${tipDate(param.time)}</div>` + rows.map(([k, c]) => `<div class="ctip-r"><i style="background:${cmpColor(k)}"></i>${cmpLabel(k)}<b class="${c >= 0 ? 'pos' : 'neg'}">${fmtPct(c, 1, true)}</b></div>`).join('') : null;
     });
-    const link = (a, b) => a.timeScale().subscribeVisibleTimeRangeChange(rg => { if (bt.syncing || !rg) return; bt.syncing = true; try { b.timeScale().setVisibleRange(rg); } catch (e) { } bt.syncing = false; });
-    link(bt.nav, bt.asset); link(bt.asset, bt.nav);
     segBind('#navScale', b => bt.nav.applyOptions({ rightPriceScale: { mode: b.dataset.v === '1' ? 1 : 0 } }));
   }
   bt.r = r;
@@ -6043,7 +6041,7 @@ function renderBacktest() {
     [...$('#assetChips').querySelectorAll('[data-id]')].forEach(x => x.setAttribute('aria-pressed', bt.selSet.has(x.dataset.id)));
     setAssetChart();
   };
-  setAssetChart(); bt.nav.timeScale().fitContent();
+  setAssetChart(true); bt.nav.timeScale().fitContent();
   renderStack(r); renderYears(r, b1); renderLog(r);
 }
 // floating hover card for a chart: build(param) returns HTML, or null to hide
@@ -6102,7 +6100,8 @@ function rebaseCmp() {
   const lo = visLo();
   for (const [k, s] of bt.cmp) { const d = cmpData(k); const b = (lo && d.find(p => p.time >= lo)) || d[0]; if (b) s.setData(d.map(p => ({ time: p.time, value: p.value / b.value * 100 }))); }
 }
-function setAssetChart() {
+function setAssetChart(resetRange = false) {
+  const range = resetRange ? null : bt.asset.timeScale().getVisibleRange();
   if (!bt.cmp) {
     bt.cmp = new Map(); if (bt.cmpLog == null) bt.cmpLog = true;
     bt.asset.applyOptions({ localization: { locale: 'zh-CN', percentageFormatter: pctFmt } });
@@ -6128,7 +6127,8 @@ function setAssetChart() {
   [...$('#cmpScale').children].forEach(x => x.setAttribute('aria-pressed', (x.dataset.v === '1') === bt.cmpLog));
   $('#cmpTitle').textContent = single ? `${sel[0]} K 线` : '走势对比';
   $('#cmpSub').textContent = single ? '月线 · 复权价格 · 可多选标的或「本策略」进行对比' : `涨跌幅（均按美元计）· 以可见区间的第一个月为 0%，拖动或缩放会重新计算${bt.cmpLog ? ' · 对数坐标，相同涨幅高度相同' : ''}`;
-  try { const rg = bt.nav.timeScale().getVisibleRange(); if (rg) bt.asset.timeScale().setVisibleRange(rg); else bt.asset.timeScale().fitContent(); } catch (e) { bt.asset.timeScale().fitContent(); }
+  if (range) bt.asset.timeScale().setVisibleRange(range);
+  else bt.asset.timeScale().fitContent();
   updateCmpLegend();
 }
 function updateCmpLegend() {
