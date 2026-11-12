@@ -268,7 +268,7 @@ test('every backtest chart and comparison rerenders from the current complete mo
   e.evaluate(section('let bt =', '// floating hover card'));
   e.evaluate(section('const STRAT =', 'const pctFmt ='));
   e.evaluate(section('function setMarkers(', '// one asset alone'));
-  e.evaluate(section('function renderLog(', '/* ---------------- 00 rebalance view'));
+  e.evaluate(section('function paginateBacktestRows(', '/* ---------------- 00 rebalance view'));
   e.evaluate('bt = fixture');
   for (const [policy, expected] of [['fixed', 2900], ['buy-only', 2850], ['rebalance', 2625]]) {
     e.evaluate(`setInvestmentPolicy('${policy}'); S.mode = S.mode === 'none' ? 'none' : 'threshold'; renderBacktest()`);
