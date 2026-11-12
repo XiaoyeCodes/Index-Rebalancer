@@ -111,7 +111,7 @@ export async function workspaceSync(endpoint,seed) {
       if(!equal(mine,theirs)||meta?.revision!==remote.revision)install(theirs,remote.revision,theirs);
     } else {
       const blob=await seal(merged.book);
-      const result=await request('','PUT',{revision:remote.revision,blob});
+      const result=await request('','PUT',{revision:remote.revision,generation:remote.generation??0,blob});
       if(!result){again=true;return;}
       // Local edits during fetch are still pending against the just-saved base.
       const after=localBook();
@@ -157,7 +157,7 @@ export async function workspaceSync(endpoint,seed) {
       const remote=await request('?since=-1'),meta=JSON.parse(localStorage.getItem(localKey)||'null');
       if(remote.revision&&(!meta||meta.install||remote.revision!==meta.revision))throw Error('其他设备有新数据，请等待共享账本同步后重新操作。');
       if(!equal(localBook(),expected))throw Error('投资数据已变化，请重新核对后操作。');
-      const blob=await seal(next),saved=await request('','PUT',{revision:remote.revision,blob});
+      const blob=await seal(next),saved=await request('','PUT',{revision:remote.revision,generation:remote.generation??0,replace:true,blob});
       if(!saved)throw Error('其他设备已更新账本，本次未覆盖，请同步后重试。');
       if(!equal(localBook(),expected)) {
         localStorage.setItem(backupKey,JSON.stringify(localBook()));

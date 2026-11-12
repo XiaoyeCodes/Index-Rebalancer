@@ -31,7 +31,7 @@ jobs:
           node-version: 24
       - run: npm ci --no-audit --no-fund
       - name: Test backup storage
-        run: node --test ../app/scripts/github-backups.test.mjs
+        run: node --test ../app/scripts/github-backups.test.mjs ../app/scripts/book-store.test.mjs
       - name: Configure server-side GitHub backup credential
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

@@ -1,28 +1,20 @@
 import { DurableObject } from 'cloudflare:workers';
 import config from './access.json';
 import { githubBackups } from './github-backups.js';
+import { bookStore } from './book-store.js';
 
 const origin = 'https://xiaoyecodes.github.io';
 const maxBytes = 1536 * 1024;
 export class SharedBook extends DurableObject {
   constructor(ctx, env) {
     super(ctx,env);
-    this.sql = ctx.storage.sql;
-    this.sql.exec('CREATE TABLE IF NOT EXISTS book (id INTEGER PRIMARY KEY, rev INTEGER NOT NULL, data TEXT NOT NULL)');
+    this.store=bookStore(ctx.storage);
   }
   read(since) {
-    const row = this.sql.exec('SELECT rev FROM book WHERE id=1').toArray()[0];
-    const revision = row?.rev || 0;
-    if (since === revision || !revision) return {revision};
-    return {revision, blob:this.sql.exec('SELECT data FROM book WHERE id=1').one().data};
+    return this.store.read(since);
   }
-  write(revision, blob) {
-    // Each invocation runs synchronously: comparing and advancing the revision
-    // never yields to another writer between SQL statements.
-    const current = this.sql.exec('SELECT rev FROM book WHERE id=1').toArray()[0]?.rev || 0;
-    if (current !== revision) return null;
-    this.sql.exec('INSERT OR REPLACE INTO book(id,rev,data) VALUES(1,?,?)',current+1,blob);
-    return current+1;
+  write(revision,blob,generation,replace) {
+    return this.store.write(revision,blob,generation,replace);
   }
 }
 export default {
@@ -63,7 +55,9 @@ export default {
       catch(error){return answer({detail:error.message},503);}
     }
     if(!Number.isSafeInteger(payload?.revision)||payload.revision<0||typeof payload.blob!=='string'||!/^[A-Za-z0-9+/=]+$/.test(payload.blob))return answer({},400);
-    const revision=await book.write(payload.revision,payload.blob);
-    return revision===null ? answer({},409) : answer({revision});
+    if(!Number.isSafeInteger(payload.generation)||payload.generation<0)return answer({detail:'网页版本已更新，请刷新后再保存投资数据。'},426);
+    if(payload.replace!=null&&typeof payload.replace!=='boolean')return answer({},400);
+    const saved=await book.write(payload.revision,payload.blob,payload.generation,payload.replace===true);
+    return saved===null ? answer({},409) : answer(saved);
   }
 };

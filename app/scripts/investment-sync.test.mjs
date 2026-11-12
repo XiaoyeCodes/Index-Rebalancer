@@ -12,7 +12,7 @@ async function fixture({changedRemote=false,conflict=false}={}) {
     assert.match(options.headers.Authorization,/^Bearer [a-f0-9]{64}$/);
     if(url.endsWith('/backups')&&options.method==='POST'){const body=JSON.parse(options.body);files.set(body.id,body.backup);uploaded=body;return Response.json({id:body.id,commit:'saved'});}
     if(url.includes('/backups/'))return Response.json(files.get(decodeURIComponent(url.split('/backups/')[1])));
-    if(options.method==='PUT') {puts++;if(conflict)return Response.json({}, {status:409});const body=JSON.parse(options.body);assert.equal(body.revision,5);remote={revision:6,blob:body.blob};return Response.json({revision:6});}
+    if(options.method==='PUT') {puts++;if(conflict)return Response.json({}, {status:409});const body=JSON.parse(options.body);assert.equal(body.revision,5);assert.equal(body.generation,0);assert.equal(body.replace,true);remote={revision:6,generation:1,blob:body.blob};return Response.json({revision:6,generation:1});}
     return Response.json({...remote,revision:changedRemote?6:remote.revision});
   }};
   for(const [key,value]of Object.entries(mocks))Object.defineProperty(globalThis,key,{configurable:true,value});
