@@ -167,7 +167,7 @@ test('sell restrictions apply to calendar and hybrid triggers as well as thresho
   }
 });
 
-test('six comparison portfolios share funding and history while retaining each distinct policy', () => {
+test('comparisons omit the selected policy and keep the other policies on identical funding and history', () => {
   const assets = { AAA: asset(Array.from({ length: 66 }, (_, i) => 100 * 1.02 ** i)),
     BBB: asset(Array(64).fill(100), 2), SPY: asset(Array(66).fill(100)) };
   const e = engine(assets);
@@ -176,31 +176,30 @@ test('six comparison portfolios share funding and history while retaining each d
       const current = e.run({ ...driftConfig, mode, period, allowSell, cashflow, fee: 0.15 });
       e.context.current = current;
       const rows = e.evaluate('backtestComparisons(cfg, current)');
-      assert.equal(JSON.stringify(rows.map(row => row.key)), JSON.stringify(['strategy', 'sp500', 'fixed', 'buy-only', 'rebalance-cash', 'rebalance-fixed']));
+      const selected = mode === 'none' ? 'fixed' : !allowSell ? 'buy-only' : cashflow ? 'rebalance-cash' : 'rebalance-fixed';
+      const expected = ['strategy', 'sp500', 'fixed', 'buy-only', 'rebalance-cash', 'rebalance-fixed'].filter(key => key !== selected);
+      assert.equal(JSON.stringify(rows.map(row => row.key)), JSON.stringify(expected));
       assert.equal(rows[0].result, current);
-      const selected = mode === 'none' ? 2 : !allowSell ? 3 : cashflow ? 4 : 5;
-      assert.equal(JSON.stringify(rows[0].result.nav), JSON.stringify(rows[selected].result.nav));
       for (const { key, result } of rows) {
         assert.equal(result.s0, current.s0);
         assert.equal(JSON.stringify(result.inv), JSON.stringify(current.inv));
         assert.equal(result.cfg.fee, 0.15);
         if (key !== 'sp500') assert.equal(JSON.stringify(result.cfg.weights), JSON.stringify(current.cfg.weights));
       }
-      for (const index of [1, 2, 3]) assert.equal(rows[index].result.rebCount, 0);
-      assert.equal(rows[1].result.cfg.weights.SPY, 100);
-      assert.equal(rows[2].result.cfg.cashflow, false);
-      assert.equal(rows[3].result.cfg.allowSell, false);
-      assert.equal(rows[3].result.cfg.cashflow, true);
-      assert.equal(rows[4].result.cfg.cashflow, true);
-      assert.equal(rows[5].result.cfg.cashflow, false);
-      for (const index of [4, 5]) {
-        const actual = rows[index].result.cfg;
+      assert.equal(rows.find(row => row.key === 'sp500').result.cfg.weights.SPY, 100);
+      for (const row of rows.slice(1)) {
+        const actual = row.result.cfg;
+        if (!row.key.startsWith('rebalance-')) assert.equal(row.result.rebCount, 0);
+        if (row.key === 'fixed') assert.equal(actual.cashflow, false);
+        if (row.key === 'buy-only') { assert.equal(actual.allowSell, false); assert.equal(actual.cashflow, true); }
+        if (!row.key.startsWith('rebalance-')) continue;
+        assert.equal(actual.cashflow, row.key === 'rebalance-cash');
         assert.equal(actual.allowSell, true);
         assert.equal(actual.mode, mode === 'none' ? 'calendar' : mode);
         assert.equal(actual.period, period);
         assert.equal(actual.abs, current.cfg.abs);
         assert.equal(actual.rel, current.cfg.rel);
-        assert.ok(rows[index].detail.includes(mode === 'threshold' ? '仅阈值再平衡' : period === 'Q' ? '按季再平衡' : '按年再平衡'));
+        assert.ok(row.detail.includes(mode === 'threshold' ? '仅阈值再平衡' : period === 'Q' ? '按季再平衡' : '按年再平衡'));
       }
     }
   }
@@ -211,13 +210,30 @@ test('quarterly and annual comparison labels follow their actual trading schedul
     BBB: asset(Array(66).fill(100)), SPY: asset(Array(66).fill(100)) });
   const results = [];
   for (const period of ['Q', 'Y']) {
-    e.run({ ...driftConfig, mode: 'calendar', period, allowSell: true, cashflow: false, fee: 0.05 });
-    results.push(e.evaluate('backtestComparisons(cfg)[5]'));
+    e.run({ ...driftConfig, mode: 'calendar', period, allowSell: true, cashflow: true, fee: 0.05 });
+    results.push(e.evaluate('backtestComparisons(cfg).find(row => row.key === "rebalance-fixed")'));
   }
   assert.ok(results[0].result.rebCount > results[1].result.rebCount);
   assert.notEqual(results[0].result.final, results[1].result.final);
   assert.match(results[0].detail, /按季再平衡/);
   assert.match(results[1].detail, /按年再平衡/);
+});
+
+test('cash allocation changes results while identical or merely numerically equal policies are handled separately', () => {
+  const e = engine({ ...driftingAssets(), SPY: asset(Array(7).fill(100)) });
+  e.run({ ...driftConfig, mode: 'calendar', period: 'Y', allowSell: true, cashflow: true });
+  const rows = e.evaluate('backtestComparisons(cfg)');
+  assert.equal(rows.length, 5);
+  assert.equal(rows.some(row => row.key === 'rebalance-cash'), false);
+  close(rows[0].result.final, 2850);
+  const fixedCash = rows.find(row => row.key === 'rebalance-fixed');
+  close(fixedCash.result.final, 2900);
+  assert.match(fixedCash.label, /新钱固定比例/);
+  assert.match(rows[0].detail, /新钱补低配/);
+  // No scheduled trade occurs in January/February, so these distinct policies
+  // happen to have equal outcomes. Hide by policy, never by rounded metrics.
+  close(rows.find(row => row.key === 'buy-only').result.final, 2850);
+  close(rows.find(row => row.key === 'fixed').result.final, 2900);
 });
 
 test('policy controls prevent conflicting fixed, buy-only and buy/sell settings', () => {
@@ -263,12 +279,14 @@ test('every backtest chart and comparison rerenders from the current complete mo
     assert.equal(e.context.fixture.valS.data.at(-1).value, e.evaluate('bt.r.final'));
     assert.equal(e.evaluate('JSON.stringify(cmpData(STRAT))'), e.evaluate('JSON.stringify(navLine(bt.r))'));
     assert.ok(nodes.get('#cmpTable').innerHTML.includes(String(expected)));
-    assert.equal((nodes.get('#cmpTable').innerHTML.match(/data-comparison=/g) || []).length, 6);
+    assert.equal((nodes.get('#cmpTable').innerHTML.match(/data-comparison=/g) || []).length, 5);
+    const selectedKey = policy === 'rebalance' ? 'rebalance-cash' : policy;
+    assert.ok(!nodes.get('#cmpTable').innerHTML.includes(`data-comparison="${selectedKey}"`));
     assert.ok(nodes.get('#cmpTable').innerHTML.includes(e.evaluate('investmentPolicyLabel(modelBacktestConfig(S))')));
     assert.equal(nodes.get('#navRebalanceLegend').hidden, policy !== 'rebalance');
     assert.equal(e.context.fixture.navS.markers.length, policy === 'rebalance' ? 2 : 0);
     if (policy === 'fixed') {
-      assert.match(nodes.get('#cmpNote').innerHTML, /完全相同/);
+      assert.match(nodes.get('#cmpNote').innerHTML, /规则相同的对照已合并/);
     }
     if (policy === 'buy-only') {
       assert.match(nodes.get('#cmpNote').innerHTML, /新钱补低配/);

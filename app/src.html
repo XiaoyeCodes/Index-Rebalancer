@@ -942,10 +942,12 @@ function investmentPolicyLabel(cfg) {
   const policy = investmentPolicy(cfg);
   if (policy === 'fixed') return '固定比例定投（不再平衡）';
   if (policy === 'buy-only') return '只买不卖（新钱补低配）';
-  return `允许买卖再平衡（定投钱${cfg.cashflow ? '补低配' : '固定比例'}，${rebalanceTriggerLabel(cfg)}）`;
+  return `允许买卖再平衡（新钱${cfg.cashflow ? '补低配' : '固定比例'}，${rebalanceTriggerLabel(cfg)}）`;
 }
 function backtestComparisons(state, current = backtest(state)) {
   const cfg = modelBacktestConfig(state), common = { ...cfg, startWeek: current.s0 };
+  const policy = investmentPolicy(current.cfg);
+  const selectedKey = policy === 'rebalance' ? (current.cfg.cashflow ? 'rebalance-cash' : 'rebalance-fixed') : policy;
   // A fixed-ratio model has no active trading trigger; its buy/sell comparisons
   // use the configured quarter/year schedule. Active triggers remain unchanged.
   const tradingMode = cfg.mode === 'none' ? 'calendar' : cfg.mode;
@@ -957,10 +959,10 @@ function backtestComparisons(state, current = backtest(state)) {
     ['rebalance-fixed', { mode: tradingMode, allowSell: true, cashflow: false }, '#B46C39'],
   ];
   return [{ key: 'strategy', label: '本策略', detail: investmentPolicyLabel(current.cfg), result: current, color: 'var(--accent)' },
-    ...variants.map(([key, overrides, color]) => {
+    ...variants.filter(([key]) => key !== selectedKey).map(([key, overrides, color]) => {
       const result = backtest({ ...common, ...overrides });
-      const label = key === 'sp500' ? '同额定投标普 500' : key.startsWith('rebalance-') ? '允许买卖再平衡' : investmentPolicyLabel(result.cfg);
-      const detail = key.startsWith('rebalance-') ? `（定投钱${result.cfg.cashflow ? '补低配' : '固定比例'}，${rebalanceTriggerLabel(result.cfg)}）` : '';
+      const label = key === 'sp500' ? '同额定投标普 500' : key.startsWith('rebalance-') ? `允许买卖再平衡 · 新钱${result.cfg.cashflow ? '补低配' : '固定比例'}` : investmentPolicyLabel(result.cfg);
+      const detail = key.startsWith('rebalance-') ? rebalanceTriggerLabel(result.cfg) : '';
       return { key, label, detail, result, color };
     })];
 }
@@ -1334,8 +1336,8 @@ function renderBacktest() {
     ['再平衡次数', String(r.rebCount), `年均换手 ${fmtPct(r.turnYear, 1)}`],
   ].map(([l, v, c]) => `<div title="${esc(KPI_HELP[l] || '')}"><div class="l">${l}</div><div class="v">${v}</div><div class="c">${c}</div></div>`).join('');
   $('#kpiHelp').innerHTML = `<b>怎么读：</b>定投年化把每笔钱投入的时间算进去，是你实际体验到的年化收益；净值年化不受投入节奏影响，衡量策略本身；最大回撤是历史上从高点到低点最深的一次下跌。`;
-  const tradingNote = cfg.mode === 'none' ? `当前未启用买卖触发，两组买卖对照按模型的${cfg.period === 'Q' ? '季度' : '年度'}频率定期再平衡。` : cfg.mode === 'threshold' ? '两组买卖对照仅按模型阈值触发，不启用定期再平衡。' : '两组买卖对照沿用模型的触发方式、阈值和季度／年度频率。';
-  $('#cmpNote').innerHTML = `<b>怎么读：</b>本策略采用「${esc(comparisons[0].detail)}」，与对应对照的规则完全相同，结果应一致。所有组合使用相同回测区间、投入时间、初始投入、月度金额及单边成本；四种同组合对照的标的与目标权重也相同。${tradingNote}`;
+  const tradingNote = cfg.mode === 'none' ? `当前未启用买卖触发，买卖对照按模型的${cfg.period === 'Q' ? '季度' : '年度'}频率定期再平衡。` : cfg.mode === 'threshold' ? '买卖对照仅按模型阈值触发，不启用定期再平衡。' : '买卖对照沿用模型的触发方式、阈值和季度／年度频率。';
+  $('#cmpNote').innerHTML = `<b>怎么读：</b>本策略采用「${esc(comparisons[0].detail)}」，与本策略规则相同的对照已合并。其余同组合对照分别比较新钱分配和买卖方式，标的与目标权重相同；所有组合使用相同回测区间、投入时间、初始投入、月度金额及单边成本。${tradingNote}`;
   $('#cmpTable').innerHTML = `<thead><tr><th scope="col">策略</th><th scope="col" class="r">定投年化</th><th scope="col" class="r">期末市值</th><th scope="col" class="r">最大回撤</th><th scope="col" class="r">年化波动</th></tr></thead><tbody>${comparisons.map(({ key, label, detail, result: x, color }) => `<tr data-comparison="${key}"><td><span class="cmp-strategy"><span class="dot" style="background:${color}"></span><span>${key === 'strategy' ? `<strong>${esc(label)}</strong>` : esc(label)}${detail ? `<span class="cmp-detail">${esc(detail)}</span>` : ''}</span></span></td><td class="r num">${fmtPct(x.xirr)}</td><td class="r num">${fmtMoney(x.final)}</td><td class="r num neg">${fmtPct(x.mdd)}</td><td class="r num">${fmtPct(x.vol)}</td></tr>`).join('')}</tbody>`;
 
   // charts
