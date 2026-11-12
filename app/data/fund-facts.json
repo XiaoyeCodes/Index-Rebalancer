@@ -1,0 +1,23 @@
+{
+  "checkedOn": "2026-11-12",
+  "method": "Manual check of issuer product pages; percent per year. This is not a daily live fee feed.",
+  "funds": {
+    "VOO":{"fee":0.03,"source":"https://advisors.vanguard.com/investments/products/voo/vanguard-sp-500-etf"},
+    "SGOV":{"fee":0.09,"source":"https://www.ishares.com/us/products/314116/ishares-0-3-month-treasury-bond-etf"},
+    "QQQM":{"fee":0.15,"source":"https://www.invesco.com/us/en/financial-products/etfs/invesco-nasdaq-100-etf.html"},
+    "VGT":{"fee":0.09,"source":"https://advisors.vanguard.com/investments/products/vgt/vanguard-information-technology-etf"},
+    "SOXX":{"fee":0.33,"source":"https://www.ishares.com/us/products/239705/ishares-semiconductor-etf-soxx"},
+    "IBIT":{"fee":0.25,"source":"https://www.ishares.com/us/products/333011/ishares-bitcoin-trust-etf"},
+    "SPY":{"fee":0.0945,"source":"https://www.ssga.com/us/en/institutional/etfs/state-street-spdr-sp-500-etf-trust-spy"},
+    "VTI":{"fee":0.03,"source":"https://advisors.vanguard.com/investments/products/vti/vanguard-total-stock-market-etf"},
+    "VXUS":{"fee":0.05,"source":"https://advisors.vanguard.com/investments/products/vxus/vanguard-total-international-stock-etf"},
+    "VWO":{"fee":0.06,"source":"https://advisors.vanguard.com/investments/products/vwo/vanguard-ftse-emerging-markets-etf"},
+    "SCHD":{"fee":0.06,"source":"https://www.schwabassetmanagement.com/products/schd"},
+    "VNQ":{"fee":0.13,"source":"https://advisors.vanguard.com/investments/products/vnq/vanguard-real-estate-etf"},
+    "GLD":{"fee":0.40,"source":"https://www.ssga.com/us/en/individual/etfs/spdr-gold-shares-gld"},
+    "GLDM":{"fee":0.10,"source":"https://www.ssga.com/us/en/individual/etfs/spdr-gold-minishares-gldm"},
+    "BND":{"fee":0.03,"source":"https://advisors.vanguard.com/investments/products/bnd/vanguard-total-bond-market-etf"},
+    "TLT":{"fee":0.15,"source":"https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf"},
+    "SHY":{"fee":0.15,"source":"https://www.ishares.com/us/products/239452/ishares-13-year-treasury-bond-etf"}
+  }
+}

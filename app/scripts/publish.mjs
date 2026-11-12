@@ -2,12 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { randomBytes, createCipheriv, publicEncrypt } from 'node:crypto';
+import { randomBytes, createCipheriv, publicEncrypt, createHash } from 'node:crypto';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const app = path.join(root, 'app');
 const output = path.join(root, 'dist');
-const allowed = new Set(['index.html', '.nojekyll', 'pages-login.js', 'workspace-sync.js', 'browser-model.js', 'browser-session.js', 'application.bin', 'assets']);
+const allowed = new Set(['index.html', '.nojekyll', 'pages-login.js', 'workspace-sync.js', 'browser-model.js', 'browser-session.js', 'application.bin', 'data-status.json', 'assets']);
 fs.mkdirSync(output, {recursive:true});
 for (const entry of fs.readdirSync(output, {withFileTypes:true})) {
   if (!allowed.has(entry.name) || (entry.name==='assets' ? !entry.isDirectory() : !entry.isFile())) {
@@ -56,3 +56,10 @@ const shell = fs.readFileSync(path.join(app,'login.html'),'utf8').split('<!-- lo
 fs.writeFileSync(path.join(output,'index.html'),shell+'<script id="access" type="application/json">'+JSON.stringify(envelope)+'</script><script type="module" src="./pages-login.js"></script></body></html>');
 for (const name of ['pages-login.js','workspace-sync.js','browser-model.js','browser-session.js']) fs.copyFileSync(path.join(app,name),path.join(output,name));
 fs.writeFileSync(path.join(output,'.nojekyll'),'');
+const snapshotBytes=fs.readFileSync(path.join(app,'data/prices-weekly.json'));
+const snapshot=JSON.parse(snapshotBytes);
+fs.writeFileSync(path.join(output,'data-status.json'),JSON.stringify({asOf:snapshot.asOf,...snapshot.health,
+  dataSha256:createHash('sha256').update(snapshotBytes).digest('hex'),
+  applicationSha256:createHash('sha256').update(encrypted).digest('hex'),
+  sourceCommit:process.env.GITHUB_SHA||null,
+  assetDates:Object.fromEntries(Object.entries(snapshot.assets).map(([id,a])=>[id,a.asOf])),fxDates:snapshot.fxAsOf}));

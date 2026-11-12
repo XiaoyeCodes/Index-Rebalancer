@@ -8,7 +8,7 @@ on:
       - '.github/workflows/deploy-pages.yml'
   # GITHUB_TOKEN commits from the data updater do not trigger push workflows.
   workflow_run:
-    workflows: ['Weekly data update']
+    workflows: ['Market data update (manual)']
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -38,6 +38,11 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+      - name: Test calculations and independently reproduce every built-in model
+        run: |
+          node --test app/scripts/*.test.mjs
+          node app/scripts/audit-export.mjs --output .private/deploy-validation/browser.json
+          python3 app/scripts/audit-data.py app/data/prices-weekly.json .private/deploy-validation/browser.json
       - name: Build application with the latest committed data
         run: |
           node app/scripts/build.mjs

@@ -162,7 +162,7 @@
         <div class="tbl-wrap">
           <table id="assetTable">
             <thead><tr>
-              <th>标的</th><th>风险</th><th>走势（对数）</th><th class="r">20 年年化</th><th class="r">年化波动</th><th class="r">最大回撤</th><th class="r">与标普相关</th><th class="r">费率</th><th>标的概要</th><th class="r">收藏 / 组合</th>
+              <th>标的</th><th>风险</th><th>走势（对数）</th><th class="r">20 年年化</th><th class="r">年化波动</th><th class="r">周收盘回撤</th><th class="r">与标普相关</th><th class="r">费率</th><th>标的概要</th><th class="r">收藏 / 组合</th>
             </tr></thead>
             <tbody></tbody>
           </table>
@@ -172,7 +172,7 @@
         <summary>初始五个候选标的的组合分析</summary>
         <div class="prose" id="verdictText"></div>
       </details>
-      <p class="note">20 年年化 = 最近 20 年（<span id="from20"></span> 至今）复权价格的年复合增长率；成立不足 20 年的标的按其可得历史计算，并在数值旁标注起始年份。年化波动由周收益率计算。部分标的在成立前用同指数或同类资产的数据接续，详见各标的的「数据说明」。</p>
+      <p class="note">统计统一取最近约 20 年（<span id="from20"></span> 起），不足 20 年按可得历史计算。年化、波动与回撤按标的本币复权周收盘价；相关性统一换算美元后与 SPY 比较。周收盘回撤不含周内跌幅。带「含接续」的历史包含其他基金或指数，详见标的数据说明。风险分层由本工具人工设定，并非发行方评级。费率为人工核对的基金年费率，不随行情每日更新。</p>
     </div>
   </section>
 
@@ -226,7 +226,7 @@
                   <span class="hint">偏离判定：任一资产的当前权重与目标相差 ≥ 绝对阈值，或相差幅度 ≥ 目标权重 × 相对阈值。触发后整个组合调回目标，执行前会提醒核对定投日期。</span></div>
                 <h3 class="form-title">交易设置</h3>
                 <div class="field full"><span class="hint">用于操作清单和执行前的日期提醒。</span></div>
-                <div class="field"><label for="rbFx">美元兑人民币汇率</label><input type="number" id="rbFx" min="1" max="20" step="0.01"><span class="hint">默认取最新市场汇率；人民币资产按此折算</span></div>
+                <div class="field"><label for="rbFx">美元兑人民币汇率</label><input type="number" id="rbFx" min="1" max="20" step="0.01"><span class="hint" id="rbFxHint">默认取最新市场汇率；人民币资产按此折算</span><button type="button" class="btn sm ghost" id="restoreAutoFx" hidden>恢复自动汇率</button></div>
                 <div class="field"><label for="rbLast">上次再平衡日期</label><input type="date" id="rbLast"><span class="hint" id="rbLastHint"></span></div>
                 <div class="field full"><span class="lab" id="rbSellLabel">超出阈值时</span><div class="seg" id="rbSell" role="group" aria-labelledby="rbSellLabel"><button type="button" data-v="1" aria-pressed="true">按模型规则卖出</button><button type="button" data-v="0" aria-pressed="false">只买不卖</button></div></div>
                 <div class="field full"><span class="lab" id="rbWholeLabel">股数</span><div class="seg" id="rbWhole" role="group" aria-labelledby="rbWholeLabel"><button type="button" data-v="0" aria-pressed="true">允许碎股</button><button type="button" data-v="1" aria-pressed="false">只买整数股 / 整手</button></div></div>
@@ -301,14 +301,14 @@
           <div class="panel-b log-body"><div class="log-scroll"><table class="log" id="logTable"></table></div></div>
         </div>
       </div>
-      <p class="note">回测假设：从全部标的自身行情齐备后的共同区间开始，不使用成立前的替代行情；对照组合使用相同区间及投入时间。按周线收盘价模拟成交，允许零碎份额，分红再投资，计入设置的单边交易成本，不计税费。人民币、港币标的按当周汇率折算美元收益；投入与市值按固定汇率等值模拟，未计入美元兑人民币波动对人民币投资者的影响。最大回撤按剔除定投现金流后的周线收盘净值计算，不含盘中跌幅。K 线的高低点由持仓与各标的周最高、最低价近似计算。历史表现不代表未来。</p>
+      <p class="note">回测假设：从全部标的自身行情齐备后的共同区间开始，不使用成立前的替代行情；对照组合使用相同区间及投入时间。按周线收盘价模拟成交，允许零碎份额，分红再投资，计入设置的单边交易成本，不计税费。人民币、港币标的按当周汇率折算美元收益；投入与市值按固定汇率等值模拟，未计入美元兑人民币波动对人民币投资者的影响。最大回撤按剔除定投现金流后的周线收盘净值计算，不含周内跌幅。K 线的高低点由持仓与各标的周最高、最低价近似计算。历史表现不代表未来。</p>
     </div>
   </section>
 
-  <footer class="foot"><span>数据：Yahoo Finance 日线（含分红复权），本页内嵌，截至 <span id="asOf2"></span>。本工具用于学习定投与再平衡方法，不构成投资建议。</span><span class="sig">Dynamic Rebalancing</span></footer>
+  <footer class="foot"><span>数据：Yahoo Finance 复权日线及交叉核验的备用行情（价格指数除外）；以美股已收盘交易日为基准，截至 <span id="asOf2"></span>。<span id="dataCheckedAt"></span>本工具用于学习定投与再平衡方法，不构成投资建议。</span><span class="sig">Dynamic Rebalancing</span></footer>
 </main>
 
-<div class="data-status" role="status"><i aria-hidden="true"></i><span id="dataAsOf"></span></div>
+<div class="data-status" role="status"><i aria-hidden="true"></i><span id="dataAsOf"></span><button id="refreshData" type="button" hidden>刷新数据</button></div>
 
 <dialog class="execution-dialog ai-settings" id="aiSettings" aria-labelledby="aiSettingsTitle" aria-describedby="aiSettingsIntro">
   <form id="aiSettingsForm">
@@ -432,6 +432,7 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script id="pricedata" type="application/json">__DATA__</script>
+<script src="market-calendar.js"></script>
 <script src="investment.js"></script>
 <script src="ledger.js"></script>
 <script src="ledger-ui.js"></script>
@@ -442,7 +443,8 @@ const D = JSON.parse(document.getElementById('pricedata').textContent);
 const N = D.n, W0 = Date.parse(D.start + 'T00:00:00Z'), WK = 7 * 864e5;
 const wDate = i => new Date(W0 + i * WK);
 const ymd = d => d.toISOString().slice(0, 10);
-const ym = i => ymd(wDate(i)).slice(0, 7);
+const ym = i => (D.dates?.[i] || ymd(wDate(i))).slice(0, 7);
+const SNAPSHOT_SHA = '__DATA_SHA__';
 const fmtPct = (x, d = 1, sign = false) => x == null || !isFinite(x) ? '—' : (sign && x > 0 ? '+' : '') + (x * 100).toFixed(d) + '%';
 const fmtMoney = x => x >= 1e8 ? (x / 1e8).toFixed(2) + ' 亿' : x >= 1e4 ? (x / 1e4).toFixed(x >= 1e6 ? 0 : 1) + ' 万' : Math.round(x).toLocaleString('zh-CN');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -534,7 +536,7 @@ const A = {
     role: '具有能源周期敞口，煤价、需求、政策及资本开支都会影响盈利和分红。历史股息不能直接当作未来固定收益。' },
   QQQM: { logo: 'invesco', cn: '纳斯达克 100', cls: '美股 · 大盘成长', risk: 5, fee: 0.15, color: '#EB5934', mine: true,
     hold: '跟踪纳斯达克 100 指数：在纳斯达克上市、市值最大的 100 家非金融公司。信息技术、通信服务、可选消费合计占大头，前十大持仓（英伟达、微软、苹果、亚马逊、博通、Meta、Alphabet 等）约占一半权重。与 QQQ 同指数，费率更低，适合长期持有。',
-    role: '适合作为高风险层的成长主力，但它和标普 500 的大公司高度重合，同时重仓两者等于加倍押注美国大型科技股，而不是分散。2000 年科网泡沫后最大回撤 -83%，直到 2015 年才回到前高；定投加再平衡能在下跌中自动多买，但比例宜控制。' },
+    role: '可作为高风险层的成长配置，与标普 500 的大公司持仓重合度较高，需合并考察集中度。科技股在历史熊市中曾有显著回撤；定投和再平衡不能消除市场风险。' },
   VGT: { logo: 'vanguard', cn: '先锋信息技术 ETF', cls: '美股 · 信息技术', risk: 5, fee: 0.09, color: '#8B3A46',
     hold: '跟踪 MSCI 美国可投资市场信息技术 25/50 指数，覆盖美国大、中、小盘信息技术公司，包括软件、半导体及科技硬件等业务。由 Vanguard 管理，基金年费率 0.09%。',
     role: '集中配置美国信息技术行业，可作为科技方向的卫星仓。与纳斯达克 100、标普 500 及科技个股存在持仓重叠，需合并考察行业与公司集中度；行业估值、技术迭代和市场周期会带来较大波动。' },
@@ -546,22 +548,22 @@ const A = {
     role: '过去 {years:IBIT} 年复合增长最高，但年化波动约 {vol:IBIT}，经历过多次 -75% 以上的下跌，且与股票相关性低。这类资产最适合「小比例 + 阈值再平衡」：涨多了自动卖出锁定一部分收益，跌深了用定投补回。比例通常控制在个位数，并接受它让组合更颠簸。' },
   SPY: { logo: 'statestreet', cn: '标普 500', cls: '美股 · 大盘', risk: 4, fee: 0.0945, color: '#345DE3', mine: true,
     hold: '跟踪标普 500 指数：美国约 500 家大型上市公司，按市值加权，覆盖全部 11 个行业，信息技术约占三成。SPY 流动性最好；同指数的 VOO、IVV 费率约 0.03%，长期定投可优先考虑。',
-    role: '最适合做组合的核心底仓，长期回报稳健、规则透明。它和 VTI 几乎完全同步（相关 0.99），两者选一即可。' },
+    role: '可作为组合的美股核心底仓，指数规则透明。它与 VTI 持仓和收益表现高度重合，分散配置时应避免重复计算敞口。' },
   VTI: { logo: 'vanguard', cn: '美国全市场', cls: '美股 · 全市场', risk: 4, fee: 0.03, color: '#527EBC',
-    hold: '跟踪 CRSP 美国全市场指数，约 3500 只股票，覆盖大、中、小盘，前十大与标普 500 基本一致。费率 0.03%。',
+    hold: '跟踪美国全市场股票基准，覆盖大、中、小盘，主要持仓与标普 500 有较多重叠。费率 0.03%。具体基准及持仓以发行方最新资料为准。',
     role: '可替代标普 500 作为核心底仓，多覆盖了中小盘，长期表现与标普 500 非常接近。' },
   VXUS: { logo: 'vanguard', cn: '美国以外全球', cls: '国际股票', risk: 4, fee: 0.05, color: '#7562D3',
-    hold: '跟踪富时全球（除美国）全市场指数，8000 多只股票，涵盖欧洲、日本、英国、加拿大等发达市场和中国、印度、台湾等新兴市场。',
+    hold: '跟踪富时全球（除美国）全市场指数，持有数千只股票，涵盖发达市场和新兴市场。',
     role: '用来降低对单一国家的依赖。过去 20 年明显跑输美股，但历史上也有国际股票长期领先的时期；适合希望全球分散的人做中等比例配置。' },
-  VWO: { logo: 'vanguard', cn: '新兴市场', cls: '国际股票', risk: 4, fee: 0.07, color: '#AB57A2',
+  VWO: { logo: 'vanguard', cn: '新兴市场', cls: '国际股票', risk: 4, fee: 0.06, color: '#AB57A2',
     hold: '跟踪富时新兴市场指数，主要是中国、印度、台湾、巴西、沙特等市场的大中盘股票。',
     role: '波动大、过去 20 年回报偏低，2008 年后用了近 10 年才回到前高。若已持有 VXUS（已含新兴市场），通常不必再单独配置。' },
   SCHD: { logo: 'schwab', cn: '美国红利 100', cls: '美股 · 价值红利', risk: 3, fee: 0.06, color: '#229584', mine: true,
     hold: '跟踪道琼斯美国红利 100 指数：先筛选连续 10 年以上派息的公司，再按现金流负债比、净资产收益率、股息率和股息增长率综合打分选出 100 只。金融、能源、必需消费、医疗、工业权重较高。2011 年 10 月成立。',
-    role: '它是股票基金，不属于低风险资产：与标普 500 相关性约 0.87，2020 年也跌了约 30%。它的价值在于价值与红利风格，与 QQQM 的成长风格互补；积累期分红自动再投资即可。' },
+    role: '它是股票基金，仍有明显市场风险；与标普 500 的同期相关性为 {corr:SCHD}。价值与红利风格可与成长风格搭配，但历史分红不代表未来固定收入。' },
   VNQ: { logo: 'vanguard', cn: '美国房地产信托', cls: 'REITs', risk: 4, fee: 0.13, color: '#9A6854',
     hold: '跟踪 MSCI 美国可投资市场房地产指数，主要持有各类 REITs：数据中心、通信塔、仓储物流、住宅、医疗地产等。分红率较高。',
-    role: '对利率敏感，2008 年最大回撤 -72%，2022 年加息时也大跌。它和股票同涨同跌的程度较高，分散作用有限，可作小比例卫星仓。' },
+    role: '对利率敏感，在金融危机及加息环境中均可能显著下跌；与股票有一定共同风险，可结合自身回撤承受能力考虑配置。' },
   GLD: { logo: 'statestreet', cn: '黄金', cls: '大宗商品', risk: 3, fee: 0.40, color: '#D29827', mine: true,
     hold: 'SPDR 黄金信托，在伦敦金库托管实物金条，净值跟随金价，没有利息和分红。同类低费率产品：GLDM（0.10%）、IAUM（约 0.09%），长期定投更合适。',
     role: '组合里最有效的分散工具之一：与美股相关性接近 0，2008 年金融危机时上涨。但它不是低风险：2011–2015 年最大回撤 -45%，到 2020 年才回到前高。适合 10%–15% 左右的分散仓位。' },
@@ -572,12 +574,12 @@ const A = {
     hold: '跟踪彭博美国综合债券指数（浮动调整版）：美国国债、政府机构房贷抵押证券、投资级公司债，约 1 万多只债券，久期约 6 年。按月付息。',
     role: '真正的低风险层主力：波动约 5%，股市大跌时往往持平或上涨，用来降低组合回撤，也给再平衡提供「低位买股」的弹药。2022 年加息时罕见地下跌 13%。' },
   TLT: { logo: 'ishares', cn: '20 年以上美国国债', cls: '债券 · 长久期', risk: 3, fee: 0.15, color: '#3E668D',
-    hold: '持有剩余期限 20 年以上的美国国债，久期约 16–17 年，对利率变化极其敏感。',
-    role: '在股灾中经常大涨（2008 年 +29%），是强力的对冲工具；但利率上行时跌幅堪比股票（2020–2023 年最大回撤 -48%）。不适合当作「低风险」，适合懂利率风险的人小比例配置。' },
+    hold: '持有剩余期限 20 年以上的美国国债，对利率变化极其敏感。组合久期随持仓与市场变化，以发行方最新资料为准。',
+    role: '长期国债有时能分散股票风险，但利率上行时也可能显著下跌。久期较长，不能把它等同于现金或短期国债。' },
   SHY: { logo: 'ishares', cn: '1–3 年美国国债', cls: '短债 · 类现金', risk: 1, fee: 0.15, color: '#8A97B2',
     hold: '持有剩余期限 1–3 年的美国国债，久期约 2 年，价格波动很小。同类的 SGOV（0–3 个月国债，0.09%）更接近现金。',
     role: '组合的「现金垫」：几乎不亏，收益接近短期利率。适合离用钱时间较近、或回撤承受力很低的人，也可以作为稳健组合的缓冲。' },
-  SSE: { logo: 'sse', lot: 100, cn: '上证指数', code: '000001', cls: 'A股 · 宽基指数', cur: 'CNY', risk: 4, fee: null, color: '#A44E8B',
+  SSE: { kind:'index', logo: 'sse', lot: 100, cn: '上证指数', code: '000001', cls: 'A股 · 宽基指数', cur: 'CNY', risk: 4, fee: null, color: '#A44E8B',
     hold: '上证综合指数：上海证券交易所全部上市股票按市值加权，金融、工业、能源等传统行业权重较高。这是价格指数，不含分红；指数本身不能直接买，可通过上证指数 ETF 等跟踪。',
     role: '最常被引用的 A 股「温度计」，但不太适合直接拿来定投：它不含分红，长期年化只有 {cagr:SSE}，最大回撤 {mdd:SSE}。想配 A 股宽基，更推荐中证 A500 或沪深 300 这类 ETF。' },
   A500: { logo: 'chinaamc', lot: 100, cn: '中证 A500', code: '512050', cls: 'A股 · 宽基', cur: 'CNY', risk: 4, fee: null, color: '#D65E6F',
@@ -585,7 +587,7 @@ const A = {
     role: '配置 A 股的核心宽基首选。人民币资产与美股相关性低（相关系数 {corr:A500}），能分散美元资产的风险；但 A 股波动大、牛短熊长，最大回撤 {mdd:A500}，正适合定投加再平衡「跌了多买」。比例建议适中。' },
   BANK: { logo: 'huabao', lot: 100, cn: '华宝银行 ETF', code: '512800', cls: 'A股 · 行业', cur: 'CNY', risk: 4, fee: null, color: '#488A59',
     hold: '华宝中证银行 ETF（512800），跟踪中证银行指数，持有 A 股上市银行，大型国有银行和股份制银行权重最高。估值低、股息率较高，与经济周期和利率政策关系紧密。2017 年 7 月上市，此前无数据。',
-    role: '单一行业，集中度高。偏价值与高股息，可作小比例卫星仓；自上市以来最大回撤 {mdd:BANK}，不宜作为核心。注意：这只 ETF 在 Yahoo 的分红数据不完整，历史收益可能被低估。' },
+    role: '单一行业，集中度高。偏价值与高股息，可作小比例卫星仓；周收盘最大回撤 {mdd:BANK}，不宜作为核心。已依据交易所公告修正历史份额拆分，收益仍以基金公告与实际成交为准。' },
   SOEDIV: { logo: 'huatai', lot: 100, cn: '央企红利 ETF', code: '561580', cls: 'A股 · 红利', cur: 'CNY', risk: 4, fee: null, color: '#B46C39',
     hold: '华泰柏瑞中证央企红利 ETF（561580），跟踪中证央企红利指数：从央企控股上市公司中选取股息率高、分红稳定的股票，能源、金融、交通运输、公用事业占比较高。2023 年上市。',
     role: '可以看作「中国版的 SCHD」，红利风格、现金流稳定，和成长类资产互补。但它仍是股票，2008 年这样的熊市一样大跌（最大回撤 {mdd:SOEDIV}）。适合中低比例。' },
@@ -652,13 +654,13 @@ const ST = {};
   for (let i = 1; i < N; i++) { const a = P('SPY', i - 1), b = P('SPY', i); spyR[i] = a && b ? Math.log(b / a) : null; }
   for (const id of IDS) {
     const a = D.assets[id], c = a.c, last = N - 1;
-    const i20 = Math.max(a.first, last - W20), yrs = (last - i20) / 52.1775;
+    const i20 = Math.max(a.first, last - W20), yrs = D.dates ? (Date.parse(D.dates[last])-Date.parse(D.dates[i20]))/864e5/365.25 : (last - i20) / 52.1775;
     const cagr = yrs >= 1 ? Math.pow(c[last - a.first] / c[i20 - a.first], 1 / yrs) - 1 : null;
-    const r = []; for (let j = 1; j < c.length; j++) r.push(Math.log(c[j] / c[j - 1]));
+    const r = []; for (let j = i20 - a.first + 1; j < c.length; j++) r.push(Math.log(c[j] / c[j - 1]));
     const mu = r.reduce((x, y) => x + y, 0) / r.length; const vol = Math.sqrt(r.reduce((x, y) => x + (y - mu) ** 2, 0) / r.length * 52.1775);
-    let pk = 0, mdd = 0; for (const x of c) { pk = Math.max(pk, x); mdd = Math.min(mdd, x / pk - 1); }
+    let pk = 0, mdd = 0; for (const x of c.slice(i20 - a.first)) { pk = Math.max(pk, x); mdd = Math.min(mdd, x / pk - 1); }
     let sa = 0, ss = 0, n = 0; const ra = [], rs = [];
-    for (let i = a.first + 1; i < N; i++) { if (spyR[i] == null) continue; ra.push(Math.log(c[i - a.first] / c[i - a.first - 1])); rs.push(spyR[i]); }
+    for (let i = i20 + 1; i < N; i++) { if (spyR[i] == null) continue; ra.push(Math.log(P(id,i) / P(id,i-1))); rs.push(spyR[i]); }
     n = ra.length; sa = ra.reduce((x, y) => x + y, 0) / n; ss = rs.reduce((x, y) => x + y, 0) / n;
     let cov = 0, va = 0, vs = 0; for (let k = 0; k < n; k++) { cov += (ra[k] - sa) * (rs[k] - ss); va += (ra[k] - sa) ** 2; vs += (rs[k] - ss) ** 2; }
     const years = {}; let prevY = null, prevC = null;
@@ -793,10 +795,11 @@ function xirr(flows) {
   let lo = -0.999999, hi = 5, flo = f(lo), fhi = f(hi);
   while (flo * fhi > 0 && hi < 1e6) { hi *= 2; fhi = f(hi); }
   if (flo * fhi > 0) return null;
-  for (let k = 0; k < 200; k++) { const mid = (lo + hi) / 2, fm = f(mid); if (Math.abs(fm) < 1e-7) return mid; if (flo * fm < 0) { hi = mid; fhi = fm; } else { lo = mid; flo = fm; } }
+  for (let k = 0; k < 200; k++) { const mid = (lo + hi) / 2, fm = f(mid); if (Math.abs(fm) < 1e-10) return mid; if (flo * fm < 0) { hi = mid; fhi = fm; } else { lo = mid; flo = fm; } }
   return (lo + hi) / 2;
 }
 function backtest(cfg) {
+  const flowDate = i => D.dates?.[i] ? Date.parse(D.dates[i] + 'T00:00:00Z') : wDate(i).getTime();
   const ids = Object.keys(cfg.weights).filter(id => cfg.weights[id] > 0);
   const s0 = Math.max(startIndex(cfg.start), commonHistoryStart(ids), cfg.startWeek || 0); const fee = (cfg.fee || 0) / 100;
   const sh = Object.fromEntries(ids.map(id => [id, 0]));
@@ -812,7 +815,7 @@ function backtest(cfg) {
     const uB = units;
     let contrib = 0; if (i === s0) contrib += cfg.initial || 0; if (newMonth) contrib += cfg.monthly || 0;
     if (contrib > 0) {
-      const navB = units > 0 ? pre.c / units : 1; units += contrib / navB; invested += contrib; flows.push([wDate(i).getTime(), -contrib]);
+      const navB = units > 0 ? pre.c / units : 1; units += contrib / navB; invested += contrib; flows.push([flowDate(i), -contrib]);
       const v = Object.fromEntries(ids.map(id => [id, sh[id] * (P(id, i) || 0)])); const T = pre.c + contrib;
       let alloc = {};
       if (cfg.cashflow) {
@@ -820,7 +823,8 @@ function backtest(cfg) {
         if (gs >= contrib) for (const id in gaps) alloc[id] = contrib * gaps[id] / gs;
         else for (const id in tw) alloc[id] = gaps[id] + (contrib - gs) * tw[id];
       } else for (const id in tw) alloc[id] = contrib * tw[id];
-      for (const id in alloc) sh[id] += alloc[id] * (1 - fee) / P(id, i);
+      // The budget includes fees charged on executed notional: buy * (1+fee) = budget.
+      for (const id in alloc) sh[id] += alloc[id] / (1 + fee) / P(id, i);
     }
     // rebalance check
     let Vc = value(i, 3);
@@ -835,11 +839,17 @@ function backtest(cfg) {
       const trades = []; let gross = 0;
       for (const id of ids) { const tgtV = (tw[id] || 0) * Vc, curV = sh[id] * (P(id, i) || 0); const dlt = tgtV - curV; if (Math.abs(dlt) > 0.5) { trades.push([id, dlt]); gross += Math.abs(dlt); } }
       if (gross / Vc > 0.002) {
-        const cost = gross * fee; const V2 = Vc - cost;
+        const before = Object.fromEntries(ids.map(id=>[id,sh[id]*P(id,i)]));
+        // Solve V_after + fee * sum(abs(target * V_after - current)) = V_before.
+        let lo=0,hi=Vc;
+        for(let k=0;k<60;k++) {const mid=(lo+hi)/2;const needed=mid+fee*ids.reduce((s,id)=>s+Math.abs((tw[id]||0)*mid-before[id]),0);if(needed>Vc)hi=mid;else lo=mid;}
+        const V2=(lo+hi)/2;
+        const executed=ids.map(id=>[id,(tw[id]||0)*V2-before[id]]);
+        gross=executed.reduce((s,[,v])=>s+Math.abs(v),0);
         for (const id of ids) sh[id] = (tw[id] || 0) * V2 / (P(id, i) || 1);
         rebCount++; turnSum += gross / 2 / Vc;
         const reason = thrHit ? `${worst} 偏离 ${(cur[worst] * 100).toFixed(1)}% → 目标 ${(tw[worst] * 100).toFixed(1)}%` : (cfg.period === 'Q' ? '季度定期检查' : '年度定期检查');
-        log.push({ i, reason, turn: gross / 2 / Vc, trades: trades.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])) });
+        log.push({ i, reason, turn: gross / 2 / Vc, trades: executed.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])) });
         marks.push(i);
         Vc = V2;
       }
@@ -857,14 +867,14 @@ function backtest(cfg) {
     if (nextNew) wHist.push({ i, w: Object.fromEntries(ids.map(id => [id, post > 0 ? sh[id] * (P(id, i) || 0) / post : 0])) });
   }
   const final = val.at(-1)[1];
-  const xr = xirr([...flows, [wDate(N - 1).getTime(), final]]);
-  const yrs = (N - 1 - s0) / 52.1775; const twr = yrs > 0 ? Math.pow(nav.at(-1).c, 1 / yrs) - 1 : null;
+  const xr = xirr([...flows, [flowDate(N - 1), final]]);
+  const yrs = D.dates ? (flowDate(N-1)-flowDate(s0))/864e5/365.25 : (N - 1 - s0) / 52.1775; const twr = yrs > 0 ? Math.pow(nav.at(-1).c, 1 / yrs) - 1 : null;
   // Unit NAV starts at 1 before the first purchase, so the initial fee also counts.
   let pk = 1, mdd = 0, mddAt = null; for (const p of nav) { if (p.c > pk) pk = p.c; const d = p.c / pk - 1; if (d < mdd) { mdd = d; mddAt = p.i; } }
   const r = []; for (let k = 1; k < nav.length; k++) r.push(Math.log(nav[k].c / nav[k - 1].c));
   const mu = r.reduce((a, b) => a + b, 0) / r.length; const vol = Math.sqrt(r.reduce((a, b) => a + (b - mu) ** 2, 0) / r.length * 52.1775);
   const years = {}; let prev = null;
-  for (const p of nav) { const y = ym(p.i).slice(0, 4); if (!years[y]) years[y] = { s: prev ? prev.c : p.o }; years[y].e = p.c; prev = p; }
+  for (const p of nav) { const y = ym(p.i).slice(0, 4); if (!years[y]) years[y] = { s: prev ? prev.c : 1 }; years[y].e = p.c; prev = p; }
   return { cfg, s0, ids, nav, val, inv, log, wHist, marks, final, invested, contributionCount: flows.length, durationYears: yrs, xirr: xr, twr, mdd, mddAt, vol, rebCount, turnYear: yrs > 0 ? turnSum / yrs : 0, years };
 }
 
@@ -887,10 +897,10 @@ function toggleFavorite(id) {
 function renderAssets() {
   renderAssetFilters();
   const tb = $('#assetTable tbody'); let rows = '';
-  const row = id => { const st = ST[id], a = A[id], on = S.weights[id] != null, favorite = S.favorites.includes(id);
+  const row = id => { const st = ST[id], a = A[id], m = D.assets[id], on = S.weights[id] != null, favorite = S.favorites.includes(id);
     return `<tr class="row" data-id="${id}" tabindex="0"><td><div class="tk">${assetLogo(id)}<div><b>${id}</b>${a.mine ? ' <span class="chip mine">你的候选</span>' : ''}${a.cur ? ` <span class="chip">${a.cur === 'CNY' ? '人民币' : '港币'}</span>` : ''}<span>${a.cn}${a.code ? ' · ' + a.code : ''} · ${a.cls}</span></div></div></td>
-      <td>${riskHtml(a.risk)}</td><td>${spark(id)}</td>
-      <td class="r num ${st.cagr == null ? '' : st.cagr >= 0 ? 'pos' : 'neg'}">${cagrHtml(id)}</td><td class="r num">${fmtPct(st.vol)}</td><td class="r num neg">${fmtPct(st.mdd)}</td><td class="r num">${st.corr.toFixed(2)}</td><td class="r num">${a.kind === 'stock' ? '<span class="muted" title="个股没有基金管理费，交易费用以券商为准">—</span>' : a.fee == null ? '<span class="muted">见公告</span>' : a.fee.toFixed(a.fee < 0.1 ? 4 : 2).replace(/0+$/, '').replace(/\.$/, '') + '%'}</td>
+      <td>${riskHtml(a.risk)}</td><td title="${m.proxy ? '含替代标的接续历史；详见数据说明' : '使用自身可得历史'}">${spark(id)}${m.proxy ? '<span class="small muted">含接续</span>' : ''}</td>
+      <td class="r num ${st.cagr == null ? '' : st.cagr >= 0 ? 'pos' : 'neg'}">${cagrHtml(id)}</td><td class="r num">${fmtPct(st.vol)}</td><td class="r num neg">${fmtPct(st.mdd)}</td><td class="r num">${st.corr.toFixed(2)}</td><td class="r num">${a.kind === 'index' ? '<span class="muted" title="价格指数本身没有基金管理费">—</span>' : a.kind === 'stock' ? '<span class="muted" title="个股没有基金管理费，交易费用以券商为准">—</span>' : a.fee == null ? '<span class="muted">见公告</span>' : a.fee.toFixed(a.fee < 0.1 ? 4 : 2).replace(/0+$/, '').replace(/\.$/, '') + '%'}</td>
       <td class="sub" style="min-width:220px;max-width:320px;font-size:12px;line-height:1.5">${esc(a.hold.split('。')[0])}。</td>
       <td class="r"><div class="asset-actions"><button class="favorite" type="button" data-favorite="${id}" aria-pressed="${favorite}" aria-label="${favorite ? '取消收藏' : '收藏'} ${a.cn} ${id}" title="${favorite ? '取消收藏' : '收藏'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.3-5.7-3-5.7 3 1.1-6.3L3.2 9.6l6.3-.9Z"/></svg></button><button class="add" type="button" data-add="${id}" aria-pressed="${on}" aria-label="${on ? '移出组合' : '加入组合'} ${id}">${on ? '✓' : '+'}</button></div></td></tr>`; };
   const layers = LAYERS.filter(layer => ['all', 'favorites', 'model'].includes(activeLayer) || layer.key === activeLayer)
@@ -952,11 +962,13 @@ function openDrawer(id) {
   $('#dTitle').innerHTML = `${id}<small>${a.cn}</small>`;
   $('#dSub').textContent = m.name || '';
   $('#dStats').innerHTML = [
-    ['20 年年化', cagrHtml(id)], ['年化波动', fmtPct(st.vol)], ['最大回撤', fmtPct(st.mdd)], ['与标普 500 相关', st.corr.toFixed(2)]
+    ['20 年年化', cagrHtml(id)], ['年化波动', fmtPct(st.vol)], ['周收盘最大回撤', fmtPct(st.mdd)], ['与标普 500 相关（美元）', st.corr.toFixed(2)]
   ].map(([l, v]) => `<div><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
   $('#dHoldTitle').textContent = a.kind === 'stock' ? '公司业务' : '持仓说明';
-  $('#dHold').innerHTML = `<p>${esc(a.hold)}</p><p class="small muted">${a.kind === 'stock' ? '个股没有基金管理费；佣金、税费及其他交易费用以券商和适用规则为准。' : a.fee == null ? '管理费与托管费以基金公司最新公告为准。' : `费率约 ${a.fee}% / 年，以基金官网最新公告为准。`}${a.cur ? ` 以${a.cur === 'CNY' ? '人民币' : '港币'}计价；本页统计按${a.cur === 'CNY' ? '人民币' : '港币'}计算，回测和再平衡时按每周汇率折算成美元。` : ''}</p>`;
+  $('#dHold').innerHTML = `<p>${esc(a.hold)}</p><p class="small muted">${a.kind === 'index' ? '指数本身没有基金管理费；跟踪指数的基金另有费用。' : a.kind === 'stock' ? '个股没有基金管理费；佣金、税费及其他交易费用以券商和适用规则为准。' : a.fee == null ? '管理费与托管费以基金公司最新公告为准。' : `费率约 ${a.fee}% / 年，以基金官网最新公告为准。`}${a.cur ? ` 以${a.cur === 'CNY' ? '人民币' : '港币'}计价；年化、波动和回撤按本币计算，相关性、回测和再平衡按每周汇率折算美元。` : ''}</p>`;
   $('#dRole').innerHTML = `<p>${esc(fillFacts(a.role))}</p>`;
+  const fact=D.fundFacts?.funds[id];
+  $('#dHold').insertAdjacentHTML('beforeend',`<p class="small muted">行情收盘日期：${esc(m.asOf || D.asOf)}。${fact ? `年费率核对：${D.fundFacts.checkedOn} · <a href="${esc(fact.source)}" target="_blank" rel="noopener noreferrer">发行方资料</a>` : ''}</p>`);
   const ys = Object.entries(st.years).filter(([, v]) => v.r != null).slice(-12);
   $('#dYears').innerHTML = `<thead><tr>${ys.map(([y, v]) => `<th class="r">${y}${v.ytd ? '<sup>至今</sup>' : ''}</th>`).join('')}</tr></thead><tbody><tr>${ys.map(([, v]) => `<td class="r num ${v.r >= 0 ? 'pos' : 'neg'}">${fmtPct(v.r, 1, true)}</td>`).join('')}</tr></tbody>`;
   $('#dData').innerHTML = ORIGIN[id] ? `数据说明：${id}（${a.cn}${a.code ? ' ' + a.code : ''}）${ORIGIN[id]}。` : m.proxy ? `数据说明：${id} 于 ${m.actualFirst} 成立，${m.spliceWeek} 之前使用 ${m.proxy}（${proxyDesc(m.proxy)}）的复权数据按比例接续，换算到 ${id} 的价格水平。` : `数据说明：${id} 于 ${m.actualFirst} ${a.kind === 'stock' ? '上市' : '成立'}，图表按周汇总其自身复权数据，首个交易周为 ${ymd(wDate(m.first))}。${st.cagr == null ? '历史不足 1 年，不展示外推年化收益。' : ''}`;
@@ -1018,7 +1030,7 @@ function renderPresets() {
     const card = `<button class="preset" type="button" data-p="${p.key}" aria-pressed="${S.preset === p.key}">
       <div class="preset-top"><span>${Object.keys(p.w).length} 个标的${custom ? ' · 我的模板' : ''}</span><span class="pick-indicator" aria-hidden="true"></span></div>
       <div class="p-body"><h3>${esc(p.name)}</h3>${allocBar(p.w)}<div class="d">${esc(description)}</div>
-      <div class="preset-history">回测：${ymd(wDate(r.s0))} 至 ${D.asOf}<br>累计投入 ${fmtMoney(r.invested)} 元</div>
+      <div class="preset-history">回测：${D.dates?.[r.s0] || ymd(wDate(r.s0))} 至 ${D.asOf}<br>累计投入 ${fmtMoney(r.invested)} 元</div>
       <div class="pstats"><div><div class="l">定投年化</div><div class="v">${r.durationYears >= 1 ? fmtPct(r.xirr) : '不足1年'}</div></div><div><div class="l">最大回撤</div><div class="v neg">${fmtPct(r.mdd, 1)}</div></div><div><div class="l">期末市值</div><div class="v">${fmtMoney(r.final)}</div></div></div></div></button>`;
     return custom ? `<div class="preset-custom">${card}<div class="preset-tools"><button class="btn sm ghost" type="button" data-edit-preset="${p.key}" aria-label="编辑 ${esc(p.name)}">编辑</button><button class="btn sm ghost" type="button" data-delete-preset="${p.key}" aria-label="删除 ${esc(p.name)}">删除</button></div></div>` : card;
   }).join('');
@@ -1194,6 +1206,7 @@ function bindStrategy() {
   const map = { pMonthly: 'monthly', pInitial: 'initial', pStart: 'start', pMode: 'mode', pAbs: 'abs', pRel: 'rel', pPeriod: 'period', pFee: 'fee' };
   $('#ruleForm').addEventListener('input', e => { const k = map[e.target.id]; if (k) S[k] = ['start', 'mode', 'period'].includes(k) ? e.target.value : +e.target.value; if (e.target.id === 'pCash') S.cashflow = e.target.checked; save(); });
   $('#rbFx').addEventListener('input', e => { const v = +e.target.value; if (v > 0) { S.fx = v; S.fxManual = true; save(); syncTradeSettings(); } });
+  $('#restoreAutoFx').addEventListener('click',()=>{S.fxManual=false;ensureRebalanceState();save();syncTradeSettings();renderRebalance();});
   segBind('#rbSell', b => { S.allowSell = b.dataset.v === '1'; save(); syncTradeSettings(); });
   segBind('#rbWhole', b => { S.wholeShares = b.dataset.v === '1'; save(); syncTradeSettings(); });
   $('#rbLast').addEventListener('change', e => { S.lastRebalance = e.target.value || null; save(); syncTradeSettings(); });
@@ -1661,6 +1674,8 @@ function refreshRebalance() { const plan = planRebalance(); syncTradeSettings();
 function syncTradeSettings() {
   const effSell = S.allowSell;
   if (document.activeElement !== $('#rbFx')) $('#rbFx').value = S.fx;
+  $('#rbFxHint').textContent=S.fxManual?'手动固定汇率；不会随每日行情变化。':`自动汇率 · 截至 ${D.fxAsOf?.CNY || D.asOf}；人民币资产按此折算。`;
+  $('#restoreAutoFx').hidden=!S.fxManual;
   [...$('#rbSell').children].forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === effSell));
   [...$('#rbWhole').children].forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S.wholeShares));
   if (document.activeElement !== $('#rbLast')) $('#rbLast').value = S.lastRebalance || '';
@@ -2409,10 +2424,43 @@ function bindSharedBook() {
   window.addEventListener('storage',event=>{if(event.key==='heng.shared.v1' && event.newValue && !JSON.parse(event.newValue).install)paintSharedBook();});
 }
 
+/* ---------------- snapshot freshness ---------------- */
+let newerSnapshot = false;
+function renderDataStatus() {
+  const expected=MarketCalendar.expectedUSDate(),health=D.health;
+  const fxExpected=[D.asOf,MarketCalendar.expectedFXDate()].sort()[0];
+  const fxLag=D.fxAsOf && ['CNY','HKD'].some(cur=>D.fxAsOf[cur]<fxExpected);
+  const overdue=D.asOf<expected || fxLag || (health?.checkedAt && Date.now()-Date.parse(health.checkedAt)>48*3600000);
+  const warning=overdue || newerSnapshot || !!health?.warnings?.length;
+  const text=newerSnapshot?'已有新的校验数据':D.asOf<expected?`行情截至 ${D.asOf} · 待更新至 ${expected}`:fxLag?`行情截至 ${D.asOf} · 汇率待更新`:overdue?`行情截至 ${D.asOf} · 更新检查逾期`:`行情截至 ${D.asOf}${health?.warnings?.length?' · 部分日期待核对':''}`;
+  $('#dataAsOf').textContent=text;
+  const box=$('#dataAsOf').closest('.data-status');
+  box.classList.toggle('stale',warning);
+  box.title=[health?.checkedAt?`最近校验：${new Date(health.checkedAt).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})}（北京时间）`:'',health?.crosscheck?`已与第二行情源核对 ${health.crosscheck.assets} 个标的、${health.crosscheck.observations} 条收盘价`:'',...Object.entries(D.assets).map(([id,a])=>`${id}: ${a.asOf||D.asOf}`)].filter(Boolean).join('\n');
+  $('#refreshData').hidden=!newerSnapshot;
+  $('#dataCheckedAt').textContent=health?.checkedAt?`最近校验：${new Date(health.checkedAt).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false})}（北京时间）。`:'';
+}
+async function checkPublishedData() {
+  if(!window.privateAccount?.pages || document.hidden) return;
+  try {
+    const response=await fetch('./data-status.json',{cache:'no-store'});
+    if(!response.ok) return;
+    const latest=await response.json();
+    if(latest.dataSha256 && latest.dataSha256!==SNAPSHOT_SHA) newerSnapshot=true;
+    renderDataStatus();
+  } catch(_) { /* Existing validated data remains visible while offline. */ }
+}
+
 /* ---------------- boot ---------------- */
 function boot() {
   const last = D.asOf || ymd(wDate(N - 1));
   $('#dataAsOf').textContent = `数据截至 ${last}`; $('#from20').textContent = ym(Math.max(0, N - 1 - W20)); $('#asOf2').textContent = last; $('#dataSpan').textContent = `${ymd(wDate(D.assets.SPY.first)).slice(0, 4)}–${last.slice(0, 4)}`;
+  renderDataStatus();
+  $('#refreshData').addEventListener('click',()=>location.reload());
+  setInterval(renderDataStatus,60000);
+  setInterval(checkPublishedData,15*60000);
+  window.addEventListener('focus',checkPublishedData);
+  checkPublishedData();
   const now = new Date();
   $('#planMonth').dateTime = todayStr().slice(0, 7);
   $('#planMonth').textContent = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long' }).format(now);

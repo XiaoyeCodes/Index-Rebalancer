@@ -66,9 +66,10 @@ test('new monthly cash cannot hide a 50 percent loss in unit NAV', () => {
 
 test('first-purchase fees count toward drawdown and time-weighted return', () => {
   const result = engine({ AAA: asset(Array(54).fill(100)) }).run({ fee: 1 });
-  close(result.final, 990);
-  close(result.mdd, -0.01);
-  close(result.twr, Math.pow(0.99, 1 / result.durationYears) - 1);
+  close(result.final, 1000 / 1.01);
+  close(result.mdd, 1 / 1.01 - 1);
+  close(result.twr, Math.pow(1 / 1.01, 1 / result.durationYears) - 1);
+  close(result.years['2000'].s,1);
 });
 
 test('XIRR agrees with the independently published Excel example on Actual/365', () => {
@@ -80,6 +81,23 @@ test('XIRR agrees with the independently published Excel example on Actual/365',
   close(e.evaluate('xirr(flows)'), 0.373362535, 1e-8);
   assert.equal(e.evaluate('xirr([[0, -100], [0, 101]])'), null);
   assert.equal(e.evaluate('xirr([[0, 100], [86400000, 101]])'), null);
+});
+
+test('XIRR uses actual closing dates, including an incomplete final trading week',()=>{
+  const e=engine({AAA:asset([100,100,110])});
+  e.context.D.dates=['2000-01-07','2000-01-14','2000-01-19'];
+  const r=e.run();
+  close(r.xirr,Math.pow(1.1,365/12)-1,1e-8);
+});
+
+test('rebalance fees conserve cash using the actual executed notional',()=>{
+  const r=engine({AAA:asset([100,200]),BBB:asset([100,100])}).run({weights:{AAA:30,BBB:70},fee:1,mode:'threshold',abs:1,rel:1});
+  assert.equal(r.log.length,1);
+  const before=1000/1.01*1.3;
+  const traded=r.log[0].trades.reduce((sum,[,amount])=>sum+Math.abs(amount),0);
+  close(r.final+traded*.01,before,1e-8);
+  close(r.wHist.at(-1).w.AAA,.3);
+  close(r.wHist.at(-1).w.BBB,.7);
 });
 
 test('the three requested models share real history and identical contribution dates', () => {

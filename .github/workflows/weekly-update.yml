@@ -1,8 +1,8 @@
 # Manual fallback. Scheduled updates run in the private Index-Rebalancer-Automation repository
 # so the public-repository 60-day inactivity rule cannot disable the scheduled updater.
 # Downloads from Yahoo Finance, rebuilds the weekly data and app/heng.html, then commits and pushes
-# only those two files (see app/scripts/update.mjs --git). Can also be started by hand from the Actions tab.
-name: Weekly data update
+# the validated snapshot, its evidence, and the rebuilt page. Manual fallback only.
+name: Market data update (manual)
 
 on:
   workflow_dispatch:

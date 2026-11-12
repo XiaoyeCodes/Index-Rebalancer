@@ -2173,6 +2173,11 @@ button, summary, a {
   border-radius: 50%;
   background: #26815c;
 }
+.data-status {max-width:calc(100vw - 32px);white-space:normal;pointer-events:auto;}
+.data-status.stale {border-color:#dbb463;color:#805817;}
+.data-status.stale i {background:#b77a16;flex-shrink:0;}
+.data-status button {border:0;background:none;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer;white-space:nowrap;}
+.data-status button[hidden] {display:none;}
 
 .settings-trigger {
   justify-self: end;
