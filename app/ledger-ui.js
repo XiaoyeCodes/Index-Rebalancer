@@ -49,7 +49,7 @@ function renderLedger() {
   $('#ledgerInfo').textContent = !real ? '当前显示示例持仓。请在「本月计划」填入你的实际股数后开始记账。' :
     changed ? '当前股数和账本有差异。请核对这次变动的金额，再查看收益。' :
     !book ? '可以从现有持仓开始，也可以在确认第一笔真实操作时自动建账。' :
-    book.usePast ? '期初成本按已核对的历史成交流水计算。' :
+    book.usePast ? '' :
     book.cost == null ? '' : window.privateAccount?.sync ? '已确认的买卖会计入共享账本。' : '按清单确认后的买卖会保存在这个浏览器。';
   $('#ledgerInfo').hidden = !$('#ledgerInfo').textContent;
   const legacy = book ? book.legacy : S.lastAppliedOps;
@@ -66,11 +66,11 @@ function renderLedger() {
   $('#ledgerPageStatus').textContent = '共 '+page.total+' 条'+(page.total?' · 第 '+page.page+' / '+page.pages+' 页':'');
   $('#ledgerPrev').disabled = page.page <= 1;
   $('#ledgerNext').disabled = page.page >= page.pages;
-  $('#ledgerPastStatus').hidden = !book?.past?.length;
+  $('#ledgerPastStatus').hidden = !book?.past?.length || !!book.usePast;
   $('#ledgerPastStatus').innerHTML = '';
-  if (book?.past?.length) {
+  if (book?.past?.length && !book.usePast) {
     const past = Ledger.pastFlows(book);
-    $('#ledgerPastStatus').innerHTML = '<p class="small muted">'+(book.usePast?'已将完整历史流水计入收益，同日买卖按净额计算。':past?'补录股数已与期初持仓吻合。确认已录入全部历史买卖后，可以据此计算收益。':'补录流水尚未与期初股数吻合，目前仅供查阅。')+
+    $('#ledgerPastStatus').innerHTML = '<p class="small muted">'+(past?'补录股数已与期初持仓吻合。确认已录入全部历史买卖后，可以据此计算收益。':'补录流水尚未与期初股数吻合，目前仅供查阅。')+
       (past && !book.usePast?' <button class="btn sm" type="button" id="usePast">使用完整流水计算收益</button>':'')+'</p>';
   }
 }
