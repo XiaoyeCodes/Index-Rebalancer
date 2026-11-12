@@ -101,7 +101,7 @@
     </div>
     <div class="panel ledger-panel">
       <div class="panel-h"><h2>记账明细</h2><div class="ledger-actions"><button class="btn sm" id="ledgerBackfill" type="button">补录历史成交</button><button class="btn sm" id="ledgerSetup" type="button">设置期初成本</button></div></div>
-      <p id="ledgerInfo" class="small muted"></p>
+      <p id="ledgerInfo" class="small muted" hidden></p>
       <button class="btn sm" id="ledgerAdjust" type="button" hidden>核对股数变动</button>
       <form id="ledgerForm" hidden>
         <label id="ledgerLabel" for="ledgerAmount"></label>
@@ -122,7 +122,6 @@
         <button type="submit" class="btn primary">保存成交</button> <button type="button" id="pastCancel" class="btn">取消</button>
       </form>
       <div id="ledgerList"></div>
-      <details class="small ledger-method"><summary>收益怎么算？</summary><p>总收益 = 当前持仓市值 + 累计净卖出回款 − 累计投入。累计投入包含期初成本，以及每次买入超过卖出的金额。累计收益率 = 总收益 ÷ 累计投入。金额按美元估算，涵盖模型外持仓，不含闲置现金、单独派发的现金股息和未录入的费用。</p></details>
     </div>
   </section>
 
