@@ -69,8 +69,10 @@
 
     <div class="section grid">
       <div class="investment-launcher" id="opsPanel" role="group" aria-label="本期投资操作">
-        <button class="btn primary" type="button" id="monthlyAction" disabled>定投</button>
-        <button class="btn primary" type="button" id="rebalanceAction" disabled>再平衡</button>
+        <dl class="investment-schedule" id="investmentSchedule" aria-label="下次投资计划">
+          <div><dt>下次定投</dt><dd><span id="nextMonthlyTime">—</span><small id="nextMonthlyHint"></small><button class="btn primary" type="button" id="monthlyAction" disabled>定投</button></dd></div>
+          <div><dt>下次再平衡</dt><dd><span id="nextRebalanceTime">—</span><small id="nextRebalanceHint"></small><button class="btn primary" type="button" id="rebalanceAction" disabled>再平衡</button></dd></div>
+        </dl>
       </div>
 
       <div class="panel" id="holdPanel" tabindex="-1">
@@ -338,6 +340,15 @@
       <button type="button" class="linkbtn" data-sync="retry" hidden>重试</button>
     </div>
   </aside>
+</dialog>
+
+<dialog class="execution-dialog" id="investmentResetConfirm" aria-labelledby="investmentResetConfirmTitle" aria-describedby="investmentResetConfirmIntro">
+  <form id="investmentResetConfirmForm">
+    <h2 id="investmentResetConfirmTitle">确认重置？</h2>
+    <p class="execution-intro" id="investmentResetConfirmIntro"></p>
+    <p class="small muted">不会改变常规的下次定投或定期再平衡日期，也不会修改当前持仓和历史记录。</p>
+    <div class="execution-actions"><button type="button" class="btn" id="investmentResetCancel" autofocus>取消</button><button type="submit" class="btn primary" id="investmentResetSubmit">确认重置</button></div>
+  </form>
 </dialog>
 
 <dialog class="template-dialog" id="templateDialog" aria-labelledby="templateTitle" aria-describedby="templateIntro">
@@ -1532,8 +1543,16 @@ function renderOps(plan) {
   rebalance.classList.toggle('is-complete', rebalance.disabled);
   rebalance.title = !state.valid ? '请先配置权重合计为 100% 的定投模型' : state.rebalanceDone ? '本月再平衡已完成' : !S.allowSell ? '当前为只买不卖，暂不执行再平衡' : '当前未触发再平衡条件，或没有需要买卖的标的';
   if (state.rebalancePlan.resetId) rebalance.title = state.valid ? '已解锁一次，点击查看再平衡检查结果' : '已解锁一次，请先配置权重合计为 100% 的定投模型';
+  renderInvestmentSchedule(state);
   const nBuy = plan.ids.filter(id => plan.delta[id] > 0).length, nSell = plan.ids.filter(id => plan.delta[id] < 0).length;
   $('#rbOps').textContent = `买 ${nBuy} · 卖 ${nSell}`;
+}
+function renderInvestmentSchedule(state = investmentActionState()) {
+  const today = todayStr(), schedule = Investment.nextSchedule(S,today), monthly = schedule.monthly, rebalance = schedule.rebalance;
+  $('#nextMonthlyTime').textContent = state.valid ? monthly.date : '请先配置模型';
+  $('#nextMonthlyHint').textContent = !state.valid ? '目标权重需合计 100%' : monthly.reset ? '已解锁一次，可提前定投' : monthly.overdue ? `原计划 ${monthly.planned}，本期待完成` : monthly.date===today && !monthly.done ? '今天可定投' : `每月 ${monthly.day} 日计划`;
+  $('#nextRebalanceTime').textContent = !state.valid ? '请先配置模型' : rebalance.date || (rebalance.reset ? '现在可检查' : S.mode==='none' ? '未启用再平衡' : '达到偏离阈值时');
+  $('#nextRebalanceHint').textContent = !state.valid ? '目标权重需合计 100%' : rebalance.reset ? '已解锁一次，可提前检查' : S.mode==='none' ? '当前仅执行定投' : !S.allowSell ? '当前为只买不卖，暂不执行' : S.mode==='threshold' ? (rebalance.done ? '本期已完成，下月起按阈值检查' : state.rebalancePlan.thr ? '已达到阈值，可查看买卖清单' : '随持仓占比变化触发') : rebalance.overdue ? '计划日期已到，尚待检查' : state.rebalancePlan.thr ? '已达阈值，可提前检查' : `${S.period==='Q'?'季度':'年度'}检查${S.mode==='hybrid'?'，达到阈值可提前':''}`;
 }
 function renderRebalancePreview(plan) {
   $('#opsConfirmIntro').textContent = plan.resetId ? '本次使用设置中解锁的一次再平衡机会。核对检查结果；需要买卖时，在券商完成操作后再确认更新持仓。' : '核对需要买入、卖出的金额和股数。在券商完成操作后，再确认更新持仓。';
@@ -1677,6 +1696,29 @@ function renderResetSettings() {
   $('#resetMonthly').textContent = monthly ? '定投已解锁' : '重置定投';
   $('#resetRebalance').textContent = rebalance ? '再平衡已解锁' : '重置再平衡';
   $('#investmentResetStatus').textContent = `定投：${monthly ? '已解锁一次，待使用' : '可解锁一次'}；再平衡：${rebalance ? '已解锁一次，待使用' : '可解锁一次'}。`;
+}
+let resetConfirmation = null;
+function openInvestmentReset(kind) {
+  if (!['monthly','rebalance'].includes(kind) || Investment.pendingReset(S,kind,todayStr()) || $('#investmentResetConfirm').open) return;
+  resetConfirmation = {kind,today:todayStr()};
+  const label = kind==='monthly' ? '定投' : '再平衡';
+  $('#investmentResetConfirmTitle').textContent = `确认重置${label}？`;
+  $('#investmentResetConfirmIntro').textContent = kind==='monthly' ? '将解锁一次本期定投机会，可以在日期未到时提前定投。' : '将解锁一次本期再平衡检查机会，可以提前查看需要买卖的标的。';
+  $('#investmentResetSubmit').disabled = $('#investmentResetCancel').disabled = false;
+  $('#investmentResetConfirm').showModal();
+}
+async function confirmInvestmentReset(event) {
+  event.preventDefault();
+  const dialog = $('#investmentResetConfirm'), submit = $('#investmentResetSubmit'), cancel = $('#investmentResetCancel'), request = resetConfirmation;
+  if (!dialog.open || !request || submit.disabled) return;
+  submit.disabled = cancel.disabled = true;
+  try {
+    if (request.today!==todayStr()) {
+      dialog.close(); renderResetSettings(); $('#investmentResetStatus').textContent='日期已变化，请重新确认重置操作。'; return;
+    }
+    await resetInvestmentAction(request.kind);
+    if (dialog.open && resetConfirmation===request) dialog.close();
+  } finally { submit.disabled = cancel.disabled = false; }
 }
 async function resetInvestmentAction(kind) {
   if (!['monthly','rebalance'].includes(kind)) return;
@@ -1827,8 +1869,12 @@ async function confirmOps(event) {
 
 function bindRebalance() {
   bindLedger();
-  $('#resetMonthly').onclick = () => resetInvestmentAction('monthly');
-  $('#resetRebalance').onclick = () => resetInvestmentAction('rebalance');
+  $('#resetMonthly').onclick = () => openInvestmentReset('monthly');
+  $('#resetRebalance').onclick = () => openInvestmentReset('rebalance');
+  $('#investmentResetConfirmForm').addEventListener('submit', confirmInvestmentReset);
+  $('#investmentResetCancel').onclick = () => $('#investmentResetConfirm').close();
+  $('#investmentResetConfirm').addEventListener('cancel', event => { if ($('#investmentResetSubmit').disabled) event.preventDefault(); });
+  $('#investmentResetConfirm').addEventListener('close', () => { resetConfirmation=null; if ($('#aiSettings').open) $('#closeSettings').focus({preventScroll:true}); });
   $('#openSettings').addEventListener('click', renderResetSettings);
   $('#monthlyAction').onclick = openMonthlyInvestment;
   $('#rebalanceAction').onclick = applyOps;
@@ -2276,6 +2322,7 @@ function go(v, push = true) {
   if (!VIEWS.includes(v)) v = 'rebalance';
   if ($('#opsConfirm').open) $('#opsConfirm').close();
   if ($('#bonusDialog').open) $('#bonusDialog').close();
+  if ($('#investmentResetConfirm').open) $('#investmentResetConfirm').close();
   if (!$('#drawer').hidden) closeDrawer();
   const changingView = current && current !== v;
   current = v;
@@ -2395,7 +2442,7 @@ function boot() {
       if ($('#bonusDialog').open) $('#bonusDialog').close();
       investmentIntent = {kind:'monthly',amountCny:null,period:todayStr().slice(0,7),id:''};
       refreshRebalance();
-    } else renderBalanceHeadline(window.__plan);
+    } else { renderBalanceHeadline(window.__plan); renderInvestmentSchedule(); }
   };
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHeadline(); });
   setInterval(refreshHeadline, 60000);

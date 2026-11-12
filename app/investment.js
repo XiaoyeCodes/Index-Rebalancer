@@ -48,5 +48,22 @@ const Investment = (() => {
       legacy ? state.lastAppliedOps?.confirmedOn : null, legacy ? state.lastExecutionDate : null]
       .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date || '') && Number.isFinite(Date.parse(date))).sort().at(-1);
   }
-  return { period, pendingReset, operationId, monthlyDone, rebalanceDone, preferredDay, monthlyDate, operationDone, lastBalanceCheck };
+  function nextSchedule(state, today) {
+    // Extra manual opportunities do not move the regular monthly/quarterly/yearly plan.
+    const regular = {...state,investmentResets:null};
+    const monthlyCompleted = monthlyDone(regular,today), monthlyPlanned = monthlyDate(regular,today,monthlyCompleted);
+    const monthly = {date:!monthlyCompleted && monthlyPlanned<today ? today : monthlyPlanned,planned:monthlyPlanned,
+      done:monthlyCompleted,overdue:!monthlyCompleted && monthlyPlanned<today,reset:!!pendingReset(state,'monthly',today),day:preferredDay(regular,today)};
+    const completed = rebalanceDone(regular,today), reset = !!pendingReset(state,'rebalance',today);
+    if (state.mode!=='calendar' && state.mode!=='hybrid') return {monthly,rebalance:{date:null,done:completed,reset,overdue:false,due:false}};
+    const last = lastBalanceCheck(regular), anchor = last && last<=today ? last : null;
+    const interval = state.period==='Q' ? 3 : 12;
+    const base = anchor || today, year = +base.slice(0,4), month = +base.slice(5,7)-1;
+    let next = new Date(year,Math.floor(month/interval)*interval+(anchor || completed || month%interval!==0 ? interval : 0),1);
+    const dateString = value => `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-01`;
+    if (completed && dateString(next)<=today) next = new Date(+today.slice(0,4),Math.floor((+today.slice(5,7)-1)/interval)*interval+interval,1);
+    const date = dateString(next);
+    return {monthly,rebalance:{date,done:completed,reset,due:date<=today,overdue:!!anchor && !completed && date<today}};
+  }
+  return { period, pendingReset, operationId, monthlyDone, rebalanceDone, preferredDay, monthlyDate, operationDone, lastBalanceCheck, nextSchedule };
 })();
