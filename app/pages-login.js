@@ -2,6 +2,7 @@ import { workspaceSync } from './workspace-sync.js';
 import { browserModel } from './browser-model.js';
 import { browserSession } from './browser-session.js';
 import { verifyPagesPassword } from './password-check.js';
+import { loadApplication } from './application-loader.js';
 
 const access = JSON.parse(document.getElementById('access').textContent);
 const bytes = value => Uint8Array.from(atob(value), char => char.charCodeAt(0));
@@ -25,9 +26,8 @@ async function openApplication(wrappingKey,remember,restoring=false) {
     unlockSeed=await subtle.digest('SHA-256',privateBytes);
   } finally { new Uint8Array(privateBytes).fill(0); }
   const appKey=await subtle.unwrapKey('raw',bytes(access.wrapped),privateKey,'RSA-OAEP',{name:'AES-GCM',length:256},false,['decrypt']);
-  const response=await fetch('./application.bin',{cache:'no-store'});
-  if (!response.ok) throw Error('页面加载失败，请刷新后重试。');
-  const html=await subtle.decrypt({name:'AES-GCM',iv:bytes(access.appIv)},appKey,await response.arrayBuffer());
+  status.textContent='正在加载应用…';
+  const html=await loadApplication(access,appKey);
   const model=browserModel(unlockSeed),sync=await workspaceSync(access.syncEndpoint,unlockSeed);
   if (!restoring) {
     if (remember) {
@@ -37,6 +37,7 @@ async function openApplication(wrappingKey,remember,restoring=false) {
     else await session.clear().catch(()=>{});
   }
   window.privateAccount={pages:true,model,sync,verifyPassword:password=>verifyPagesPassword(access,password),logout:async()=>{await session.clear();location.reload();}};
+  status.textContent='正在打开页面…';
   document.open();document.write(new TextDecoder().decode(html));document.close();
 }
 function busy(value,message='') {
