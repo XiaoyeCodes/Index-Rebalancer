@@ -54,3 +54,47 @@ test('HTTP and unsupported encoding errors do not turn into authenticated HTML o
   assert.equal(calls,1);
   await assert.rejects(loadApplication({...f.access,appEncoding:'unknown'},f.key,async () => new Response(f.cipher)),/不支持此页面版本/);
 });
+
+function savedFiles() {
+  const files = new Map();
+  return {files,open:async () => ({
+    match:async url => files.get(url)?.clone(),
+    put:async (url,response) => files.set(url,response.clone()),
+    keys:async () => [...files.keys()],
+    delete:async url => files.delete(url),
+  })};
+}
+
+test('explicit browser storage reuses authenticated ciphertext and retains only two publication versions', async () => {
+  const storage = savedFiles(), versions = await Promise.all(['one','two','three'].map(text => fixture(text)));
+  let downloads = 0;
+  for (const f of versions) {
+    const fetcher = async () => {downloads++;return new Response(f.cipher);};
+    const first = await loadApplication(f.access,f.key,fetcher,storage);
+    const next = await loadApplication(f.access,f.key,fetcher,storage);
+    assert.deepEqual(new Uint8Array(first),new Uint8Array(next));
+  }
+  assert.equal(downloads,3);assert.equal(storage.files.size,2);
+  for (const response of storage.files.values()) {
+    const encrypted = new Uint8Array(await response.clone().arrayBuffer());
+    assert.ok(versions.some(f => Buffer.from(f.cipher).equals(Buffer.from(encrypted))));
+  }
+});
+
+test('damaged explicit cache is discarded and replaced by one verified download', async () => {
+  const f = await fixture('recovered'), storage = savedFiles();
+  storage.files.set('https://application.invalid/application.bin?v='+f.access.appVersion,new Response(new Uint8Array(40)));
+  let downloads = 0;
+  const plain = await loadApplication(f.access,f.key,async (url,options) => {
+    downloads++;assert.equal(options.cache,'reload');return new Response(f.cipher);
+  },storage);
+  assert.equal(new TextDecoder().decode(plain),'recovered');assert.equal(downloads,1);
+});
+
+test('blocked or full cache storage cannot prevent a valid login', async () => {
+  const f = await fixture('available');
+  for (const storage of [{open:async()=>{throw Error('blocked');}},{open:async()=>({match:async()=>undefined,put:async()=>{throw Error('full');}})}]) {
+    const plain = await loadApplication(f.access,f.key,async()=>new Response(f.cipher),storage);
+    assert.equal(new TextDecoder().decode(plain),'available');
+  }
+});

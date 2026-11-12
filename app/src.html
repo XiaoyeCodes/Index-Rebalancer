@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Dynamic Rebalancing · 全天候动态再平衡策略。管理持仓、设置定投模型、查看操作清单，并用历史数据回测。">
 <meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="动态再平衡">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="./assets/app-icon-180.png">
 <title>Dynamic Rebalancing</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -15,6 +20,11 @@
 <!-- shared line-art icon set -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <symbol id="i-mobile-plan" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16m-11 5h6"/></symbol>
+    <symbol id="i-mobile-history" viewBox="0 0 24 24"><path d="M5 4h14v17H5zM9 9h6m-6 4h6m-6 4h3"/></symbol>
+    <symbol id="i-mobile-assets" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+    <symbol id="i-mobile-model" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="white"/><circle cx="15" cy="17" r="3" fill="white"/></symbol>
+    <symbol id="i-mobile-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></symbol>
     <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M8 20h8M4 8h16M4 8l-2.5 6h5zM20 8l-2.5 6h5z"/><circle cx="12" cy="4" r="1"/></symbol>
     <symbol id="i-quill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-7 1-11 5-13 12l-2 4M7 16c4 0 8-2 10-6M14 3.5l.6 1.8M19 9l1.8.5M17.4 5.7l1.2-1.2"/></symbol>
     <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></symbol>
@@ -315,6 +325,21 @@
   <footer class="foot"><span>数据：Yahoo Finance 复权日线及交叉核验的备用行情（价格指数除外）；以美股已收盘交易日为基准，截至 <span id="asOf2"></span>。<span id="dataCheckedAt"></span>本工具用于学习定投与再平衡方法，不构成投资建议。</span><span class="sig">Dynamic Rebalancing</span></footer>
 </main>
 
+<nav class="mobile-nav" aria-label="手机主导航">
+  <a href="#rebalance" data-tab="rebalance"><svg aria-hidden="true"><use href="#i-mobile-plan"/></svg><span>本月</span></a>
+  <a href="#history" data-tab="history"><svg aria-hidden="true"><use href="#i-mobile-history"/></svg><span>记录</span></a>
+  <a href="#assets" data-tab="assets"><svg aria-hidden="true"><use href="#i-mobile-assets"/></svg><span>标的</span></a>
+  <a href="#strategy" data-tab="strategy"><svg aria-hidden="true"><use href="#i-mobile-model"/></svg><span>模型</span></a>
+  <button type="button" id="mobileMore" aria-haspopup="dialog" aria-controls="mobileMoreDialog" aria-expanded="false"><svg aria-hidden="true"><use href="#i-mobile-more"/></svg><span>更多</span></button>
+</nav>
+
+<dialog class="execution-dialog mobile-more" id="mobileMoreDialog" aria-labelledby="mobileMoreTitle">
+  <div class="settings-heading"><h2 id="mobileMoreTitle">更多</h2><button class="dclose" type="button" id="mobileMoreClose" aria-label="关闭更多菜单">×</button></div>
+  <button class="mobile-menu-item" type="button" data-mobile-view="assistant"><span>AI 助手</span><span aria-hidden="true">›</span></button>
+  <button class="mobile-menu-item" type="button" data-mobile-view="backtest"><span>历史回测</span><span aria-hidden="true">›</span></button>
+  <button class="mobile-menu-item" type="button" id="mobileSettings"><span>设置与主屏幕安装</span><span aria-hidden="true">›</span></button>
+</dialog>
+
 <div class="data-status" role="status"><i aria-hidden="true"></i><span id="dataAsOf"></span><button id="refreshData" type="button" hidden>刷新数据</button></div>
 
 <dialog class="execution-dialog ai-settings" id="aiSettings" aria-labelledby="aiSettingsTitle" aria-describedby="aiSettingsIntro">
@@ -362,6 +387,12 @@
       <button type="button" class="linkbtn" data-sync="backup" hidden>下载先前版本</button>
       <button type="button" class="linkbtn" data-sync="retry" hidden>重试</button>
     </div>
+  </aside>
+  <aside class="home-install" id="homeInstall" hidden aria-labelledby="homeInstallTitle">
+    <h3 class="h3s" id="homeInstallTitle">iPhone 主屏幕版</h3>
+    <div id="homeInstallSteps"><p>用 Safari 打开网站，点「分享」→「添加到主屏幕」→「添加」。以后点桌面图标即可打开。</p><p class="small muted">首次从主屏幕打开可能需要重新登录，使用同一访问密码即可同步共享账本。</p></div>
+    <p id="homeInstallReady" hidden>已在主屏幕版中打开。你的应用会随网站更新，无需重新安装。</p>
+    <button class="btn sm" type="button" id="copyInstallLink">复制网站链接</button><span class="small muted" id="homeInstallMessage" role="status"></span>
   </aside>
 </dialog>
 
@@ -2544,6 +2575,7 @@ let current = null;
 function go(v, push = true) {
   if (v === 'research' || v === 'ai') { v = 'assistant'; history.replaceState(null, '', '#assistant'); }
   if (!VIEWS.includes(v)) v = 'rebalance';
+  if ($('#mobileMoreDialog').open) $('#mobileMoreDialog').close();
   if ($('#opsConfirm').open) $('#opsConfirm').close();
   if ($('#bonusDialog').open) $('#bonusDialog').close();
   if ($('#investmentResetConfirm').open) $('#investmentResetConfirm').close();
@@ -2551,7 +2583,8 @@ function go(v, push = true) {
   const changingView = current && current !== v;
   current = v;
   document.querySelectorAll('section[data-view]').forEach(s => s.hidden = s.dataset.view !== v);
-  document.querySelectorAll('.view-nav [data-tab]').forEach(t => t.dataset.tab === v ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current'));
+  document.querySelectorAll('.view-nav [data-tab], .mobile-nav [data-tab]').forEach(t => t.dataset.tab === v ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current'));
+  $('#mobileMore').classList.toggle('is-active', ['assistant', 'backtest'].includes(v));
   if (push && location.hash !== '#' + v) history.pushState(null, '', '#' + v);
   window.scrollTo(0, 0);
   if (v === 'rebalance') renderRebalance();
@@ -2559,6 +2592,10 @@ function go(v, push = true) {
   if (v === 'assistant') mountAssistant();
   if (v === 'assets') renderAssets();
   if (v === 'backtest') renderBacktest();
+  if (v === 'strategy' && matchMedia('(max-width:760px)').matches) {
+    const list=$('#presets'), chosen=list.querySelector('[aria-pressed="true"]');
+    if (chosen) list.scrollLeft=chosen.offsetLeft-list.offsetLeft;
+  }
   if (changingView) {
     const title = document.querySelector(`#${v} h1`);
     title.tabIndex = -1;
@@ -2644,12 +2681,22 @@ function boot() {
     renderAssets();
     $('#layerNav [aria-pressed="true"]').focus({ preventScroll: true });
   });
-  document.querySelector('.app-header').addEventListener('click', event => {
+  const navigate = event => {
     const link = event.target.closest('a[href^="#"]');
     if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     go(link.hash.slice(1));
+  };
+  document.querySelector('.app-header').addEventListener('click', navigate);
+  document.querySelector('.mobile-nav').addEventListener('click', navigate);
+  $('#mobileMore').onclick = () => { $('#mobileMoreDialog').showModal(); $('#mobileMore').setAttribute('aria-expanded','true'); };
+  $('#mobileMoreClose').onclick = () => $('#mobileMoreDialog').close();
+  $('#mobileMoreDialog').addEventListener('close', () => $('#mobileMore').setAttribute('aria-expanded','false'));
+  $('#mobileMoreDialog').addEventListener('click', event => {
+    const item=event.target.closest('[data-mobile-view]');
+    if (item) go(item.dataset.mobileView);
   });
+  $('#mobileSettings').onclick = () => { $('#mobileMoreDialog').close(); $('#openSettings').click(); };
   window.addEventListener('hashchange', () => go(location.hash.slice(1), false));
   $('#heroRun').onclick = () => { if (sumW() === 100) go('backtest'); else $('#weightRows').scrollIntoView({ behavior: 'smooth' }); };
   go((location.hash || '#rebalance').slice(1), false);

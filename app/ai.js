@@ -37,6 +37,10 @@
     } else { showStatus(true); }
     $('openSettings').onclick=async()=>{
       if (!dialog.open) dialog.showModal();
+      $('homeInstall').hidden=!browser;
+      const installed=matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+      $('homeInstallSteps').hidden=installed;
+      $('homeInstallReady').hidden=!installed;
       feedback('');
       $('saveAI').disabled = $('clearAI').disabled = true;
       try {
@@ -60,6 +64,10 @@
       return false;
     };
     $('closeSettings').onclick=()=>dialog.close();
+    $('copyInstallLink').onclick=async()=>{
+      try { await navigator.clipboard.writeText(new URL('./',location.href).href); $('homeInstallMessage').textContent='链接已复制，可发送到 iPhone 后用 Safari 打开。'; }
+      catch { $('homeInstallMessage').textContent='请用 Safari 打开当前网站，再从分享菜单添加到主屏幕。'; }
+    };
     dialog.addEventListener('close',()=>{$('aiApiKey').value='';});
     $('accountLogout').onclick=()=>account().logout().catch(e=>{$('aiSettingsMessage').textContent=e.message;});
     form.onsubmit=async event=>{

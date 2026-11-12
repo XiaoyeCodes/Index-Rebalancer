@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Dynamic Rebalancing · 全天候动态再平衡策略。管理持仓、设置定投模型、查看操作清单，并用历史数据回测。">
 <meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="动态再平衡">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="./assets/app-icon-180.png">
 <title>Dynamic Rebalancing</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
@@ -4029,6 +4034,50 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
 #collaboration{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);font-size:.85rem;color:var(--ink-3)}
 #collaboration .sync-controls{display:flex;align-items:center;flex-wrap:wrap;gap:.7rem}
 
+/* iPhone home-screen layout. Desktop keeps the full header navigation. */
+.mobile-nav {display:none;}
+.home-install {margin-top:24px;padding-top:20px;border-top:1px solid var(--line);}
+.home-install p {font-size:14px;line-height:1.65;margin:8px 0 14px;}
+.home-install .small {font-size:12px;}
+#homeInstallMessage {display:block;margin-top:8px;}
+.mobile-more {inset:auto 0 0;margin:0 auto;width:min(560px,100%);border-radius:26px 26px 0 0;padding:24px 24px max(24px,env(safe-area-inset-bottom));}
+.mobile-more .settings-heading {margin-bottom:16px;}
+.mobile-menu-item {width:100%;display:flex;align-items:center;justify-content:space-between;min-height:58px;padding:16px 4px;border:0;border-top:1px solid var(--line);background:transparent;font-size:16px;text-align:left;cursor:pointer;}
+.mobile-menu-item>span:last-child {font-size:24px;color:var(--ink-3);}
+
+@media(max-width:760px) {
+  html {scroll-padding-top:calc(80px + env(safe-area-inset-top));}
+  body {padding-bottom:calc(80px + env(safe-area-inset-bottom));}
+  .app-header {padding-top:env(safe-area-inset-top);}
+  .header-inner {min-height:66px;padding-block:8px;}
+  .header-inner, .page {width:auto;margin-left:max(16px,env(safe-area-inset-left));margin-right:max(16px,env(safe-area-inset-right));}
+  .view-nav {display:none;}
+  .brand-name {max-width:130px;}
+  .settings-trigger {min-height:44px;}
+  .home-intro h1 {font-size:clamp(30px,8vw,38px);}
+  .presets {grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:86%;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:2px;padding:2px 2px 14px;overscroll-behavior-x:contain;}
+  .presets>* {scroll-snap-align:start;}
+  .btn, .add, .favorite, .dclose {min-height:44px;}
+  .add, .favorite, .dclose {min-width:44px;}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea {font-size:16px!important;}
+  .mobile-nav {
+    position:fixed;inset:auto 0 0;z-index:20;
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+    height:calc(72px + env(safe-area-inset-bottom));
+    padding:7px max(8px,env(safe-area-inset-right)) max(7px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+    border-top:1px solid var(--line);background:rgb(255 255 255 / 96%);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  }
+  .mobile-nav a, .mobile-nav button {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:54px;padding:5px 2px;border:0;border-radius:14px;background:transparent;color:var(--ink-3);text-decoration:none;font-size:11px;font-weight:500;line-height:1.2;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .mobile-nav svg {width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .mobile-nav [aria-current=page], .mobile-nav .is-active {background:var(--sunken);color:var(--ink);font-weight:600;}
+  .mobile-nav a:focus-visible, .mobile-nav button:focus-visible {outline:2px solid var(--accent);outline-offset:-2px;}
+  body:has(input:focus, textarea:focus, select:focus) .mobile-nav {visibility:hidden;}
+  .data-status {position:static;display:flex;width:fit-content;max-width:calc(100% - 32px);margin:12px auto 8px;}
+  .execution-dialog {max-height:calc(100dvh - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));}
+  .tbl-wrap {overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;}
+}
+
 
 </style>
 </head>
@@ -4037,6 +4086,11 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
 <!-- shared line-art icon set -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <symbol id="i-mobile-plan" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 10h16m-11 5h6"/></symbol>
+    <symbol id="i-mobile-history" viewBox="0 0 24 24"><path d="M5 4h14v17H5zM9 9h6m-6 4h6m-6 4h3"/></symbol>
+    <symbol id="i-mobile-assets" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+    <symbol id="i-mobile-model" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="white"/><circle cx="15" cy="17" r="3" fill="white"/></symbol>
+    <symbol id="i-mobile-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></symbol>
     <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M8 20h8M4 8h16M4 8l-2.5 6h5zM20 8l-2.5 6h5z"/><circle cx="12" cy="4" r="1"/></symbol>
     <symbol id="i-quill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-7 1-11 5-13 12l-2 4M7 16c4 0 8-2 10-6M14 3.5l.6 1.8M19 9l1.8.5M17.4 5.7l1.2-1.2"/></symbol>
     <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></symbol>
@@ -4337,6 +4391,21 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
   <footer class="foot"><span>数据：Yahoo Finance 复权日线及交叉核验的备用行情（价格指数除外）；以美股已收盘交易日为基准，截至 <span id="asOf2"></span>。<span id="dataCheckedAt"></span>本工具用于学习定投与再平衡方法，不构成投资建议。</span><span class="sig">Dynamic Rebalancing</span></footer>
 </main>
 
+<nav class="mobile-nav" aria-label="手机主导航">
+  <a href="#rebalance" data-tab="rebalance"><svg aria-hidden="true"><use href="#i-mobile-plan"/></svg><span>本月</span></a>
+  <a href="#history" data-tab="history"><svg aria-hidden="true"><use href="#i-mobile-history"/></svg><span>记录</span></a>
+  <a href="#assets" data-tab="assets"><svg aria-hidden="true"><use href="#i-mobile-assets"/></svg><span>标的</span></a>
+  <a href="#strategy" data-tab="strategy"><svg aria-hidden="true"><use href="#i-mobile-model"/></svg><span>模型</span></a>
+  <button type="button" id="mobileMore" aria-haspopup="dialog" aria-controls="mobileMoreDialog" aria-expanded="false"><svg aria-hidden="true"><use href="#i-mobile-more"/></svg><span>更多</span></button>
+</nav>
+
+<dialog class="execution-dialog mobile-more" id="mobileMoreDialog" aria-labelledby="mobileMoreTitle">
+  <div class="settings-heading"><h2 id="mobileMoreTitle">更多</h2><button class="dclose" type="button" id="mobileMoreClose" aria-label="关闭更多菜单">×</button></div>
+  <button class="mobile-menu-item" type="button" data-mobile-view="assistant"><span>AI 助手</span><span aria-hidden="true">›</span></button>
+  <button class="mobile-menu-item" type="button" data-mobile-view="backtest"><span>历史回测</span><span aria-hidden="true">›</span></button>
+  <button class="mobile-menu-item" type="button" id="mobileSettings"><span>设置与主屏幕安装</span><span aria-hidden="true">›</span></button>
+</dialog>
+
 <div class="data-status" role="status"><i aria-hidden="true"></i><span id="dataAsOf"></span><button id="refreshData" type="button" hidden>刷新数据</button></div>
 
 <dialog class="execution-dialog ai-settings" id="aiSettings" aria-labelledby="aiSettingsTitle" aria-describedby="aiSettingsIntro">
@@ -4384,6 +4453,12 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
       <button type="button" class="linkbtn" data-sync="backup" hidden>下载先前版本</button>
       <button type="button" class="linkbtn" data-sync="retry" hidden>重试</button>
     </div>
+  </aside>
+  <aside class="home-install" id="homeInstall" hidden aria-labelledby="homeInstallTitle">
+    <h3 class="h3s" id="homeInstallTitle">iPhone 主屏幕版</h3>
+    <div id="homeInstallSteps"><p>用 Safari 打开网站，点「分享」→「添加到主屏幕」→「添加」。以后点桌面图标即可打开。</p><p class="small muted">首次从主屏幕打开可能需要重新登录，使用同一访问密码即可同步共享账本。</p></div>
+    <p id="homeInstallReady" hidden>已在主屏幕版中打开。你的应用会随网站更新，无需重新安装。</p>
+    <button class="btn sm" type="button" id="copyInstallLink">复制网站链接</button><span class="small muted" id="homeInstallMessage" role="status"></span>
   </aside>
 </dialog>
 
@@ -5070,6 +5145,10 @@ function bindLedger() {
     } else { showStatus(true); }
     $('openSettings').onclick=async()=>{
       if (!dialog.open) dialog.showModal();
+      $('homeInstall').hidden=!browser;
+      const installed=matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+      $('homeInstallSteps').hidden=installed;
+      $('homeInstallReady').hidden=!installed;
       feedback('');
       $('saveAI').disabled = $('clearAI').disabled = true;
       try {
@@ -5093,6 +5172,10 @@ function bindLedger() {
       return false;
     };
     $('closeSettings').onclick=()=>dialog.close();
+    $('copyInstallLink').onclick=async()=>{
+      try { await navigator.clipboard.writeText(new URL('./',location.href).href); $('homeInstallMessage').textContent='链接已复制，可发送到 iPhone 后用 Safari 打开。'; }
+      catch { $('homeInstallMessage').textContent='请用 Safari 打开当前网站，再从分享菜单添加到主屏幕。'; }
+    };
     dialog.addEventListener('close',()=>{$('aiApiKey').value='';});
     $('accountLogout').onclick=()=>account().logout().catch(e=>{$('aiSettingsMessage').textContent=e.message;});
     form.onsubmit=async event=>{
@@ -7181,6 +7264,7 @@ let current = null;
 function go(v, push = true) {
   if (v === 'research' || v === 'ai') { v = 'assistant'; history.replaceState(null, '', '#assistant'); }
   if (!VIEWS.includes(v)) v = 'rebalance';
+  if ($('#mobileMoreDialog').open) $('#mobileMoreDialog').close();
   if ($('#opsConfirm').open) $('#opsConfirm').close();
   if ($('#bonusDialog').open) $('#bonusDialog').close();
   if ($('#investmentResetConfirm').open) $('#investmentResetConfirm').close();
@@ -7188,7 +7272,8 @@ function go(v, push = true) {
   const changingView = current && current !== v;
   current = v;
   document.querySelectorAll('section[data-view]').forEach(s => s.hidden = s.dataset.view !== v);
-  document.querySelectorAll('.view-nav [data-tab]').forEach(t => t.dataset.tab === v ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current'));
+  document.querySelectorAll('.view-nav [data-tab], .mobile-nav [data-tab]').forEach(t => t.dataset.tab === v ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current'));
+  $('#mobileMore').classList.toggle('is-active', ['assistant', 'backtest'].includes(v));
   if (push && location.hash !== '#' + v) history.pushState(null, '', '#' + v);
   window.scrollTo(0, 0);
   if (v === 'rebalance') renderRebalance();
@@ -7196,6 +7281,10 @@ function go(v, push = true) {
   if (v === 'assistant') mountAssistant();
   if (v === 'assets') renderAssets();
   if (v === 'backtest') renderBacktest();
+  if (v === 'strategy' && matchMedia('(max-width:760px)').matches) {
+    const list=$('#presets'), chosen=list.querySelector('[aria-pressed="true"]');
+    if (chosen) list.scrollLeft=chosen.offsetLeft-list.offsetLeft;
+  }
   if (changingView) {
     const title = document.querySelector(`#${v} h1`);
     title.tabIndex = -1;
@@ -7281,12 +7370,22 @@ function boot() {
     renderAssets();
     $('#layerNav [aria-pressed="true"]').focus({ preventScroll: true });
   });
-  document.querySelector('.app-header').addEventListener('click', event => {
+  const navigate = event => {
     const link = event.target.closest('a[href^="#"]');
     if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     go(link.hash.slice(1));
+  };
+  document.querySelector('.app-header').addEventListener('click', navigate);
+  document.querySelector('.mobile-nav').addEventListener('click', navigate);
+  $('#mobileMore').onclick = () => { $('#mobileMoreDialog').showModal(); $('#mobileMore').setAttribute('aria-expanded','true'); };
+  $('#mobileMoreClose').onclick = () => $('#mobileMoreDialog').close();
+  $('#mobileMoreDialog').addEventListener('close', () => $('#mobileMore').setAttribute('aria-expanded','false'));
+  $('#mobileMoreDialog').addEventListener('click', event => {
+    const item=event.target.closest('[data-mobile-view]');
+    if (item) go(item.dataset.mobileView);
   });
+  $('#mobileSettings').onclick = () => { $('#mobileMoreDialog').close(); $('#openSettings').click(); };
   window.addEventListener('hashchange', () => go(location.hash.slice(1), false));
   $('#heroRun').onclick = () => { if (sumW() === 100) go('backtest'); else $('#weightRows').scrollIntoView({ behavior: 'smooth' }); };
   go((location.hash || '#rebalance').slice(1), false);

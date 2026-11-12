@@ -8,7 +8,7 @@ import { gzipSync } from 'node:zlib';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const app = path.join(root, 'app');
 const output = path.join(root, 'dist');
-const allowed = new Set(['index.html', '.nojekyll', 'pages-login.js', 'workspace-sync.js', 'investment-book.js', 'password-check.js', 'browser-model.js', 'browser-session.js', 'application.bin', 'data-status.json', 'assets']);
+const allowed = new Set(['index.html', '.nojekyll', 'manifest.webmanifest', 'pages-login.js', 'workspace-sync.js', 'investment-book.js', 'password-check.js', 'browser-model.js', 'browser-session.js', 'application.bin', 'data-status.json', 'assets']);
 fs.mkdirSync(output, {recursive:true});
 for (const entry of fs.readdirSync(output, {withFileTypes:true})) {
   if (!allowed.has(entry.name) || (entry.name==='assets' ? !entry.isDirectory() : !entry.isFile())) {
@@ -18,6 +18,8 @@ for (const entry of fs.readdirSync(output, {withFileTypes:true})) {
 const assistant = path.join(root, 'assistant');
 fs.mkdirSync(path.join(output,'assets'),{recursive:true});
 fs.copyFileSync(path.join(app,'assets/favicon.png'),path.join(output,'assets/favicon.png'));
+fs.copyFileSync(path.join(app,'manifest.webmanifest'),path.join(output,'manifest.webmanifest'));
+for (const size of [180,192,512]) fs.copyFileSync(path.join(app,`assets/app-icon-${size}.png`),path.join(output,`assets/app-icon-${size}.png`));
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const options = {cwd:assistant,stdio:'inherit',shell:process.platform==='win32'};
 if (!fs.existsSync(path.join(assistant,'node_modules/vite/bin/vite.js'))) execFileSync(npm,['ci'],options);
