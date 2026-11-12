@@ -15,6 +15,7 @@ import { validateSnapshot } from './freshness.mjs';
 import { crosscheck } from './crosscheck.mjs';
 import {repairQuotes} from './repair-quotes.mjs';
 import {auditHistory} from './audit-history.mjs';
+import {reconcileHistory} from './reconcile-history.mjs';
 
 // Restore every publication input if any build or independent calculation fails.
 export async function withRollback(files,action) {
@@ -56,6 +57,8 @@ async function main() {
   const repairFile=new URL('../data/quote-repairs.json',import.meta.url);
   const repaired=await repairQuotes({archive:fs.existsSync(repairFile)?JSON.parse(fs.readFileSync(repairFile,'utf8')):[]});
   console.log(`备用来源核对并填补 ${repaired.applied.length} 个空日线，累计保留 ${repaired.evidence.length} 条证据。`);
+  const reconciled=reconcileHistory();
+  console.log(`历史复核 ${reconciled.reviewedCases} 条：${reconciled.primaryCorrectionCases} 条收盘价修正记录，${reconciled.retainedPrimaryCases} 条保留已核实主源价格。`);
   console.log('2/3 生成周线数据并校验…');
   const next = buildWeekly();
   const health = validateSnapshot(next,prev);
@@ -64,10 +67,10 @@ async function main() {
   console.log('3/3 与 Nasdaq / Tencent 核对最近三个收盘价，并独立复算…');
   const external=await crosscheck(next);
   const history=await auditHistory(next);
-  if(history.failures.length || history.results.some(r=>r.weeklyDifferences.length))throw Error('Historical weekly-close cross-check failed: '+JSON.stringify(history.failures.concat(history.results.filter(r=>r.weeklyDifferences.length))));
+  if(history.failures.length || history.unresolvedDisagreements)throw Error('Unreviewed historical price disagreement: '+JSON.stringify(history.failures.concat(history.results.filter(r=>r.unresolvedDifferences.length).map(r=>({id:r.id,differences:r.unresolvedDifferences})))));
   next.health={checkedAt:external.checkedAt,expectedUSDate:health.expectedUSDate,warnings:health.warnings,
     crosscheck:{assets:external.assets,observations:external.observations,sources:['Yahoo Finance','Nasdaq','Tencent Finance','Eastmoney']},
-    history:{assets:history.assets,observations:history.observations,weeklyComparisons:history.weeklyComparisons,nonWeeklyDisagreements:history.nonWeeklyDisagreements},
+    history:{assets:history.assets,observations:history.observations,weeklyComparisons:history.weeklyComparisons,nonWeeklyDisagreements:history.nonWeeklyDisagreements,sourceDisagreements:history.sourceDisagreements,canonicalVsNasdaqDisagreements:history.canonicalVsNasdaqDisagreements,reviewedCases:history.reviewedCases,primaryCorrectionCases:history.primaryCorrectionCases,retainedPrimaryCases:history.retainedPrimaryCases,unresolvedDisagreements:history.unresolvedDisagreements},
     repairedBars:repaired.evidence.length};
   const html=new URL('../heng.html',import.meta.url),crossFile=new URL('../data/crosscheck.json',import.meta.url),validationFile=new URL('../data/validation.json',import.meta.url);
   const historyFile=new URL('../data/historical-audit.json',import.meta.url),adjustmentFile=new URL('../data/adjustment-check.json',import.meta.url);

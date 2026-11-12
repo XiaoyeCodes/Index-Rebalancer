@@ -86,7 +86,7 @@ function load(rawDir, ticker, {now = Date.now(), cutoff = '9999-12-31'} = {}) {
     dates.set(k,day); lastDate = day; lastClose = c;
   });
   if (!m.size) throw new Error(`${ticker}: 没有有效的历史行情`);
-  return { m, dates, first: since ?? j.meta.firstTradeDate, name: j.meta.longName, currency: j.meta.currency, lastDate,lastClose,off,corrections,repairs:j.verifiedRepairs||[] };
+  return { m, dates, first: since ?? j.meta.firstTradeDate, name: j.meta.longName, currency: j.meta.currency, lastDate,lastClose,off,corrections,repairs:j.verifiedRepairs||[],historicalReview:j.historicalReconciliations||[] };
 }
 
 // splice `older` onto `newer`: weeks before the splice point come from `older`, rescaled to `newer`'s price level
@@ -132,6 +132,7 @@ export function buildWeekly(rawDir = RAW_DIR, {now = Date.now()} = {}) {
       ticker: ch.at(-1), asOf: A.lastDate, lastClose:A.lastClose,
       corrections: L.flatMap((v,i)=>v.corrections.map(c=>({ticker:ch[i],...c}))),
       repairs:A.repairs,
+      historicalReview:A.historicalReview,
     };
     end = Math.max(end, ...out.keys());
   }

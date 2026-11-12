@@ -1,0 +1,1260 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-11-12T06:15:00.271Z",
+  "basis": "USD regular-session market close, adjusted for subsequent share splits only",
+  "scope": "The 17 dated disagreements found on 2026-11-12. No general allowance for future discrepancies.",
+  "records": [
+    {
+      "id": "AAPL",
+      "date": "2020-07-09",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "correct-primary",
+      "originalPrimaryClose": 95.75250244140625,
+      "originalSecondaryClose": 95.6825,
+      "acceptedClose": 95.6825,
+      "splitDivisorAtReview": 4,
+      "splitsAtReview": [
+        {
+          "date": "2020-08-31",
+          "ratio": "4:1"
+        }
+      ],
+      "finding": "Yahoo close disagrees with corroborated daily close; correct close and matching adjusted close.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 95.75250244140625
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/AAPL/historical?assetclass=stocks&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 95.6825
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usAAPL.OQ,day,2020-07-09,2020-07-09,10",
+          "field": "day[2]",
+          "rawValue": 382.73,
+          "splitDivisor": 4,
+          "value": 95.6825,
+          "sha256": "506248a674dee0baa308a5c30322769a7c2e7a93dcc26db5aa1f57414927343f",
+          "bar": {
+            "open": 96.2625,
+            "close": 95.6825,
+            "high": 96.3175,
+            "low": 94.6725
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/AAPL",
+          "field": "decoded daily close",
+          "rawValue": 382.73,
+          "splitDivisor": 4,
+          "value": 95.6825,
+          "sha256": "218aff86d32bd3a0fea40e81f76d9eb4b0c9fa265045cb59ee3cf01e1ac89d80",
+          "bar": {
+            "open": 96.2625,
+            "high": 96.3175,
+            "low": 94.6725,
+            "close": 95.6825
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 95.6825
+      },
+      "originalPrimaryFields": {
+        "close": 95.75250244140625
+      }
+    },
+    {
+      "id": "AMZN",
+      "date": "2019-08-22",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "correct-primary",
+      "originalPrimaryClose": 90.23300170898438,
+      "originalSecondaryClose": 90.28,
+      "acceptedClose": 90.28,
+      "splitDivisorAtReview": 20,
+      "splitsAtReview": [
+        {
+          "date": "2022-06-06",
+          "ratio": "20:1"
+        }
+      ],
+      "finding": "Yahoo close disagrees with corroborated daily close; correct close and matching adjusted close.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AMZN?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 90.23300170898438
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/AMZN/historical?assetclass=stocks&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 90.28
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usAMZN.OQ,day,2019-08-22,2019-08-22,10",
+          "field": "day[2]",
+          "rawValue": 1805.6,
+          "splitDivisor": 20,
+          "value": 90.28,
+          "sha256": "b6af1e74497e1d5a31454c19c3d8c1bad2ccb12196b305cd13172544c2c37d70",
+          "bar": {
+            "open": 91.4,
+            "close": 90.28,
+            "high": 91.47055,
+            "low": 90.005
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/AMZN",
+          "field": "decoded daily close",
+          "rawValue": 1805.6,
+          "splitDivisor": 20,
+          "value": 90.28,
+          "sha256": "53d0440325709908546d389ccaf127655614289c041941ebe7fe48deb2a051fc",
+          "bar": {
+            "open": 91.4,
+            "high": 91.4705,
+            "low": 90.005,
+            "close": 90.28
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 90.28
+      },
+      "originalPrimaryFields": {
+        "close": 90.23300170898438
+      }
+    },
+    {
+      "id": "BND",
+      "date": "2018-07-26",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "correct-primary",
+      "originalPrimaryClose": 79.02999877929688,
+      "originalSecondaryClose": 78.97,
+      "acceptedClose": 78.97,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Yahoo OHLC is a flat repeated 79.03 bar; replace the dated OHLC with Nasdaq values corroborated by Tencent. Volume is outside this correction scope.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/BND?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 79.02999877929688
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/BND/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 78.97,
+          "bar": {
+            "open": 79.06,
+            "high": 79.0968,
+            "low": 78.94,
+            "close": 78.97
+          }
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usBND.OQ,day,2018-07-26,2018-07-26,10",
+          "field": "day[2]",
+          "rawValue": 78.97,
+          "splitDivisor": 1,
+          "value": 78.97,
+          "sha256": "815f7b7dd6bb40ecd1bd8e22d4b5c657edec7bded13f17881e353d65b9ee8fd1",
+          "bar": {
+            "open": 79.06,
+            "close": 78.97,
+            "high": 79.097,
+            "low": 78.94
+          }
+        }
+      ],
+      "acceptedFields": {
+        "open": 79.06,
+        "high": 79.0968,
+        "low": 78.94,
+        "close": 78.97
+      },
+      "originalPrimaryFields": {
+        "open": 79.02999877929688,
+        "high": 79.02999877929688,
+        "low": 79.02999877929688,
+        "close": 79.02999877929688
+      }
+    },
+    {
+      "id": "BRK-B",
+      "date": "2019-08-12",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "correct-primary",
+      "originalPrimaryClose": 197.17999267578125,
+      "originalSecondaryClose": 197.2,
+      "acceptedClose": 197.2,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Yahoo close disagrees with corroborated daily close; correct close and matching adjusted close.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/BRK-B?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 197.17999267578125
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/BRK.B/historical?assetclass=stocks&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 197.2
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usBRK.B.N,day,2019-08-12,2019-08-12,10",
+          "field": "day[2]",
+          "rawValue": 197.2,
+          "splitDivisor": 1,
+          "value": 197.2,
+          "sha256": "2c6a41dab03293340bb266580ae8719b245ce03534466eaf06f1c9f3a373f37a",
+          "bar": {
+            "open": 197.61,
+            "close": 197.2,
+            "high": 199.47,
+            "low": 196.91
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/BRK.B",
+          "field": "decoded daily close",
+          "rawValue": 197.2,
+          "splitDivisor": 1,
+          "value": 197.2,
+          "sha256": "1746f27d1a3967097316f495d259274fdb3679b3dc4896ed8d27dcf95d982f1a",
+          "bar": {
+            "open": 197.61,
+            "high": 199.47,
+            "low": 196.91,
+            "close": 197.2
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 197.2
+      },
+      "originalPrimaryFields": {
+        "close": 197.17999267578125
+      }
+    },
+    {
+      "id": "GLD",
+      "date": "2026-04-20",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "retain-primary",
+      "originalPrimaryClose": 442.0899963378906,
+      "originalSecondaryClose": 445.93,
+      "acceptedClose": 442.09,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Nasdaq close repeats the preceding trading day; retain same-date price corroborated by other feeds.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/GLD?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 442.0899963378906
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/GLD/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 445.93
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usGLD.AM,day,2026-04-20,2026-04-20,10",
+          "field": "day[2]",
+          "rawValue": 442.09,
+          "splitDivisor": 1,
+          "value": 442.09,
+          "sha256": "7f9d5e8f116e59b8d724a15905cc754d209390a57b2a52efcba899c2f93e2412",
+          "bar": {
+            "open": 443.13,
+            "close": 442.09,
+            "high": 443.42,
+            "low": 440.05
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/GLD",
+          "field": "decoded daily close",
+          "rawValue": 442.09,
+          "splitDivisor": 1,
+          "value": 442.09,
+          "sha256": "736683987765ed6cbafda7d6c2f32339398b455db0dfdf5fb18a7d26d17d233a",
+          "bar": {
+            "open": 443.13,
+            "high": 443.42,
+            "low": 440.05,
+            "close": 442.09
+          }
+        },
+        {
+          "name": "IBKR",
+          "field": "close; source=Last; outside_rth=false",
+          "value": 442.09,
+          "request": {
+            "contract_id": 51529211,
+            "security_type": "STK",
+            "outside_rth": false,
+            "period": "ONE_YEAR",
+            "step": "ONE_DAY"
+          },
+          "bar": {
+            "open": 443.13,
+            "high": 443.42,
+            "low": 440.05,
+            "close": 442.09
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 442.09
+      },
+      "originalPrimaryFields": {
+        "close": 442.0899963378906
+      }
+    },
+    {
+      "id": "GLD",
+      "date": "2017-03-20",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "retain-primary",
+      "originalPrimaryClose": 117.51000213623047,
+      "originalSecondaryClose": 117.5645,
+      "acceptedClose": 117.51,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Specific Nasdaq close disagrees with independently retrieved same-date prices; cause not established; retain corroborated primary value.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/GLD?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 117.51000213623047
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/GLD/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 117.5645
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usGLD.AM,day,2017-03-20,2017-03-20,10",
+          "field": "day[2]",
+          "rawValue": 117.51,
+          "splitDivisor": 1,
+          "value": 117.51,
+          "sha256": "f309869bcb0d4f2eecdf66fbb8e68882abed4734d541184582628a35c00a5864",
+          "bar": {
+            "open": 117.31,
+            "close": 117.51,
+            "high": 117.595,
+            "low": 117.205
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/GLD",
+          "field": "decoded daily close",
+          "rawValue": 117.51,
+          "splitDivisor": 1,
+          "value": 117.51,
+          "sha256": "736683987765ed6cbafda7d6c2f32339398b455db0dfdf5fb18a7d26d17d233a",
+          "bar": {
+            "open": 117.31,
+            "high": 117.59,
+            "low": 117.2,
+            "close": 117.51
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 117.51
+      },
+      "originalPrimaryFields": {
+        "close": 117.51000213623047
+      }
+    },
+    {
+      "id": "GLDM",
+      "date": "2026-04-20",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "retain-primary",
+      "originalPrimaryClose": 95.26000213623047,
+      "originalSecondaryClose": 96.04,
+      "acceptedClose": 95.26,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Nasdaq close repeats the preceding trading day; retain same-date price corroborated by other feeds.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/GLDM?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 95.26000213623047
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/GLDM/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 96.04
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usGLDM.AM,day,2026-04-20,2026-04-20,10",
+          "field": "day[2]",
+          "rawValue": 95.26,
+          "splitDivisor": 1,
+          "value": 95.26,
+          "sha256": "3cc05fd735088f9e73ef528d010bfa056bf1ca056911dc83fa18b2b48beb1358",
+          "bar": {
+            "open": 95.48,
+            "close": 95.26,
+            "high": 95.53,
+            "low": 94.82
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/GLDM",
+          "field": "decoded daily close",
+          "rawValue": 95.26,
+          "splitDivisor": 1,
+          "value": 95.26,
+          "sha256": "ebe3c3572471425eb69ad7eac86fe0d4bf7e016a88a3cf4f1747a3d375a5aa9c",
+          "bar": {
+            "open": 95.48,
+            "high": 95.525,
+            "low": 94.82,
+            "close": 95.26
+          }
+        },
+        {
+          "name": "IBKR",
+          "field": "close; source=Last; outside_rth=false",
+          "value": 95.26,
+          "request": {
+            "contract_id": 543859629,
+            "security_type": "STK",
+            "outside_rth": false,
+            "period": "ONE_YEAR",
+            "step": "ONE_DAY"
+          },
+          "bar": {
+            "open": 95.48,
+            "high": 95.53,
+            "low": 94.82,
+            "close": 95.26
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 95.26
+      },
+      "originalPrimaryFields": {
+        "close": 95.26000213623047
+      }
+    },
+    {
+      "id": "SCHD",
+      "date": "2026-04-20",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "retain-primary",
+      "originalPrimaryClose": 31.030000686645508,
+      "originalSecondaryClose": 31.05,
+      "acceptedClose": 31.03,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Nasdaq close repeats the preceding trading day; retain same-date price corroborated by other feeds.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SCHD?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 31.030000686645508
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/SCHD/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 31.05
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSCHD.AM,day,2026-04-20,2026-04-20,10",
+          "field": "day[2]",
+          "rawValue": 31.03,
+          "splitDivisor": 1,
+          "value": 31.03,
+          "sha256": "00280303202a220623452b4c9034ed616acd704a1c016be6de4975627cfb34f8",
+          "bar": {
+            "open": 31.07,
+            "close": 31.03,
+            "high": 31.17,
+            "low": 30.96
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/SCHD",
+          "field": "decoded daily close",
+          "rawValue": 31.03,
+          "splitDivisor": 1,
+          "value": 31.03,
+          "sha256": "b31ec8589c1d11e7cf74928d351197aa0f0a54b0497db9e98b94c91422d6a01f",
+          "bar": {
+            "open": 31.07,
+            "high": 31.17,
+            "low": 30.96,
+            "close": 31.03
+          }
+        },
+        {
+          "name": "IBKR",
+          "field": "close; source=Last; outside_rth=false",
+          "value": 31.03,
+          "request": {
+            "contract_id": 96079912,
+            "security_type": "STK",
+            "outside_rth": false,
+            "period": "ONE_YEAR",
+            "step": "ONE_DAY"
+          },
+          "bar": {
+            "open": 31.07,
+            "high": 31.17,
+            "low": 30.96,
+            "close": 31.03
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 31.03
+      },
+      "originalPrimaryFields": {
+        "close": 31.030000686645508
+      }
+    },
+    {
+      "id": "SOXX",
+      "date": "2019-08-22",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "correct-primary",
+      "originalPrimaryClose": 22.86111068725586,
+      "originalSecondaryClose": 22.8767,
+      "acceptedClose": 22.876666666666665,
+      "splitDivisorAtReview": 9,
+      "splitsAtReview": [
+        {
+          "date": "2024-03-07",
+          "ratio": "3:1"
+        },
+        {
+          "date": "2026-11-05",
+          "ratio": "3:1"
+        }
+      ],
+      "finding": "Yahoo close disagrees with corroborated daily close; correct close and matching adjusted close.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SOXX?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 22.86111068725586
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/SOXX/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 22.8767
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSOXX.OQ,day,2019-08-22,2019-08-22,10",
+          "field": "day[2]",
+          "rawValue": 205.89,
+          "splitDivisor": 9,
+          "value": 22.876666666666665,
+          "sha256": "4e9c25fe78066d58ccede98cc6bd5bdef8f59c2d80d80b38da0426be69cc5fa3",
+          "bar": {
+            "open": 22.91,
+            "close": 22.876666666666665,
+            "high": 22.99,
+            "low": 22.623333333333335
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/SOXX",
+          "field": "decoded daily close",
+          "rawValue": 205.89,
+          "splitDivisor": 9,
+          "value": 22.876666666666665,
+          "sha256": "dea023ebd4d11a74fe5b16a6d1c72c218682d7fd05999fd200d5aad22928ad63",
+          "bar": {
+            "open": 22.91,
+            "high": 22.99,
+            "low": 22.623333333333335,
+            "close": 22.876666666666665
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 22.876666666666665
+      },
+      "originalPrimaryFields": {
+        "close": 22.86111068725586
+      }
+    },
+    {
+      "id": "SPCX",
+      "date": "2026-06-16",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "correct-primary",
+      "originalPrimaryClose": 211.38999938964844,
+      "originalSecondaryClose": 201.8,
+      "acceptedClose": 201.8,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Correct the close and daily low; Nasdaq supports the close, and Sina, Tencent and IBKR corroborate both corrected fields.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPCX?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 211.38999938964844
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/SPCX/historical?assetclass=stocks&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 201.8
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSPCX.OQ,day,2026-06-16,2026-06-16,10",
+          "field": "day[2]",
+          "rawValue": 201.8,
+          "splitDivisor": 1,
+          "value": 201.8,
+          "sha256": "9231c102dac599f12dea8eec7eadac643ba3786cee6ce9bb999d7291d7e780c1",
+          "bar": {
+            "open": 200.51,
+            "close": 201.8,
+            "high": 225.64,
+            "low": 195.13
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/SPCX",
+          "field": "decoded daily close",
+          "rawValue": 201.8,
+          "splitDivisor": 1,
+          "value": 201.8,
+          "sha256": "37f690afcaa3971353b7e34132cd94912e20f9cce022ec0260e2f435ab707d5c",
+          "bar": {
+            "open": 200.51,
+            "high": 225.64,
+            "low": 195.13,
+            "close": 201.8
+          }
+        },
+        {
+          "name": "IBKR",
+          "field": "close; source=Last; outside_rth=false",
+          "value": 201.8,
+          "request": {
+            "contract_id": 890493863,
+            "security_type": "STK",
+            "outside_rth": false,
+            "period": "ONE_YEAR",
+            "step": "ONE_DAY"
+          },
+          "bar": {
+            "open": 200.51,
+            "high": 225.64,
+            "low": 195.13,
+            "close": 201.8
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 201.8,
+        "low": 195.13
+      },
+      "originalPrimaryFields": {
+        "close": 211.38999938964844,
+        "low": 199.97999572753906
+      }
+    },
+    {
+      "id": "SPY",
+      "date": "2026-04-20",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "retain-primary",
+      "originalPrimaryClose": 708.719970703125,
+      "originalSecondaryClose": 710.14,
+      "acceptedClose": 708.72,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Nasdaq close repeats the preceding trading day; retain same-date price corroborated by other feeds.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPY?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 708.719970703125
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/SPY/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 710.14
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSPY.AM,day,2026-04-20,2026-04-20,10",
+          "field": "day[2]",
+          "rawValue": 708.72,
+          "splitDivisor": 1,
+          "value": 708.72,
+          "sha256": "7fd1dd95d50869ed017c7e06f06ab9b3746857ea5d8b15a55f38372683bcbb5e",
+          "bar": {
+            "open": 708.78,
+            "close": 708.72,
+            "high": 709.91,
+            "low": 706.14
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/SPY",
+          "field": "decoded daily close",
+          "rawValue": 708.72,
+          "splitDivisor": 1,
+          "value": 708.72,
+          "sha256": "9ce9064dff7847d31f219a2e04db668b6f2773cd81a1d44a8ef1cb4a3e9c5e0d",
+          "bar": {
+            "open": 708.78,
+            "high": 709.91,
+            "low": 706.14,
+            "close": 708.72
+          }
+        },
+        {
+          "name": "IBKR",
+          "field": "close; source=Last; outside_rth=false",
+          "value": 708.72,
+          "request": {
+            "contract_id": 756733,
+            "security_type": "STK",
+            "outside_rth": false,
+            "period": "ONE_YEAR",
+            "step": "ONE_DAY"
+          },
+          "bar": {
+            "open": 708.79,
+            "high": 709.91,
+            "low": 706.14,
+            "close": 708.72
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 708.72
+      },
+      "originalPrimaryFields": {
+        "close": 708.719970703125
+      }
+    },
+    {
+      "id": "SPY",
+      "date": "2019-07-16",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "correct-primary",
+      "originalPrimaryClose": 299.7799987792969,
+      "originalSecondaryClose": 299.71,
+      "acceptedClose": 299.71,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Yahoo close disagrees with corroborated daily close; correct close and matching adjusted close.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPY?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 299.7799987792969
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/SPY/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 299.71
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSPY.AM,day,2019-07-16,2019-07-16,10",
+          "field": "day[2]",
+          "rawValue": 299.71,
+          "splitDivisor": 1,
+          "value": 299.71,
+          "sha256": "16b96c7ac28672564f79fb4d90fda9f3fa5031dc989a0af933688b45e228e22b",
+          "bar": {
+            "open": 300.65,
+            "close": 299.71,
+            "high": 300.88,
+            "low": 299.44
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/SPY",
+          "field": "decoded daily close",
+          "rawValue": 299.71,
+          "splitDivisor": 1,
+          "value": 299.71,
+          "sha256": "9ce9064dff7847d31f219a2e04db668b6f2773cd81a1d44a8ef1cb4a3e9c5e0d",
+          "bar": {
+            "open": 300.65,
+            "high": 300.88,
+            "low": 299.44,
+            "close": 299.71
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 299.71
+      },
+      "originalPrimaryFields": {
+        "close": 299.7799987792969
+      }
+    },
+    {
+      "id": "TLT",
+      "date": "2019-05-28",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "correct-primary",
+      "originalPrimaryClose": 128.6999969482422,
+      "originalSecondaryClose": 128.79,
+      "acceptedClose": 128.79,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Yahoo close disagrees with corroborated daily close; correct close and matching adjusted close.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/TLT?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 128.6999969482422
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/TLT/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 128.79
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usTLT.OQ,day,2019-05-28,2019-05-28,10",
+          "field": "day[2]",
+          "rawValue": 128.79,
+          "splitDivisor": 1,
+          "value": 128.79,
+          "sha256": "13d003592b3596041b6a76df038360918a9fa8ee32455e205122f23525145938",
+          "bar": {
+            "open": 128.27,
+            "close": 128.79,
+            "high": 128.9,
+            "low": 128.085
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/TLT",
+          "field": "decoded daily close",
+          "rawValue": 128.79,
+          "splitDivisor": 1,
+          "value": 128.79,
+          "sha256": "ebbfbe7026635b2c31293a1cb3ffd2841a8fbc8f94d8c626243e4d27a787de51",
+          "bar": {
+            "open": 128.27,
+            "high": 128.9,
+            "low": 128.09,
+            "close": 128.79
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 128.79
+      },
+      "originalPrimaryFields": {
+        "close": 128.6999969482422
+      }
+    },
+    {
+      "id": "VNQ",
+      "date": "2017-03-20",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "retain-primary",
+      "originalPrimaryClose": 82.37000274658203,
+      "originalSecondaryClose": 82.2991,
+      "acceptedClose": 82.37,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Specific Nasdaq close disagrees with independently retrieved same-date prices; cause not established; retain corroborated primary value.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VNQ?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 82.37000274658203
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/VNQ/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 82.2991
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVNQ.AM,day,2017-03-20,2017-03-20,10",
+          "field": "day[2]",
+          "rawValue": 82.37,
+          "splitDivisor": 1,
+          "value": 82.37,
+          "sha256": "dea0850430fa56f22a618174b19816a0e4ec1e77c957d2202d43537d9b61297f",
+          "bar": {
+            "open": 82.5,
+            "close": 82.37,
+            "high": 82.74,
+            "low": 82.16
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/VNQ",
+          "field": "decoded daily close",
+          "rawValue": 82.37,
+          "splitDivisor": 1,
+          "value": 82.37,
+          "sha256": "540da2bfd92160df9370c0d52fac02a0d9707b3f697f3d02543ef30b0b29a4d7",
+          "bar": {
+            "open": 82.5,
+            "high": 82.74,
+            "low": 82.16,
+            "close": 82.37
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 82.37
+      },
+      "originalPrimaryFields": {
+        "close": 82.37000274658203
+      }
+    },
+    {
+      "id": "VOO",
+      "date": "2017-03-20",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "retain-primary",
+      "originalPrimaryClose": 218.3699951171875,
+      "originalSecondaryClose": 218.3327,
+      "acceptedClose": 218.37,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Specific Nasdaq close disagrees with independently retrieved same-date prices; cause not established; retain corroborated primary value.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VOO?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 218.3699951171875
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/VOO/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 218.3327
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVOO.AM,day,2017-03-20,2017-03-20,10",
+          "field": "day[2]",
+          "rawValue": 218.37,
+          "splitDivisor": 1,
+          "value": 218.37,
+          "sha256": "92c2011503d341ad7c348d395a6008988cd18a164430a1046cfab173686abb00",
+          "bar": {
+            "open": 218.59,
+            "close": 218.37,
+            "high": 218.89,
+            "low": 217.98
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/VOO",
+          "field": "decoded daily close",
+          "rawValue": 218.37,
+          "splitDivisor": 1,
+          "value": 218.37,
+          "sha256": "9e76901e76243725d5091dea763e69d14d7d38b11fb5870dd4083afd265c732e",
+          "bar": {
+            "open": 218.59,
+            "high": 218.89,
+            "low": 217.98,
+            "close": 218.37
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 218.37
+      },
+      "originalPrimaryFields": {
+        "close": 218.3699951171875
+      }
+    },
+    {
+      "id": "VWO",
+      "date": "2017-03-20",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "retain-primary",
+      "originalPrimaryClose": 40.45000076293945,
+      "originalSecondaryClose": 40.4681,
+      "acceptedClose": 40.45,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Specific Nasdaq close disagrees with independently retrieved same-date prices; cause not established; retain corroborated primary value.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VWO?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 40.45000076293945
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/VWO/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 40.4681
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVWO.AM,day,2017-03-20,2017-03-20,10",
+          "field": "day[2]",
+          "rawValue": 40.45,
+          "splitDivisor": 1,
+          "value": 40.45,
+          "sha256": "1ca5e0da8fcd702e4445002f525877aea0c1f2676c01af6b5d447f1791b2c5fe",
+          "bar": {
+            "open": 40.21,
+            "close": 40.45,
+            "high": 40.515,
+            "low": 40.175
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/VWO",
+          "field": "decoded daily close",
+          "rawValue": 40.45,
+          "splitDivisor": 1,
+          "value": 40.45,
+          "sha256": "f7e7d96d7b72101cbfa877118d07f4eeeac78bd4a1e6be848acd4d6481d3bb7f",
+          "bar": {
+            "open": 40.21,
+            "high": 40.51,
+            "low": 40.17,
+            "close": 40.45
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 40.45
+      },
+      "originalPrimaryFields": {
+        "close": 40.45000076293945
+      }
+    },
+    {
+      "id": "VXUS",
+      "date": "2020-01-22",
+      "currency": "USD",
+      "basis": "regular-session closing price; split-adjusted; not dividend-adjusted",
+      "basisThrough": "2026-11-11",
+      "action": "correct-primary",
+      "originalPrimaryClose": 56.220001220703125,
+      "originalSecondaryClose": 56.2,
+      "acceptedClose": 56.2,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Yahoo close disagrees with corroborated daily close; correct close and matching adjusted close.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VXUS?period1=946684800&period2=1794528000&interval=1d&events=div,split",
+          "field": "indicators.quote[0].close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 56.220001220703125
+        },
+        {
+          "name": "Nasdaq",
+          "url": "https://api.nasdaq.com/api/quote/VXUS/historical?assetclass=etf&limit=10000&fromdate=2000-01-01&todate=2026-11-11",
+          "field": "data.tradesTable.rows.close",
+          "basis": "split-adjusted, before dividend adjustment",
+          "value": 56.2
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVXUS.OQ,day,2020-01-22,2020-01-22,10",
+          "field": "day[2]",
+          "rawValue": 56.2,
+          "splitDivisor": 1,
+          "value": 56.2,
+          "sha256": "f28cb8b2155e9016ae3d1a0e7d8517cef93dc9c5d1ae8e3c986de3b86d144d5a",
+          "bar": {
+            "open": 56.31,
+            "close": 56.2,
+            "high": 56.37,
+            "low": 56.15
+          }
+        },
+        {
+          "name": "Sina Finance",
+          "url": "https://finance.sina.com.cn/staticdata/us/VXUS",
+          "field": "decoded daily close",
+          "rawValue": 56.2,
+          "splitDivisor": 1,
+          "value": 56.2,
+          "sha256": "7cde0479f8c302f0ec274cac2c2d5d004767c10ea59cd24ef05b08009f854e03",
+          "bar": {
+            "open": 56.31,
+            "high": 56.37,
+            "low": 56.15,
+            "close": 56.2
+          }
+        }
+      ],
+      "acceptedFields": {
+        "close": 56.2
+      },
+      "originalPrimaryFields": {
+        "close": 56.220001220703125
+      }
+    }
+  ],
+  "corporateActionSources": {
+    "AAPL": "https://investor.apple.com/dividend-history/default.aspx",
+    "AMZN": "https://ir.aboutamazon.com/faqs/default.aspx",
+    "SOXX2024": "https://infomemo.theocc.com/infomemos?number=53942",
+    "SOXX2026": {
+      "source": "IBKR corporate actions",
+      "request": {
+        "contract_id": 12658194,
+        "security_type": "STK",
+        "outside_rth": false,
+        "period": "ONE_MONTH",
+        "step": "ONE_DAY",
+        "include_corporate_actions": true
+      },
+      "event": {
+        "type": "Splits",
+        "date": "20261105",
+        "announce_date": "20260821",
+        "value": "3.0"
+      }
+    }
+  }
+}
