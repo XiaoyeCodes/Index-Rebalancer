@@ -33,6 +33,11 @@ export async function accountGate(req,res,url){
     send(res,200,{ok:true});return true;
   }
   if(!authenticated(token,audience))throw fail(401,'请先输入密码登录。');
+  if(route==='/api/account/verify-password'&&verb==='POST'){
+    const {password}=await body(req,4096);
+    const temporary=await login(password,audience,false);logout(temporary);
+    send(res,200,{ok:true});return true;
+  }
   if(route==='/api/account/logout' && verb==='POST'){
     await body(req,4096);logout(token);
     res.setHeader('Set-Cookie','heng_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');

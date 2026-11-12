@@ -319,6 +319,22 @@
       <div class="investment-reset-buttons"><button type="button" class="btn" id="resetMonthly">重置定投</button><button type="button" class="btn" id="resetRebalance">重置再平衡</button></div>
       <p class="small" id="investmentResetStatus" role="status" aria-live="polite"></p>
     </section>
+    <section class="investment-data-settings" aria-labelledby="investmentDataSettingsTitle">
+      <h3 class="h3s" id="investmentDataSettingsTitle">投资数据</h3>
+      <p class="small muted">备份包含投资记录、我的持仓、本月计划及自建模型。GitHub备份加密保存在私有仓库，可在其他登录设备恢复。</p>
+      <div class="investment-data-buttons">
+        <button type="button" class="btn" id="cloudBackupCreate" data-investment-action data-cloud-only="true">备份到 GitHub</button>
+        <button type="button" class="btn" id="cloudBackupList" data-investment-action data-cloud-only="true">从 GitHub 恢复</button>
+        <button type="button" class="btn" id="investmentBackupDownload" data-investment-action>下载备份文件</button>
+        <button type="button" class="btn" id="investmentBackupImport" data-investment-action>导入备份文件</button>
+        <button type="button" class="btn danger-outline" id="investmentDataClear" data-investment-action>清空投资数据</button>
+      </div>
+      <input id="investmentBackupFile" type="file" accept=".json,application/json" hidden>
+      <p class="small muted" id="investmentDataCloudHint"></p>
+      <p class="small muted" id="lastInvestmentBackup"></p>
+      <p class="small" id="investmentDataStatus" role="status" aria-live="polite"></p>
+      <div id="investmentBackups" class="investment-backups" hidden></div>
+    </section>
     <h3 class="h3s">AI 模型</h3>
     <p class="execution-intro" id="aiSettingsIntro">AI 配置由本机服务加密保存。留空密钥可继续使用已有密钥。</p>
     <div class="field"><label for="aiBaseUrl">API 地址</label><input id="aiBaseUrl" type="url" required></div>
@@ -340,6 +356,18 @@
       <button type="button" class="linkbtn" data-sync="retry" hidden>重试</button>
     </div>
   </aside>
+</dialog>
+
+<dialog class="execution-dialog investment-data-dialog" id="investmentDataConfirm" aria-labelledby="investmentDataTitle" aria-describedby="investmentDataIntro">
+  <form id="investmentDataForm">
+    <h2 id="investmentDataTitle">清空投资数据？</h2>
+    <p class="execution-intro" id="investmentDataIntro"></p>
+    <p class="investment-data-preview" id="investmentDataPreview"></p>
+    <label class="investment-backup-check" id="backupBeforeClearRow"><input id="backupBeforeClear" type="checkbox" checked>清空前先备份到 GitHub（推荐）</label>
+    <div class="field"><label for="investmentDataPassword">再次输入登录密码</label><input id="investmentDataPassword" type="password" autocomplete="current-password" maxlength="512" required></div>
+    <p class="settings-message" id="investmentDataMessage" role="status" aria-live="polite"></p>
+    <div class="execution-actions"><button type="button" class="btn" id="investmentDataCancel">取消</button><button type="submit" class="btn primary danger" id="investmentDataSubmit">确认清空</button></div>
+  </form>
 </dialog>
 
 <dialog class="execution-dialog" id="investmentResetConfirm" aria-labelledby="investmentResetConfirmTitle" aria-describedby="investmentResetConfirmIntro">
@@ -434,6 +462,8 @@
 <script id="pricedata" type="application/json">__DATA__</script>
 <script src="market-calendar.js"></script>
 <script src="investment.js"></script>
+<script src="investment-book.js"></script>
+<script src="investment-data-ui.js"></script>
 <script src="ledger.js"></script>
 <script src="ledger-ui.js"></script>
 <script src="ai.js"></script>
@@ -737,12 +767,14 @@ let S = structuredClone(defaultState);
 try { const saved = JSON.parse(localStorage.getItem('heng.state') || 'null'); if (saved && saved.weights) S = { ...S, ...migrateExecutionState(saved) }; } catch (e) { }
 S.favorites = [...new Set(Array.isArray(S.favorites) ? S.favorites.filter(id => IDS.includes(id)) : [])];
 let ledgerRevision = S.ledger?.revision || '';
+let investmentEpoch = S.investmentEpoch || '';
 const save = () => {
   try {
     const latest = JSON.parse(localStorage.getItem('heng.state') || 'null');
-    if ((latest?.ledger?.revision || '') !== ledgerRevision && latest?.weights) {
-      S = {...S,...latest};
+    if (latest && ((latest.ledger?.revision || '') !== ledgerRevision || (latest.investmentEpoch || '') !== investmentEpoch)) {
+      S = {...structuredClone(defaultState),...latest};
       ledgerRevision = latest.ledger?.revision || '';
+      investmentEpoch = latest.investmentEpoch || '';
       toast('其他页面已更新持仓，本次修改未保存。');
       return false;
     }
@@ -1690,9 +1722,10 @@ function withCurrentHoldings(action) {
     let latest;
     try { latest = migrateExecutionState(JSON.parse(localStorage.getItem('heng.state') || 'null')); } catch (e) { }
     const receiptChanged = JSON.stringify(latest?.lastAppliedOps || null) !== JSON.stringify(S.lastAppliedOps || null);
-    if (latest?.weights && ((latest.ledger?.revision || '') !== ledgerRevision || receiptChanged || (latest.holdings && opsContext({ ...S, ...latest }) !== opsContext()))) {
-      S = { ...S, ...latest };
+    if (latest && ((latest.investmentEpoch || '') !== investmentEpoch || (latest.ledger?.revision || '') !== ledgerRevision || receiptChanged || (latest.holdings && opsContext({ ...S, ...latest }) !== opsContext()))) {
+      S = { ...structuredClone(defaultState), ...latest };
       ledgerRevision = latest.ledger?.revision || '';
+      investmentEpoch = latest.investmentEpoch || '';
       renderRebalance();
       if (current === 'history') renderLedger();
       toast('持仓已在其他页面变更，请核对当前清单后再操作。');
@@ -2372,54 +2405,15 @@ function bindSharedBook() {
     if (action==='download' || action==='backup') sync.download(action==='backup');
     else sync.act(action);
   };
-  function paintSharedBook() {
-    const stored=JSON.parse(localStorage.getItem('heng.state') || '{}');
-    S = {...structuredClone(defaultState), ...migrateExecutionState(stored)};
-    ledgerRevision = S.ledger?.revision || '';
-    const prior=new Map(customPresets.map(p=>[p.key,JSON.stringify(p)]));
-    loadTemplates();
-    computePresetStats(customPresets.filter(p=>prior.get(p.key)!==JSON.stringify(p)));
-    renderPresets(); ensureRebalanceState(); renderStrategy(); renderAssets();
-    if(current==='rebalance')renderRebalance();
-    if(current==='history')renderLedger();
-    if(current==='backtest')renderBacktest();
-  }
+  const paintSharedBook=paintInvestmentBook;
   sync.bind({
     status(text,action){
       if ($('#cloudStatus').textContent!==text) $('#cloudStatus').textContent=text;
       const show={init:['init'],join:['join','download'],conflict:['mine','theirs','download'],retry:['retry']}[action] || [];
       for (const button of bar.querySelectorAll('[data-sync]')) button.hidden=button.dataset.sync==='backup' ? !localStorage.getItem('heng.shared.backup') : !show.includes(button.dataset.sync);
     },
-    validate(book){
-      const state=book.state;
-      const holdingsValid=o=>o && typeof o==='object' && Object.entries(o).every(([id,n])=>IDS.includes(id) && Number.isFinite(n) && n>=0);
-      if (['weights','holdings','beforeExample'].some(k=>state[k] && !holdingsValid(state[k]))) throw Error('共享持仓格式错误');
-      if (['lastRebalance','lastBalanceCheckDate','lastExecutionDate'].some(key => state[key] && !/^\d{4}-\d{2}-\d{2}$/.test(state[key]))) throw Error('日期格式错误');
-      if (state.contributionMonth && !/^\d{4}-\d{2}$/.test(state.contributionMonth)) throw Error('定投期次格式错误');
-      if (state.investmentResets && (typeof state.investmentResets !== 'object' || Array.isArray(state.investmentResets) || Object.entries(state.investmentResets).some(([kind,reset]) => !['monthly','rebalance'].includes(kind) || !reset || typeof reset.id !== 'string' || !reset.id || reset.id.length>160 || !/^\d{4}-(0[1-9]|1[0-2])$/.test(reset.period || '')))) throw Error('操作重置格式错误');
-      const numeric = ['monthly','initial','fee','fx','investmentDay','abs','rel'];
-      if(numeric.some(k=>state[k]!=null && !Number.isFinite(state[k]))) throw Error('共享定投金额或设置格式错误');
-      if(state.favorites && (!Array.isArray(state.favorites)||state.favorites.some(id=>!IDS.includes(id)))) throw Error('共享收藏格式错误');
-      if(state.mode && !['none','threshold','hybrid','calendar'].includes(state.mode)) throw Error('共享策略格式错误');
-      if(state.ledger && (!Array.isArray(state.ledger.entries)||!Array.isArray(state.ledger.positions)||!holdingsValid(state.ledger.holdings))) throw Error('投资记录格式错误');
-      for(const r of state.ledger?.positions || []) if(!IDS.includes(r.id)||!Number.isFinite(r.quantity)||!Number.isFinite(r.price))throw Error('期初持仓格式错误');
-      const operationIds = new Set();
-      for(const entry of state.ledger?.entries || []) {
-        if(!Number.isFinite(entry.flow)||!Array.isArray(entry.trades)||entry.trades.some(r=>!IDS.includes(r.id)||!Number.isFinite(r.price)||!Number.isFinite(r.quantity)))throw Error('成交记录格式错误');
-        if(entry.resetId!=null && (typeof entry.resetId!=='string'||!entry.resetId||entry.resetId.length>160))throw Error('重置记录格式错误');
-        if(entry.investmentType) {
-          if(!['monthly','bonus','rebalance'].includes(entry.investmentType)||typeof entry.operationId!=='string'||!entry.operationId||operationIds.has(entry.operationId)||!/^\d{4}-\d{2}$/.test(entry.period)||!/^\d{4}-\d{2}-\d{2}$/.test(entry.date))throw Error('定投或加仓记录格式错误');
-          operationIds.add(entry.operationId);
-        }
-      }
-      if(state.ledger?.past?.some(r=>!IDS.includes(r.id)||!Number.isFinite(r.flow)||!Number.isFinite(r.quantity)))throw Error('历史成交格式错误');
-      if(Object.entries(book.templates).some(([id,p])=>!/^custom-[a-z0-9-]+$/i.test(id)||p.key!==id||typeof p.name!=='string'||!holdingsValid(p.w)))throw Error('自建模型格式错误');
-    },
-    apply(book){
-      localStorage.setItem('heng.state',JSON.stringify(book.state));
-      localStorage.setItem('heng.templates',JSON.stringify(Object.values(book.templates)));
-      paintSharedBook();
-    }
+    validate(book){ InvestmentData.validate(book,IDS); },
+    apply(book){ installLocalInvestmentBook(book); }
   });
   window.addEventListener('storage',event=>{if(event.key==='heng.shared.v1' && event.newValue && !JSON.parse(event.newValue).install)paintSharedBook();});
 }
@@ -2499,6 +2493,7 @@ function boot() {
   new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   AI.bindSettings();
   bindSharedBook();
+  bindInvestmentData();
   if (window.claude && claude.use) claude.use('sample').then(fn => { sampleFn = fn; }).catch(() => {});
 }
 boot();

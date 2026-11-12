@@ -2332,6 +2332,19 @@ button, summary, a {
   gap: 16px;
 }
 
+.investment-data-settings {margin:18px 0 24px;padding-bottom:20px;border-bottom:1px solid var(--line);}
+.investment-data-settings p {margin:8px 0;line-height:1.7;}
+.investment-data-buttons {display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+.btn.danger-outline {color:#a3342b;border-color:#d9a7a2;}
+.btn.primary.danger {background:#a3342b;border-color:#a3342b;color:#fff;}
+.investment-data-preview {padding:16px;background:var(--bg-2,#f2f3f5);border-radius:12px;line-height:1.7;}
+.investment-backup-check {display:flex;align-items:center;gap:10px;margin:18px 0;font-size:14px;}
+.investment-backup-check input {width:17px;height:17px;flex:none;accent-color:var(--ink);}
+.investment-backups {max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;margin-top:12px;}
+.investment-backup-row {display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);}
+.investment-backup-row:last-child {border-bottom:0;}
+.investment-backup-row span {flex:1 1 200px;font-size:13px;}
+
 .settings-protocol {
   padding: 10px 12px;
   border-radius: 10px;
@@ -4296,6 +4309,22 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
       <div class="investment-reset-buttons"><button type="button" class="btn" id="resetMonthly">重置定投</button><button type="button" class="btn" id="resetRebalance">重置再平衡</button></div>
       <p class="small" id="investmentResetStatus" role="status" aria-live="polite"></p>
     </section>
+    <section class="investment-data-settings" aria-labelledby="investmentDataSettingsTitle">
+      <h3 class="h3s" id="investmentDataSettingsTitle">投资数据</h3>
+      <p class="small muted">备份包含投资记录、我的持仓、本月计划及自建模型。GitHub备份加密保存在私有仓库，可在其他登录设备恢复。</p>
+      <div class="investment-data-buttons">
+        <button type="button" class="btn" id="cloudBackupCreate" data-investment-action data-cloud-only="true">备份到 GitHub</button>
+        <button type="button" class="btn" id="cloudBackupList" data-investment-action data-cloud-only="true">从 GitHub 恢复</button>
+        <button type="button" class="btn" id="investmentBackupDownload" data-investment-action>下载备份文件</button>
+        <button type="button" class="btn" id="investmentBackupImport" data-investment-action>导入备份文件</button>
+        <button type="button" class="btn danger-outline" id="investmentDataClear" data-investment-action>清空投资数据</button>
+      </div>
+      <input id="investmentBackupFile" type="file" accept=".json,application/json" hidden>
+      <p class="small muted" id="investmentDataCloudHint"></p>
+      <p class="small muted" id="lastInvestmentBackup"></p>
+      <p class="small" id="investmentDataStatus" role="status" aria-live="polite"></p>
+      <div id="investmentBackups" class="investment-backups" hidden></div>
+    </section>
     <h3 class="h3s">AI 模型</h3>
     <p class="execution-intro" id="aiSettingsIntro">AI 配置由本机服务加密保存。留空密钥可继续使用已有密钥。</p>
     <div class="field"><label for="aiBaseUrl">API 地址</label><input id="aiBaseUrl" type="url" required></div>
@@ -4317,6 +4346,18 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
       <button type="button" class="linkbtn" data-sync="retry" hidden>重试</button>
     </div>
   </aside>
+</dialog>
+
+<dialog class="execution-dialog investment-data-dialog" id="investmentDataConfirm" aria-labelledby="investmentDataTitle" aria-describedby="investmentDataIntro">
+  <form id="investmentDataForm">
+    <h2 id="investmentDataTitle">清空投资数据？</h2>
+    <p class="execution-intro" id="investmentDataIntro"></p>
+    <p class="investment-data-preview" id="investmentDataPreview"></p>
+    <label class="investment-backup-check" id="backupBeforeClearRow"><input id="backupBeforeClear" type="checkbox" checked>清空前先备份到 GitHub（推荐）</label>
+    <div class="field"><label for="investmentDataPassword">再次输入登录密码</label><input id="investmentDataPassword" type="password" autocomplete="current-password" maxlength="512" required></div>
+    <p class="settings-message" id="investmentDataMessage" role="status" aria-live="polite"></p>
+    <div class="execution-actions"><button type="button" class="btn" id="investmentDataCancel">取消</button><button type="submit" class="btn primary danger" id="investmentDataSubmit">确认清空</button></div>
+  </form>
 </dialog>
 
 <dialog class="execution-dialog" id="investmentResetConfirm" aria-labelledby="investmentResetConfirmTitle" aria-describedby="investmentResetConfirmIntro">
@@ -4519,6 +4560,210 @@ const Investment = (() => {
   }
   return { period, pendingReset, operationId, monthlyDone, rebalanceDone, preferredDay, monthlyDate, operationDone, lastBalanceCheck, nextSchedule };
 })();
+
+</script>
+<script>
+const InvestmentData = (() => {
+  const portfolio = 'holdings holdingsExample exampleKey beforeExample ledger lastAppliedOps contributionMonth lastExecutionDate lastRebalance lastBalanceCheckDate investmentResets investmentEpoch'.split(' ');
+  const strategy = 'weights preset label mode abs rel period'.split(' ');
+  const settings = 'monthly initial start fee cashflow allowSell fx fxManual wholeShares investmentDay favorites'.split(' ');
+  const fields = [...portfolio,...strategy,...settings];
+  const object = value => value && typeof value==='object' && !Array.isArray(value);
+  const date = value => typeof value==='string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
+  const period = value => typeof value==='string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
+  const clone = value => JSON.parse(JSON.stringify(value));
+  const pick = (value,keys) => Object.fromEntries(keys.filter(key=>Object.hasOwn(value,key)).map(key=>[key,value[key]]));
+  function validate(input,ids) {
+    const bad = message => {throw Error(message);};
+    if (!object(input)||!object(input.state)||!object(input.templates)) bad('备份账本格式无效。');
+    if (new TextEncoder().encode(JSON.stringify(input)).length>1024*1024) bad('备份超过1 MB容量。');
+    const allowed = new Set(ids), s=input.state;
+    const quantities = value => object(value) && Object.entries(value).every(([id,n])=>allowed.has(id)&&Number.isFinite(n)&&n>=0);
+    for (const key of ['weights','holdings','beforeExample']) if(s[key]!=null&&!quantities(s[key]))bad('持仓或权重格式无效。');
+    if(s.weights && Object.values(s.weights).reduce((n,v)=>n+v,0)>100.00001)bad('模型权重合计不能超过100%。');
+    for (const key of ['lastRebalance','lastBalanceCheckDate','lastExecutionDate']) if(s[key]!=null&&!date(s[key]))bad('计划日期无效。');
+    if(s.contributionMonth!=null&&!period(s.contributionMonth))bad('定投期次无效。');
+    if(s.start!=null&&!period(s.start))bad('回测开始日期无效。');
+    for (const key of ['monthly','initial','fee','fx','investmentDay','abs','rel']) if(s[key]!=null&&(!Number.isFinite(s[key])||s[key]<0))bad('定投金额或设置无效。');
+    if(s.fx!=null&&s.fx<=0 || s.investmentDay!=null&&(!Number.isInteger(s.investmentDay)||s.investmentDay<1||s.investmentDay>31))bad('汇率或定投日无效。');
+    for(const key of ['cashflow','allowSell','fxManual','wholeShares','holdingsExample'])if(s[key]!=null&&typeof s[key]!=='boolean')bad('设置格式无效。');
+    for(const key of ['preset','label','exampleKey','investmentEpoch'])if(s[key]!=null&&(typeof s[key]!=='string'||s[key].length>500))bad('投资数据标识无效。');
+    if(s.favorites!=null&&(!Array.isArray(s.favorites)||s.favorites.some(id=>!allowed.has(id))))bad('收藏格式无效。');
+    if(s.mode!=null&&!['none','threshold','hybrid','calendar'].includes(s.mode))bad('再平衡触发规则无效。');
+    if(s.period!=null&&!['M','Q','Y'].includes(s.period))bad('再平衡周期无效。');
+    if(s.investmentResets!=null&&(!object(s.investmentResets)||Object.entries(s.investmentResets).some(([kind,r])=>!['monthly','rebalance'].includes(kind)||!object(r)||typeof r.id!=='string'||!r.id||r.id.length>160||!period(r.period))))bad('重置机会格式无效。');
+    const rows = (value,kind) => {
+      if(!Array.isArray(value)||value.some(r=>!object(r)||!allowed.has(r.id)||!Number.isFinite(r.quantity)||!Number.isFinite(r.price)||r.price<0))bad(kind+'格式无效。');
+    };
+    if(s.ledger!=null) {
+      const book=s.ledger;
+      if(!object(book)||!date(book.date)||!quantities(book.holdings)||!Array.isArray(book.entries)||book.cost!=null&&(!Number.isFinite(book.cost)||book.cost<0))bad('投资记录格式无效。');
+      rows(book.positions,'期初持仓');
+      const seen=new Set();
+      for(const entry of book.entries) {
+        if(!object(entry)||!Number.isFinite(entry.flow)||!date(entry.date))bad('成交记录格式无效。');
+        rows(entry.trades,'成交明细');
+        if(entry.investmentType && (!['monthly','bonus','rebalance'].includes(entry.investmentType)||!period(entry.period)||typeof entry.operationId!=='string'||!entry.operationId||seen.has(entry.operationId)))bad('重复或无效的定投记录。');
+        if(entry.investmentType)seen.add(entry.operationId);
+        if(entry.resetId!=null&&(typeof entry.resetId!=='string'||!entry.resetId||entry.resetId.length>160))bad('重置记录无效。');
+      }
+      if(book.past!=null&&(!Array.isArray(book.past)||book.past.some(r=>!object(r)||!allowed.has(r.id)||!date(r.date)||!Number.isFinite(r.flow)||!Number.isFinite(r.quantity))))bad('历史成交格式无效。');
+    }
+    if(s.lastAppliedOps!=null&&(!object(s.lastAppliedOps)||s.lastAppliedOps.confirmedOn&&!date(s.lastAppliedOps.confirmedOn)))bad('执行记录格式无效。');
+    for(const [id,p] of Object.entries(input.templates))if(!/^custom-[a-z0-9-]+$/i.test(id)||!object(p)||p.key!==id||typeof p.name!=='string'||!p.name.trim()||p.name.length>200||!quantities(p.w)||Math.abs(Object.values(p.w).reduce((a,b)=>a+b,0)-100)>0.00001)bad('自建模型格式无效。');
+    // Never import credentials, conversations, arbitrary localStorage, or sync metadata.
+    return clone({state:pick(s,fields),templates:input.templates});
+  }
+  function clear(book,epoch) {
+    const state=clone(book.state);
+    for(const key of portfolio)delete state[key];
+    state.holdings={};state.holdingsExample=false;state.investmentEpoch=epoch;
+    return {state,templates:clone(book.templates)};
+  }
+  function restore(book,epoch) {const result=clone(book);result.state.investmentEpoch=epoch;return result;}
+  function summary(book) {
+    return {holdings:Object.values(book.state.holdings||{}).filter(n=>n>0).length,
+      records:(book.state.ledger?.entries?.length||0)+(book.state.ledger?.past?.length||0),
+      templates:Object.keys(book.templates).length,monthly:book.state.monthly||0,day:book.state.investmentDay||1};
+  }
+  return {portfolio,strategy,settings,fields,validate,clear,restore,summary};
+})();
+
+</script>
+<script>
+function currentInvestmentBook() {
+  const raw=JSON.parse(localStorage.getItem('heng.state')||'{}');
+  const templates=JSON.parse(localStorage.getItem('heng.templates')||'[]');
+  const state=Object.fromEntries(InvestmentData.fields.filter(k=>Object.hasOwn(raw,k)).map(k=>[k,raw[k]]));
+  return InvestmentData.validate({state,templates:Object.fromEntries(templates.map(t=>[t.key,t]))},IDS);
+}
+function paintInvestmentBook() {
+  const stored=JSON.parse(localStorage.getItem('heng.state')||'{}');
+  S={...structuredClone(defaultState),...migrateExecutionState(stored)};
+  ledgerRevision=S.ledger?.revision||'';investmentEpoch=S.investmentEpoch||'';
+  const prior=new Map(customPresets.map(p=>[p.key,JSON.stringify(p)]));
+  loadTemplates();computePresetStats(customPresets.filter(p=>prior.get(p.key)!==JSON.stringify(p)));
+  investmentIntent={kind:'monthly',amountCny:null,period:todayStr().slice(0,7),id:''};
+  monthlyDraft=null;ledgerPageNumber=1;
+  for(const id of ['#ledgerFrom','#ledgerTo'])$(id).value='';
+  for(const id of ['#opsConfirm','#bonusDialog','#ledgerDialog'])if($(id)?.open)$(id).close();
+  renderPresets();ensureRebalanceState();renderStrategy();renderAssets();
+  if(current==='rebalance')renderRebalance();
+  if(current==='history')renderLedger();
+  if(current==='backtest')renderBacktest();
+  renderResetSettings();
+}
+function installLocalInvestmentBook(book) {
+  book=InvestmentData.validate(book,IDS);
+  const before=['heng.state','heng.templates'].map(key=>[key,localStorage.getItem(key)]);
+  try {
+    localStorage.setItem('heng.state',JSON.stringify(book.state));
+    localStorage.setItem('heng.templates',JSON.stringify(Object.values(book.templates)));
+  }catch(error){for(const [key,value]of before){if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}throw error;}
+  paintInvestmentBook();
+}
+function downloadInvestmentFile(value,name) {
+  const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));
+  const link=document.createElement('a');link.href=url;link.download=name;link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function bindInvestmentData() {
+  const sync=window.privateAccount?.sync,account=window.privateAccount;
+  const dialog=$('#investmentDataConfirm'),form=$('#investmentDataForm'),message=$('#investmentDataMessage');
+  let pending=null,working=false;
+  const say=text=>{$('#investmentDataStatus').textContent=text;};
+  const checked=value=>InvestmentData.validate(value,IDS);
+  async function importFile(value){return checked(sync?await sync.importBackup(value):value);}
+  function describe(book){const s=InvestmentData.summary(book);return `${s.holdings} 个持仓标的 · ${s.records} 条成交／核对记录 · ${s.templates} 个自建模型；每月预算 ¥${s.monthly.toLocaleString()}，计划日 ${s.day} 日。`;}
+  function open(mode,book) {
+    pending={mode,book,expected:currentInvestmentBook()};
+    $('#investmentDataTitle').textContent=mode==='clear'?'清空投资数据？':'恢复备份数据？';
+    $('#investmentDataIntro').textContent=mode==='clear'?'将清空投资记录、收益账本、我的持仓及已完成的定投／再平衡记录，保留当前模型、每月预算与计划日。此操作会同步到其他登录设备。':'将用备份中的持仓、投资记录、本月计划及自建模型替换当前投资数据，并同步到其他登录设备。';
+    $('#investmentDataPreview').textContent=describe(mode==='clear'?pending.expected:book);
+    $('#backupBeforeClearRow').hidden=mode!=='clear';
+    $('#backupBeforeClear').checked=!!sync;
+    $('#backupBeforeClear').disabled=!sync;
+    $('#investmentDataPassword').value='';message.textContent='';
+    $('#investmentDataSubmit').textContent=mode==='clear'?'确认清空':'确认恢复';
+    $('#investmentDataSubmit').classList.toggle('danger',mode==='clear');
+    dialog.showModal();$('#investmentDataPassword').focus();
+  }
+  async function guarded(action) {
+    if(working)return;
+    working=true;
+    document.querySelectorAll('[data-investment-action]').forEach(button=>button.disabled=true);
+    try{await action();}catch(error){say(error.message||'操作未完成，请重试。');}
+    finally{working=false;document.querySelectorAll('[data-investment-action]').forEach(button=>button.disabled=button.dataset.cloudOnly==='true'&&!sync);}
+  }
+  $('#cloudBackupCreate').onclick=()=>guarded(async()=>{
+    say('正在加密并保存到 GitHub…');
+    const saved=await sync.createBackup(currentInvestmentBook());
+    say('已备份到 GitHub，回读校验通过。');
+    $('#investmentBackups').hidden=true;
+    $('#lastInvestmentBackup').textContent='最近备份：'+new Date(saved.backup.createdAt).toLocaleString('zh-CN');
+  });
+  $('#investmentBackupDownload').onclick=()=>guarded(async()=>{
+    const book=currentInvestmentBook(),value=sync?await sync.exportBackup(book):{...book};
+    downloadInvestmentFile(value,'投资数据备份-'+todayStr()+'.json');say('已下载备份，包含持仓、投资记录与本月计划。');
+  });
+  $('#cloudBackupList').onclick=()=>guarded(async()=>{
+    say('正在读取 GitHub 备份…');const {files}=await sync.listBackups(),list=$('#investmentBackups');
+    list.replaceChildren();list.hidden=false;
+    if(!files.length){say('还没有 GitHub 备份。');return;}
+    for(const file of files){
+      const row=document.createElement('div');row.className='investment-backup-row';
+      const label=document.createElement('span');const n=file.id;
+      label.textContent=`${n.slice(0,4)}-${n.slice(4,6)}-${n.slice(6,8)} ${n.slice(9,11)}:${n.slice(11,13)}:${n.slice(13,15)} UTC`;
+      for(const [text,action] of [['恢复',async()=>{const raw=await sync.getBackup(file.id);const book=await importFile(raw);open('restore',book);}],['下载',async()=>downloadInvestmentFile(await sync.getBackup(file.id),file.id)]]){
+        const button=document.createElement('button');button.type='button';button.className='btn sm';button.textContent=text;button.dataset.investmentAction='';
+        button.onclick=()=>guarded(action);row.append(button);
+      }
+      row.prepend(label);list.append(row);
+    }
+    say(`共 ${files.length} 份 GitHub 备份，恢复前可核对内容。`);
+  });
+  $('#investmentBackupImport').onclick=()=>$('#investmentBackupFile').click();
+  $('#investmentBackupFile').onchange=event=>guarded(async()=>{
+    const file=event.target.files[0];event.target.value='';if(!file)return;
+    if(file.size>1536*1024)throw Error('备份文件超过容量。');
+    let value;try{value=JSON.parse(await file.text());}catch{throw Error('请选择有效的 JSON 备份文件。');}
+    const book=await importFile(value);open('restore',book);
+  });
+  $('#investmentDataClear').onclick=()=>open('clear');
+  $('#investmentDataCancel').onclick=()=>{if(!working)dialog.close();};
+  dialog.addEventListener('cancel',event=>{if(working)event.preventDefault();});
+  dialog.addEventListener('close',()=>{pending=null;$('#investmentDataPassword').value='';});
+  form.onsubmit=async event=>{
+    event.preventDefault();if(working||!pending)return;
+    working=true;const task=pending,submit=$('#investmentDataSubmit'),cancel=$('#investmentDataCancel');
+    submit.disabled=cancel.disabled=true;message.textContent='正在验证密码…';
+    let password=$('#investmentDataPassword').value;$('#investmentDataPassword').value='';
+    try{
+      if(!account?.verifyPassword)throw Error('请在登录后的网页版或本地服务中操作。');
+      await account.verifyPassword(password);password='';
+      if(JSON.stringify(currentInvestmentBook())!==JSON.stringify(task.expected))throw Error('投资数据已变化，请关闭弹窗后重新核对。');
+      if(task.mode==='clear'&&$('#backupBeforeClear').checked){
+        if(!sync)throw Error('GitHub备份需要登录网页版。');
+        message.textContent='正在备份到 GitHub，校验成功后才会清空…';
+        await sync.createBackup(task.expected);
+      }
+      const epoch=crypto.randomUUID(),next=task.mode==='clear'?InvestmentData.clear(task.expected,epoch):InvestmentData.restore(task.book,epoch);
+      message.textContent=task.mode==='clear'?'正在清空并同步…':'正在恢复并同步…';
+      if(sync)await sync.replaceBook(next,task.expected);
+      else{
+        if(JSON.stringify(currentInvestmentBook())!==JSON.stringify(task.expected))throw Error('数据已变化，请重新操作。');
+        installLocalInvestmentBook(next);
+      }
+      dialog.close();say(task.mode==='clear'?'投资数据已清空，持仓与收益记录已归零。':'备份已恢复，持仓、投资记录与本月计划已更新。');
+    }catch(error){message.textContent=error.message||'操作未完成，未确认数据已更改。';}
+    finally{password='';working=false;submit.disabled=cancel.disabled=false;}
+  };
+  if(!sync){
+    for(const id of ['#cloudBackupCreate','#cloudBackupList'])$(id).disabled=true;
+    $('#investmentDataCloudHint').textContent='GitHub加密备份在网页版登录后可用。本地可下载、导入备份及验证密码后清空。';
+    window.addEventListener('storage',event=>{if(event.key==='heng.state'&&event.newValue&&(JSON.parse(event.newValue).investmentEpoch||'')!==investmentEpoch)paintInvestmentBook();});
+  }
+}
 
 </script>
 <script>
@@ -5127,12 +5372,14 @@ let S = structuredClone(defaultState);
 try { const saved = JSON.parse(localStorage.getItem('heng.state') || 'null'); if (saved && saved.weights) S = { ...S, ...migrateExecutionState(saved) }; } catch (e) { }
 S.favorites = [...new Set(Array.isArray(S.favorites) ? S.favorites.filter(id => IDS.includes(id)) : [])];
 let ledgerRevision = S.ledger?.revision || '';
+let investmentEpoch = S.investmentEpoch || '';
 const save = () => {
   try {
     const latest = JSON.parse(localStorage.getItem('heng.state') || 'null');
-    if ((latest?.ledger?.revision || '') !== ledgerRevision && latest?.weights) {
-      S = {...S,...latest};
+    if (latest && ((latest.ledger?.revision || '') !== ledgerRevision || (latest.investmentEpoch || '') !== investmentEpoch)) {
+      S = {...structuredClone(defaultState),...latest};
       ledgerRevision = latest.ledger?.revision || '';
+      investmentEpoch = latest.investmentEpoch || '';
       toast('其他页面已更新持仓，本次修改未保存。');
       return false;
     }
@@ -6080,9 +6327,10 @@ function withCurrentHoldings(action) {
     let latest;
     try { latest = migrateExecutionState(JSON.parse(localStorage.getItem('heng.state') || 'null')); } catch (e) { }
     const receiptChanged = JSON.stringify(latest?.lastAppliedOps || null) !== JSON.stringify(S.lastAppliedOps || null);
-    if (latest?.weights && ((latest.ledger?.revision || '') !== ledgerRevision || receiptChanged || (latest.holdings && opsContext({ ...S, ...latest }) !== opsContext()))) {
-      S = { ...S, ...latest };
+    if (latest && ((latest.investmentEpoch || '') !== investmentEpoch || (latest.ledger?.revision || '') !== ledgerRevision || receiptChanged || (latest.holdings && opsContext({ ...S, ...latest }) !== opsContext()))) {
+      S = { ...structuredClone(defaultState), ...latest };
       ledgerRevision = latest.ledger?.revision || '';
+      investmentEpoch = latest.investmentEpoch || '';
       renderRebalance();
       if (current === 'history') renderLedger();
       toast('持仓已在其他页面变更，请核对当前清单后再操作。');
@@ -6762,54 +7010,15 @@ function bindSharedBook() {
     if (action==='download' || action==='backup') sync.download(action==='backup');
     else sync.act(action);
   };
-  function paintSharedBook() {
-    const stored=JSON.parse(localStorage.getItem('heng.state') || '{}');
-    S = {...structuredClone(defaultState), ...migrateExecutionState(stored)};
-    ledgerRevision = S.ledger?.revision || '';
-    const prior=new Map(customPresets.map(p=>[p.key,JSON.stringify(p)]));
-    loadTemplates();
-    computePresetStats(customPresets.filter(p=>prior.get(p.key)!==JSON.stringify(p)));
-    renderPresets(); ensureRebalanceState(); renderStrategy(); renderAssets();
-    if(current==='rebalance')renderRebalance();
-    if(current==='history')renderLedger();
-    if(current==='backtest')renderBacktest();
-  }
+  const paintSharedBook=paintInvestmentBook;
   sync.bind({
     status(text,action){
       if ($('#cloudStatus').textContent!==text) $('#cloudStatus').textContent=text;
       const show={init:['init'],join:['join','download'],conflict:['mine','theirs','download'],retry:['retry']}[action] || [];
       for (const button of bar.querySelectorAll('[data-sync]')) button.hidden=button.dataset.sync==='backup' ? !localStorage.getItem('heng.shared.backup') : !show.includes(button.dataset.sync);
     },
-    validate(book){
-      const state=book.state;
-      const holdingsValid=o=>o && typeof o==='object' && Object.entries(o).every(([id,n])=>IDS.includes(id) && Number.isFinite(n) && n>=0);
-      if (['weights','holdings','beforeExample'].some(k=>state[k] && !holdingsValid(state[k]))) throw Error('共享持仓格式错误');
-      if (['lastRebalance','lastBalanceCheckDate','lastExecutionDate'].some(key => state[key] && !/^\d{4}-\d{2}-\d{2}$/.test(state[key]))) throw Error('日期格式错误');
-      if (state.contributionMonth && !/^\d{4}-\d{2}$/.test(state.contributionMonth)) throw Error('定投期次格式错误');
-      if (state.investmentResets && (typeof state.investmentResets !== 'object' || Array.isArray(state.investmentResets) || Object.entries(state.investmentResets).some(([kind,reset]) => !['monthly','rebalance'].includes(kind) || !reset || typeof reset.id !== 'string' || !reset.id || reset.id.length>160 || !/^\d{4}-(0[1-9]|1[0-2])$/.test(reset.period || '')))) throw Error('操作重置格式错误');
-      const numeric = ['monthly','initial','fee','fx','investmentDay','abs','rel'];
-      if(numeric.some(k=>state[k]!=null && !Number.isFinite(state[k]))) throw Error('共享定投金额或设置格式错误');
-      if(state.favorites && (!Array.isArray(state.favorites)||state.favorites.some(id=>!IDS.includes(id)))) throw Error('共享收藏格式错误');
-      if(state.mode && !['none','threshold','hybrid','calendar'].includes(state.mode)) throw Error('共享策略格式错误');
-      if(state.ledger && (!Array.isArray(state.ledger.entries)||!Array.isArray(state.ledger.positions)||!holdingsValid(state.ledger.holdings))) throw Error('投资记录格式错误');
-      for(const r of state.ledger?.positions || []) if(!IDS.includes(r.id)||!Number.isFinite(r.quantity)||!Number.isFinite(r.price))throw Error('期初持仓格式错误');
-      const operationIds = new Set();
-      for(const entry of state.ledger?.entries || []) {
-        if(!Number.isFinite(entry.flow)||!Array.isArray(entry.trades)||entry.trades.some(r=>!IDS.includes(r.id)||!Number.isFinite(r.price)||!Number.isFinite(r.quantity)))throw Error('成交记录格式错误');
-        if(entry.resetId!=null && (typeof entry.resetId!=='string'||!entry.resetId||entry.resetId.length>160))throw Error('重置记录格式错误');
-        if(entry.investmentType) {
-          if(!['monthly','bonus','rebalance'].includes(entry.investmentType)||typeof entry.operationId!=='string'||!entry.operationId||operationIds.has(entry.operationId)||!/^\d{4}-\d{2}$/.test(entry.period)||!/^\d{4}-\d{2}-\d{2}$/.test(entry.date))throw Error('定投或加仓记录格式错误');
-          operationIds.add(entry.operationId);
-        }
-      }
-      if(state.ledger?.past?.some(r=>!IDS.includes(r.id)||!Number.isFinite(r.flow)||!Number.isFinite(r.quantity)))throw Error('历史成交格式错误');
-      if(Object.entries(book.templates).some(([id,p])=>!/^custom-[a-z0-9-]+$/i.test(id)||p.key!==id||typeof p.name!=='string'||!holdingsValid(p.w)))throw Error('自建模型格式错误');
-    },
-    apply(book){
-      localStorage.setItem('heng.state',JSON.stringify(book.state));
-      localStorage.setItem('heng.templates',JSON.stringify(Object.values(book.templates)));
-      paintSharedBook();
-    }
+    validate(book){ InvestmentData.validate(book,IDS); },
+    apply(book){ installLocalInvestmentBook(book); }
   });
   window.addEventListener('storage',event=>{if(event.key==='heng.shared.v1' && event.newValue && !JSON.parse(event.newValue).install)paintSharedBook();});
 }
@@ -6889,6 +7098,7 @@ function boot() {
   new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   AI.bindSettings();
   bindSharedBook();
+  bindInvestmentData();
   if (window.claude && claude.use) claude.use('sample').then(fn => { sampleFn = fn; }).catch(() => {});
 }
 boot();

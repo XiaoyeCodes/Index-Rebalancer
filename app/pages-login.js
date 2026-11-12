@@ -1,6 +1,7 @@
 import { workspaceSync } from './workspace-sync.js';
 import { browserModel } from './browser-model.js';
 import { browserSession } from './browser-session.js';
+import { verifyPagesPassword } from './password-check.js';
 
 const access = JSON.parse(document.getElementById('access').textContent);
 const bytes = value => Uint8Array.from(atob(value), char => char.charCodeAt(0));
@@ -35,7 +36,7 @@ async function openApplication(wrappingKey,remember,restoring=false) {
     }
     else await session.clear().catch(()=>{});
   }
-  window.privateAccount={pages:true,model,sync,logout:async()=>{await session.clear();location.reload();}};
+  window.privateAccount={pages:true,model,sync,verifyPassword:password=>verifyPagesPassword(access,password),logout:async()=>{await session.clear();location.reload();}};
   document.open();document.write(new TextDecoder().decode(html));document.close();
 }
 function busy(value,message='') {

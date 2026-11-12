@@ -11,6 +11,11 @@ const preflight = await fetch(endpoint, {
 assert.equal(preflight.status, 204, 'Pages should be able to reach the Worker');
 assert.equal(preflight.headers.get('Access-Control-Allow-Origin'), origin);
 assert(preflight.headers.get('Access-Control-Allow-Methods')?.split(/,\s*/).includes('PUT'));
+assert(preflight.headers.get('Access-Control-Allow-Methods')?.split(/,\s*/).includes('POST'));
 const probe = await fetch(endpoint, {headers: {Origin: origin}, signal: AbortSignal.timeout(15000)});
 assert.equal(probe.status, 401, 'Unauthenticated requests must not read the shared portfolio');
-console.log('Verified Pages preflight and unauthenticated access control.');
+for(const method of ['GET','POST']) {
+  const response=await fetch(endpoint+'/backups',{method,headers:{Origin:origin},signal:AbortSignal.timeout(15000)});
+  assert.equal(response.status,401,'Unauthenticated users must not list or create investment backups');
+}
+console.log('Verified Pages preflight and unauthenticated workspace/backup access control.');

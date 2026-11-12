@@ -15,7 +15,7 @@
    if(!response.ok)throw Error('登录已过期，请重新登录。');
    const html=await response.text();
    Object.defineProperty(window,'privateAccount',{configurable:true,value:{
-     api,pages:false,logout:async()=>{await api('/api/account/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});location.reload();}
+     api,pages:false,verifyPassword:async password=>{const response=await api('/api/account/verify-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});const data=await response.json();if(!response.ok)throw Error(data.detail||'密码不正确。');return true;},logout:async()=>{await api('/api/account/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});location.reload();}
    }});
    document.open();document.write(html);document.close();
  }

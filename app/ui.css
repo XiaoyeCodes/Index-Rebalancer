@@ -2227,6 +2227,19 @@ button, summary, a {
   gap: 16px;
 }
 
+.investment-data-settings {margin:18px 0 24px;padding-bottom:20px;border-bottom:1px solid var(--line);}
+.investment-data-settings p {margin:8px 0;line-height:1.7;}
+.investment-data-buttons {display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+.btn.danger-outline {color:#a3342b;border-color:#d9a7a2;}
+.btn.primary.danger {background:#a3342b;border-color:#a3342b;color:#fff;}
+.investment-data-preview {padding:16px;background:var(--bg-2,#f2f3f5);border-radius:12px;line-height:1.7;}
+.investment-backup-check {display:flex;align-items:center;gap:10px;margin:18px 0;font-size:14px;}
+.investment-backup-check input {width:17px;height:17px;flex:none;accent-color:var(--ink);}
+.investment-backups {max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;margin-top:12px;}
+.investment-backup-row {display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);}
+.investment-backup-row:last-child {border-bottom:0;}
+.investment-backup-row span {flex:1 1 200px;font-size:13px;}
+
 .settings-protocol {
   padding: 10px 12px;
   border-radius: 10px;

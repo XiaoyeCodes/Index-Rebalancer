@@ -33,6 +33,16 @@ test('local remembered cookies last thirty days, short sessions expire, and logo
       const persistent=await cookie(true),sessionOnly=await cookie(false);
       assert.ok(persistent.includes('HttpOnly')&&persistent.includes('SameSite=Strict')&&persistent.includes('Max-Age=2592000'));
       assert.ok(sessionOnly.includes('HttpOnly')&&!sessionOnly.includes('Max-Age='));
+      const signedIn=await login('fixture-password',audience,true);
+      async function verify(password){
+        const req=Readable.from([Buffer.from(JSON.stringify({password}))]);
+        req.method='POST';req.headers={'content-type':'application/json',cookie:'heng_session='+signedIn};
+        const res={setHeader(){},writeHead(){},end(){}};
+        return accountGate(req,res,new URL(audience+'/api/account/verify-password'));
+      }
+      assert.equal(await verify('fixture-password'),true);
+      await assert.rejects(verify('incorrect'),/密码不正确/);
+      assert.equal(authenticated(signedIn,audience),true);
     `],{cwd:fileURLToPath(new URL('../',import.meta.url)),env:{...process.env,HENG_PRIVATE_DIR:temporary,HENG_MASTER_FILE:path.join(temporary,'master.key')},stdio:'pipe'});
   } finally {
     assert.equal(path.dirname(path.resolve(temporary)),path.resolve(tmpdir()));

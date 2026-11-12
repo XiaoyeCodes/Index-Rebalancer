@@ -31,6 +31,18 @@ node app/scripts/publish.mjs
 
 Cloudflare Worker 使用一个 SQLite Durable Object，通过版本号检查并串行保存加密账本。网页在可见时约每 5 秒拉取一次，断网修改在恢复连接后重试。只有页面显示「共享账本已同步」表示已完成同步。推送到 `main` 的提交包含 `sync/` 变更时，GitHub Actions 的 [Deploy Cloudflare sync](.github/workflows/deploy-sync.yml) 会发布 Worker。每次发布都会标记 Git 提交并检查网页跨域请求和未登录访问控制。部署令牌保存在仓库 Secret `CLOUDFLARE_API_TOKEN`，账户 ID 保存在仓库变量 `CLOUDFLARE_ACCOUNT_ID`。把 HTTPS 服务的 `/workspace` 地址填入 `app/sync-deployment.json` 后重新发布 Pages。访问凭证的服务端校验值保存在 `sync/access.json`。此文件只包含摘要。
 
+## 投资数据备份、恢复与清空
+
+「设置 → 投资数据」提供备份到 GitHub、从 GitHub 恢复、下载备份文件、导入备份文件，以及清空投资数据。
+
+清空需要再次输入登录密码。默认勾选「清空前先备份到 GitHub」；只有 GitHub 写入、回读以及浏览器解密核验均成功后才继续清空，备份失败不执行清空。可取消勾选直接清空。清空范围包含我的持仓、投资记录、期初成本、历史成交、已确认定投／再平衡记录与重置机会；保留模型、每月预算、计划日及规则。清空与恢复都会同步到共享账本，其他登录设备随之更新。
+
+GitHub 备份保存到私有仓库 `XiaoyeCodes/Index-Rebalancer-Automation` 的 `codex/investment-backups` 分支、`investment-backups/` 目录。持仓和记录在浏览器中用账户密钥 AES-256-GCM 加密后上传；服务器不解密投资内容。备份不包含登录密码、AI 密钥、聊天记录或浏览器登录凭据。服务器端 GitHub 凭证仅保存在 Cloudflare Secret，部署凭证来源为仓库 Secret `INDEX_REBALANCER_BACKUP_TOKEN`；维护者可替换为仅允许备份仓库 Contents 读写的专用凭证。授权过期或撤销时，页面报告备份失败。
+
+从 GitHub 列表或 JSON 文件导入后，先显示持仓标的数、记录数、每月预算和计划日；再次验证密码后整份恢复，避免重复追加成交。支持当前加密备份及旧版下载的 `{state,templates}` 投资账本。加密文件需要使用创建备份的同一工作区登录，保留工作区密钥的密码更换不影响恢复。恢复包括持仓、投资记录、当前模型、本月完成状态、预算、日期和自建模型。若其他页面或设备在操作期间有新数据，需同步后重新核对，不能静默覆盖。
+
+本地服务版本支持密码验证后的清空、下载及导入文件；GitHub 加密备份在公网网页版登录后使用。单份投资账本上限 1 MB，不自动删除历史备份。
+
 ## 定投与再平衡
 
 本月计划的操作区用两个时间卡片显示「下次定投」和「下次再平衡」，各自的操作按钮放在卡片右侧。未完成当月定投时可点击「定投」，在弹窗输入本次金额，实时查看买入比例、金额、股数和未投入现金；在券商买入后点击「已买入，更新持仓」才写入本期记录。弹窗金额不改变模型设置的每月预算，取消或预览均不记账。

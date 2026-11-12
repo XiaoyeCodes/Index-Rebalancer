@@ -1,8 +1,9 @@
+import { InvestmentData } from './investment-book.js';
 // Only portfolio fields are shared. Keep ledger, holdings and receipts atomic.
 const groups = {
-  portfolio:'holdings holdingsExample exampleKey beforeExample ledger lastAppliedOps contributionMonth lastExecutionDate lastRebalance lastBalanceCheckDate investmentResets'.split(' '),
-  strategy:'weights preset label mode abs rel period'.split(' '),
-  settings:'monthly initial start fee cashflow allowSell fx fxManual wholeShares investmentDay favorites'.split(' ')
+  portfolio:InvestmentData.portfolio,
+  strategy:InvestmentData.strategy,
+  settings:InvestmentData.settings
 };
 const keys = Object.values(groups).flat();
 const own = (o,k)=>Object.hasOwn(o,k);
@@ -66,14 +67,14 @@ export async function workspaceSync(endpoint,seed) {
   async function request(suffix,method='GET',body) {
     const headers={Authorization:'Bearer '+token};
     if(body)headers['Content-Type']='application/json';
-    const r=await fetch(endpoint+suffix,{method,headers,body:body&&JSON.stringify(body),cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(12000)});
+    const r=await fetch(endpoint+suffix,{method,headers,body:body&&JSON.stringify(body),cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(suffix.startsWith('/backups')?60000:12000)});
     if(r.status===409)return null;
-    if(!r.ok)throw Error(r.status===401?'共享服务拒绝登录':r.status===413?'账本超过同步容量':'共享服务暂时不可用');
+    if(!r.ok){const detail=await r.json().catch(()=>({}));throw Error(detail.detail||(r.status===401?'共享服务拒绝登录':r.status===413?'账本超过同步容量':'共享服务暂时不可用'));}
     return r.json();
   }
-  let hooks,timer,busy=false,again=false,choice=null,initialize=false,conflictVersion;
+  let hooks,timer,busy=false,again=false,choice=null,initialize=false,conflictVersion,stopped=false;
   function status(message,action=''){hooks.status(message,action);}
-  function schedule(ms=350){clearTimeout(timer);timer=setTimeout(tick,ms);}
+  function schedule(ms=350){clearTimeout(timer);if(!stopped)timer=setTimeout(tick,ms);}
   // Apply the server snapshot and its merge baseline as a recoverable transaction.
   function install(book,revision,base) {
     hooks.validate(book);
@@ -135,10 +136,56 @@ export async function workspaceSync(endpoint,seed) {
     catch(e){status('尚未同步 · '+(e instanceof TypeError?'网络连接失败':e.message)+'。修改已保留在本机。','retry');}
     finally{busy=false;schedule(again?100:document.hidden?30000:4500);}
   }
+  async function exportBackup(book=localBook()) {
+    hooks.validate(book);
+    return {format:'heng-investment-backup',version:1,createdAt:new Date().toISOString(),blob:await seal(book)};
+  }
+  async function importBackup(value) {
+    let book;
+    if(value?.format==='heng-investment-backup') {
+      if(value.version!==1||typeof value.blob!=='string')throw Error('不支持此备份版本。');
+      try {book=await open(value.blob);}catch{throw Error('无法解密备份，请使用创建备份的账户登录。');}
+    } else book=value;
+    hooks.validate(book);return book;
+  }
+  async function replaceBook(next,expected) {
+    if(!hooks)throw Error('账本尚未就绪。');
+    while(busy)await new Promise(resolve=>setTimeout(resolve,25));
+    busy=true;clearTimeout(timer);
+    const run=async()=>{
+      hooks.validate(next);
+      const remote=await request('?since=-1'),meta=JSON.parse(localStorage.getItem(localKey)||'null');
+      if(remote.revision&&(!meta||meta.install||remote.revision!==meta.revision))throw Error('其他设备有新数据，请等待共享账本同步后重新操作。');
+      if(!equal(localBook(),expected))throw Error('投资数据已变化，请重新核对后操作。');
+      const blob=await seal(next),saved=await request('','PUT',{revision:remote.revision,blob});
+      if(!saved)throw Error('其他设备已更新账本，本次未覆盖，请同步后重试。');
+      if(!equal(localBook(),expected)) {
+        localStorage.setItem(backupKey,JSON.stringify(localBook()));
+        // Preserve concurrent edits for explicit conflict resolution on the next tick.
+        throw Error('云端操作已完成，但本机同时有新修改；已保留本机副本，请在共享账本中核对。');
+      }
+      install(next,saved.revision,next);status('共享账本已同步');
+    };
+    try {
+      const lock=()=>navigator.locks?navigator.locks.request('heng.state.holdings',run):run();
+      if(navigator.locks)await navigator.locks.request('heng.cloud.sync',lock);else await lock();
+    } finally {busy=false;schedule(0);}
+  }
   return {
     bind(callbacks){hooks=callbacks;window.addEventListener('online',()=>schedule(0));document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule(0);});schedule(0);},
+    close(){stopped=true;clearTimeout(timer);},
     changed(){if(hooks){status('有本机修改，正在同步…');schedule();}},
     act(action){if(action==='init')initialize=true;else choice=action; schedule(0);},
+    exportBackup,importBackup,replaceBook,
+    async createBackup(book=localBook()) {
+      const backup=await exportBackup(book),id=backup.createdAt.replace(/[-:.]/g,'')+'-'+crypto.randomUUID()+'.json';
+      const saved=await request('/backups','POST',{id,backup});
+      const readback=await request('/backups/'+encodeURIComponent(id));
+      if(!equal(await importBackup(readback),book))throw Error('备份回读校验失败，未确认备份成功。');
+      return {...saved,backup};
+    },
+    listBackups:()=>request('/backups'),
+    getBackup:id=>request('/backups/'+encodeURIComponent(id)),
     download(previous){const raw=previous?localStorage.getItem(backupKey):JSON.stringify(localBook());if(!raw)return;const url=URL.createObjectURL(new Blob([raw],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='投资账本备份.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   };
 }

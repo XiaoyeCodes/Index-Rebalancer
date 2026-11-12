@@ -21,6 +21,8 @@ const page = read('src.html')
   .replace('__DATA_SHA__', () => createHash('sha256').update(read('data/prices-weekly.json')).digest('hex'))
   .replace('<script src="market-calendar.js"></script>', () => '<script>\n' + read('market-calendar.js') + '\n</script>')
   .replace('<script src="investment.js"></script>', () => '<script>\n' + read('investment.js') + '\n</script>')
+  .replace('<script src="investment-book.js"></script>', () => '<script>\n' + read('investment-book.js').replace('export const InvestmentData','const InvestmentData') + '\n</script>')
+  .replace('<script src="investment-data-ui.js"></script>', () => '<script>\n' + read('investment-data-ui.js') + '\n</script>')
   .replace('<script src="ledger.js"></script>', () => '<script>\n' + read('ledger.js') + '\n</script>')
   .replace('<script src="ledger-ui.js"></script>', () => '<script>\n' + read('ledger-ui.js') + '\n</script>')
   .replace('<script src="ai.js"></script>', () => '<script>\n' + read('ai.js') + '\n</script>');

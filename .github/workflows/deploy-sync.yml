@@ -30,6 +30,16 @@ jobs:
         with:
           node-version: 24
       - run: npm ci --no-audit --no-fund
+      - name: Test backup storage
+        run: node --test ../app/scripts/github-backups.test.mjs
+      - name: Configure server-side GitHub backup credential
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GITHUB_BACKUP_TOKEN: ${{ secrets.INDEX_REBALANCER_BACKUP_TOKEN }}
+        run: |
+          test -n "$GITHUB_BACKUP_TOKEN"
+          printf '%s' "$GITHUB_BACKUP_TOKEN" | npx wrangler secret put GITHUB_BACKUP_TOKEN
       - name: Deploy Worker
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
