@@ -4904,7 +4904,7 @@ function renderLedger() {
 function saveLedgerChange(previous) {
   if (S.ledger) S.ledger.revision = crypto.randomUUID();
   if (save()) return true;
-  if ((previous.ledger?.revision || '') === ledgerRevision) S = previous;
+  if ((previous.ledger?.revision || '') === ledgerRevision && (previous.investmentEpoch || '') === (S.investmentEpoch || '')) S = previous;
   toast('未写入记录，请核对浏览器存储和最新持仓后重试。');
   return false;
 }
@@ -5376,7 +5376,7 @@ let investmentEpoch = S.investmentEpoch || '';
 const save = () => {
   try {
     const latest = JSON.parse(localStorage.getItem('heng.state') || 'null');
-    if (latest && ((latest.ledger?.revision || '') !== ledgerRevision || (latest.investmentEpoch || '') !== investmentEpoch)) {
+    if (latest && ((latest.ledger?.revision || '') !== ledgerRevision || (latest.investmentEpoch || '') !== investmentEpoch || (latest.investmentEpoch || '') !== (S.investmentEpoch || ''))) {
       S = {...structuredClone(defaultState),...latest};
       ledgerRevision = latest.ledger?.revision || '';
       investmentEpoch = latest.investmentEpoch || '';

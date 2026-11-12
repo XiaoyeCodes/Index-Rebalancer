@@ -77,7 +77,7 @@ function renderLedger() {
 function saveLedgerChange(previous) {
   if (S.ledger) S.ledger.revision = crypto.randomUUID();
   if (save()) return true;
-  if ((previous.ledger?.revision || '') === ledgerRevision) S = previous;
+  if ((previous.ledger?.revision || '') === ledgerRevision && (previous.investmentEpoch || '') === (S.investmentEpoch || '')) S = previous;
   toast('未写入记录，请核对浏览器存储和最新持仓后重试。');
   return false;
 }

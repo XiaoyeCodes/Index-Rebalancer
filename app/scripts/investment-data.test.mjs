@@ -58,4 +58,11 @@ test('a stale tab cannot save its old holdings after another tab clears or resto
   vm.runInContext(source.slice(source.indexOf('const save = () => {'),source.indexOf('// Templates have their own storage')),context);
   assert.equal(vm.runInContext('save()',context),false);assert.equal(written,false);
   assert.equal(context.S.ledger,undefined);assert.deepEqual(JSON.parse(JSON.stringify(context.S.holdings)),{});assert.equal(context.S.investmentEpoch,'changed-epoch');
+  context.S=fixture().state;context.investmentEpoch='changed-epoch';
+  assert.equal(vm.runInContext('save()',context),false);assert.equal(written,false);
+  context.S=fixture().state;context.previous=structuredClone(context.S);context.crypto=crypto;
+  const ledgerUI=readFileSync(new URL('../ledger-ui.js',import.meta.url),'utf8');
+  vm.runInContext(ledgerUI.slice(ledgerUI.indexOf('function saveLedgerChange('),ledgerUI.indexOf('function bindLedger(')),context);
+  assert.equal(vm.runInContext('saveLedgerChange(previous)',context),false);
+  assert.equal(context.S.ledger,undefined);assert.equal(context.S.investmentEpoch,'changed-epoch');
 });

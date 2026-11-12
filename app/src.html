@@ -771,7 +771,7 @@ let investmentEpoch = S.investmentEpoch || '';
 const save = () => {
   try {
     const latest = JSON.parse(localStorage.getItem('heng.state') || 'null');
-    if (latest && ((latest.ledger?.revision || '') !== ledgerRevision || (latest.investmentEpoch || '') !== investmentEpoch)) {
+    if (latest && ((latest.ledger?.revision || '') !== ledgerRevision || (latest.investmentEpoch || '') !== investmentEpoch || (latest.investmentEpoch || '') !== (S.investmentEpoch || ''))) {
       S = {...structuredClone(defaultState),...latest};
       ledgerRevision = latest.ledger?.revision || '';
       investmentEpoch = latest.investmentEpoch || '';
