@@ -1463,13 +1463,47 @@ ul.clean li {
   font-weight: 600;
 }
 
-.log td:first-child,#cmpTable td:first-child {
+.log td:first-child {
+  white-space: nowrap;
+}
+
+#cmpTable {
+  min-width: 510px;
+  table-layout: fixed;
+}
+
+#cmpTable th:first-child {
+  width: 44%;
+}
+
+#cmpTable th:not(:first-child) {
+  width: 14%;
+}
+
+#cmpTable td.r {
   white-space: nowrap;
 }
 
 #cmpTable td,#cmpTable th {
   padding-left: 10px;
   padding-right: 10px;
+}
+
+.cmp-strategy {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.65;
+}
+
+.cmp-strategy > .dot {
+  margin-top: 6px;
+}
+
+.cmp-detail {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-3);
 }
 
 .stack svg {

@@ -26,7 +26,11 @@ const output = vm.runInContext(`(() => {
     scenarios.push({key:'audit-'+mode+'-'+cashflow,cfg:{weights:{SPY:30,QQQM:20,HSI:15,BND:25,GLD:10},start:'2010-01',monthly:1500,initial:50000,mode,abs:5,rel:30,period:'Q',fee:0.15,cashflow}});
   for (const mode of ['calendar','threshold','hybrid']) for (const cashflow of [true,false])
     scenarios.push({key:'audit-buy-only-'+mode+'-'+cashflow,cfg:{weights:{SPY:30,QQQM:20,HSI:15,BND:25,GLD:10},start:'2010-01',monthly:1500,initial:50000,mode,abs:5,rel:30,period:'Q',fee:0.15,cashflow,allowSell:false}});
-  return {catalogue:A,statistics:ST,presets:PRESETS,scenarios:scenarios.map(s=>({...s,result:backtest(s.cfg)}))};
+  for (const mode of ['none','threshold','calendar','hybrid']) for (const period of ['Q','Y']) {
+    const cfg={weights:{SPY:30,QQQM:20,HSI:15,BND:25,GLD:10},start:'2010-01',monthly:1500,initial:50000,mode,abs:5,rel:30,period,fee:0.15,cashflow:true,allowSell:true};
+    for (const row of backtestComparisons(cfg)) scenarios.push({key:'comparison-'+mode+'-'+period+'-'+row.key,name:row.label+row.detail,cfg:row.result.cfg,result:row.result});
+  }
+  return {catalogue:A,statistics:ST,presets:PRESETS,scenarios:scenarios.map(s=>({...s,result:s.result || backtest(s.cfg)}))};
 })()`,context);
 const facts=JSON.parse(fs.readFileSync(path.join(root,'app/data/fund-facts.json'),'utf8'));
 for(const [id,fact] of Object.entries(facts.funds)) if(output.catalogue[id]?.fee!==fact.fee) throw Error(`${id}: displayed fee differs from the verified issuer record`);
