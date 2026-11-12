@@ -187,10 +187,10 @@ test('every backtest chart and comparison rerenders from the current complete mo
   const e = engine(driftingAssets()), nodes = new Map();
   e.context.A = { AAA: { color: '#111111' }, BBB: { color: '#222222' } };
   e.context.D.assets.SPY = asset(Array(7).fill(100));
-  const series = () => ({ setData(data) { this.data = data; } });
+  const series = () => ({ setData(data) { this.data = data; }, setMarkers(markers) { this.markers = markers; } });
   const scale = { fitContent() {} };
   const chart = { timeScale: () => scale };
-  e.context.fixture = { nav: chart, navS: series(), b1: series(), b2: series(), val: chart, valS: series(), invS: series() };
+  e.context.fixture = { nav: chart, navS: series(), b1: series(), val: chart, valS: series(), invS: series() };
   e.context.S = { ...driftConfig, start: '2000-01', fee: 0, mode: 'none', cashflow: false, allowSell: false };
   e.context.$ = selector => { if (!nodes.has(selector)) nodes.set(selector, {}); return nodes.get(selector); };
   e.context.fmtMoney = e.context.fmtPct = e.context.esc = value => String(value);
@@ -198,6 +198,7 @@ test('every backtest chart and comparison rerenders from the current complete mo
   for (const name of ['setMarkers', 'setAssetChart', 'renderStack', 'renderYears', 'renderLog']) e.context[name] = () => {};
   e.evaluate(section('let bt =', '// floating hover card'));
   e.evaluate(section('const STRAT =', 'const pctFmt ='));
+  e.evaluate(section('function setMarkers(', '// one asset alone'));
   e.evaluate(section('function renderLog(', '/* ---------------- 00 rebalance view'));
   e.evaluate('bt = fixture');
   for (const [policy, expected] of [['fixed', 2900], ['buy-only', 2850], ['rebalance', 2625]]) {
@@ -209,8 +210,9 @@ test('every backtest chart and comparison rerenders from the current complete mo
     assert.equal(e.context.fixture.valS.data.at(-1).value, e.evaluate('bt.r.final'));
     assert.equal(e.evaluate('JSON.stringify(cmpData(STRAT))'), e.evaluate('JSON.stringify(navLine(bt.r))'));
     assert.ok(nodes.get('#cmpTable').innerHTML.includes(String(expected)));
+    assert.equal(nodes.get('#navRebalanceLegend').hidden, policy !== 'rebalance');
+    assert.equal(e.context.fixture.navS.markers.length, policy === 'rebalance' ? 2 : 0);
     if (policy === 'fixed') {
-      assert.equal(JSON.stringify(e.context.fixture.b2.data), e.evaluate('JSON.stringify(navLine(bt.r))'));
       assert.match(nodes.get('#cmpNote').innerHTML, /完全相同/);
     }
     if (policy === 'buy-only') {
@@ -223,6 +225,14 @@ test('every backtest chart and comparison rerenders from the current complete mo
   e.evaluate('renderBacktest()');
   close(e.context.fixture.invS.data.at(-1).value, 2400);
   close(e.context.fixture.valS.data.at(-1).value, 5250);
+  e.evaluate('S.abs = 30; S.rel = 100; renderBacktest()');
+  assert.equal(e.evaluate('investmentPolicy(S)'), 'rebalance');
+  assert.equal(e.evaluate('bt.r.rebCount'), 0);
+  assert.equal(nodes.get('#navRebalanceLegend').hidden, true);
+  assert.equal(e.context.fixture.navS.markers.length, 0);
+  e.evaluate("setInvestmentPolicy('fixed'); renderBacktest()");
+  assert.equal(nodes.get('#navRebalanceLegend').hidden, true);
+  assert.equal(e.context.fixture.navS.markers.length, 0);
 });
 
 test('an unfunded model has no invented NAV or annualized return', () => {

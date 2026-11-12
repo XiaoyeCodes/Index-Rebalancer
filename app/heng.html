@@ -4255,7 +4255,7 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
       <div class="panel">
         <div class="panel-h"><h2>策略净值 K 线<span class="small">月线 · 单位净值起点 1.00</span></h2>
           <div class="toolbar">
-            <div class="legend"><span><i style="background:var(--up)"></i>涨</span><span><i style="background:var(--down)"></i>跌</span><span><i style="background:#737985"></i>同额定投标普 500</span><span><i style="background:var(--brass)"></i>只定投不再平衡</span><span style="color:var(--ink-3)">▼ 再平衡</span></div>
+            <div class="legend" id="navLegend"><span title="本策略月 K 线：红涨绿跌"><i style="background:linear-gradient(90deg,var(--up) 50%,var(--down) 50%)"></i>本策略</span><span><i style="background:#737985"></i>同额定投标普 500</span><span id="navRebalanceLegend" style="color:var(--ink-3)" title="标记本策略实际发生买卖再平衡的月份" hidden>▼ 再平衡</span></div>
             <div class="seg" id="navScale"><button aria-pressed="true" data-v="1" type="button">对数</button><button aria-pressed="false" data-v="0" type="button">线性</button></div>
           </div>
         </div>
@@ -5881,7 +5881,7 @@ const AI = window.hengAI;
 let sampleFn = null;
 
 /* ---------------- 04 backtest view ---------------- */
-let bt = { nav: null, navS: null, b1: null, b2: null, asset: null, assetS: null, val: null, valS: null, invS: null, sel: null, syncing: false };
+let bt = { nav: null, navS: null, b1: null, asset: null, assetS: null, val: null, valS: null, invS: null, sel: null, syncing: false };
 function navMonthly(r) { const out = []; let cur = null; for (const p of r.nav) { const m = ym(p.i); if (!cur || cur.m !== m) { if (cur) out.push(cur); cur = { m, time: m + '-01', open: p.o, high: p.h, low: p.l, close: p.c }; } else { cur.high = Math.max(cur.high, p.h); cur.low = Math.min(cur.low, p.l); cur.close = p.c; } } if (cur) out.push(cur); return out.map(({ time, open, high, low, close }) => ({ time, open, high, low, close })); }
 function navLine(r) { const out = []; let lastM = null; for (const p of r.nav) { const m = ym(p.i); if (m !== lastM) { out.push({ time: m + '-01', value: p.c }); lastM = m; } else out[out.length - 1].value = p.c; } return out; }
 const KPI_HELP = { '定投年化（XIRR）': '按每笔投入的日期和金额计算的年化收益，也就是你实际体验到的收益率', '净值年化': '单位净值的年化增长，不受每月投入多少影响，用来衡量策略本身', '最大回撤': '历史上从最高点跌到最低点的最大幅度', '再平衡次数': '回测期间实际触发再平衡的次数' };
@@ -5918,13 +5918,12 @@ function renderBacktest() {
     bt.nav = makeChart($('#navChart'), true);
     bt.navS = bt.nav.addCandlestickSeries(candleOpts());
     bt.b1 = bt.nav.addLineSeries({ color: '#737985', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
-    bt.b2 = bt.nav.addLineSeries({ color: css('--brass'), lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
     bt.asset = makeChart($('#assetChart'), true); bt.assetS = bt.asset.addCandlestickSeries(candleOpts());
     bt.val = makeChart($('#valChart'), false);
     bt.valS = bt.val.addAreaSeries({ lineColor: css('--accent'), topColor: css('--accent') + '33', bottomColor: css('--accent') + '05', lineWidth: 1.5, priceLineVisible: false });
     bt.invS = bt.val.addLineSeries({ color: css('--ink-3'), lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false });
     bt.val.applyOptions({ localization: { locale: 'zh-CN', priceFormatter: p => fmtMoney(p) } });
-    refreshSeriesColors.push(() => { bt.navS.applyOptions(candleOpts()); bt.assetS.applyOptions(candleOpts()); bt.b1.applyOptions({ color: '#737985' }); bt.b2.applyOptions({ color: css('--brass') }); bt.valS.applyOptions({ lineColor: css('--accent'), topColor: css('--accent') + '33', bottomColor: css('--accent') + '05' }); bt.invS.applyOptions({ color: css('--ink-3') }); bt.val.applyOptions({ localization: { locale: 'zh-CN', priceFormatter: p => fmtMoney(p) } }); setMarkers(); });
+    refreshSeriesColors.push(() => { bt.navS.applyOptions(candleOpts()); bt.assetS.applyOptions(candleOpts()); bt.b1.applyOptions({ color: '#737985' }); bt.valS.applyOptions({ lineColor: css('--accent'), topColor: css('--accent') + '33', bottomColor: css('--accent') + '05' }); bt.invS.applyOptions({ color: css('--ink-3') }); bt.val.applyOptions({ localization: { locale: 'zh-CN', priceFormatter: p => fmtMoney(p) } }); setMarkers(); });
     // charts built while the page is hidden get a zero width; fit them once they are actually laid out
     if (window.ResizeObserver) new ResizeObserver(() => { if ($('#valChart').clientWidth > 0) bt.val.timeScale().fitContent(); if (!bt.navFitted && $('#navChart').clientWidth > 0) { bt.navFitted = true; bt.nav.timeScale().fitContent(); } }).observe($('#backtest'));
     attachTip(bt.val, $('#valChart'), param => {
@@ -5945,7 +5944,7 @@ function renderBacktest() {
     segBind('#navScale', b => bt.nav.applyOptions({ rightPriceScale: { mode: b.dataset.v === '1' ? 1 : 0 } }));
   }
   bt.r = r;
-  bt.navS.setData(navMonthly(r)); bt.b1.setData(navLine(b1)); bt.b2.setData(navLine(b2)); setMarkers();
+  bt.navS.setData(navMonthly(r)); bt.b1.setData(navLine(b1)); setMarkers();
   const vm = []; const im = []; let lm = null; r.val.forEach(([i, v], k) => { const m = ym(i); if (m !== lm) { vm.push({ time: m + '-01', value: v }); im.push({ time: m + '-01', value: r.inv[k][1] }); lm = m; } else { vm[vm.length - 1].value = v; im[im.length - 1].value = r.inv[k][1]; } });
   bt.valS.setData(vm); bt.invS.setData(im); bt.val.timeScale().fitContent();
   const ids = r.ids;
@@ -5980,7 +5979,18 @@ function attachTip(chart, el, build) {
     tip.style.left = Math.max(x0 + 4, x) + 'px'; tip.style.top = (el.offsetTop + 10) + 'px';
   });
 }
-function setMarkers() { if (!bt.r) return; const seen = new Set(); const mk = []; for (const i of bt.r.marks) { const t = ym(i) + '-01'; if (seen.has(t)) continue; seen.add(t); mk.push({ time: t, position: 'aboveBar', color: '#868B99', shape: 'arrowDown', size: 0.5 }); } bt.navS.setMarkers(mk); }
+function setMarkers() {
+  if (!bt.r) return;
+  const seen = new Set(), mk = [];
+  for (const i of bt.r.marks) {
+    const t = ym(i) + '-01';
+    if (seen.has(t)) continue;
+    seen.add(t);
+    mk.push({ time: t, position: 'aboveBar', color: '#868B99', shape: 'arrowDown', size: 0.5 });
+  }
+  bt.navS.setMarkers(mk);
+  $('#navRebalanceLegend').hidden = !mk.length;
+}
 // one asset alone → its candles on a log scale; anything else → lines in percentage mode, each rebased to the first visible month
 const STRAT = '__strategy';
 const cmpLabel = k => k === STRAT ? '本策略' : k;
