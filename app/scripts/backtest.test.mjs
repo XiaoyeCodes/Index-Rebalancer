@@ -317,6 +317,69 @@ test('an unfunded model has no invented NAV or annualized return', () => {
   assert.equal(r.vol, null);
 });
 
+function tooltipEngine() {
+  const e = engine({ AAA: asset([100, 100, 100, 100, 100, 50]) });
+  e.context.fmtPct = (value, digits = 1, sign = false) => value == null || !Number.isFinite(value) ? '—' : (sign && value > 0 ? '+' : '') + (value * 100).toFixed(digits) + '%';
+  e.evaluate(section('let bt =', 'const KPI_HELP ='));
+  e.evaluate(section('// floating hover card', 'function setMarkers('));
+  return e;
+}
+
+test('NAV tooltip uses previous monthly close rather than candle open, with fees included in the first month', () => {
+  const e = tooltipEngine();
+  e.context.strategy = { nav: [{ i: 0, o: 0.99, h: 0.99, l: 0.99, c: 0.99 },
+    { i: 5, o: 1.2, h: 1.25, l: 1.08, c: 1.089 }] };
+  e.context.benchmark = { nav: [{ i: 0, o: 1, h: 1, l: 1, c: 1 },
+    { i: 5, o: 0.96, h: 0.98, l: 0.9, c: 0.95 }] };
+  e.evaluate('bt.navS = {}; bt.navMonths = navMonthStats(strategy); bt.benchmarkMonths = navMonthStats(benchmark);');
+  close(e.evaluate('bt.navMonths.get("2000-02-01").change'), 0.1);
+  close(e.evaluate('bt.navMonths.get("2000-01-01").change'), -0.01);
+  const html = e.evaluate('navTooltip({time:"2000-02-01",seriesData:new Map([[bt.navS,{close:1.089}]])})');
+  assert.match(html, /本策略当月涨跌<b class="pos">\+10\.00%/);
+  assert.match(html, /标普 500 当月涨跌<b class="neg">-5\.00%/);
+  assert.match(html, /本策略净值<b>1\.089/);
+  assert.match(html, /开<b>1\.200/);
+  assert.equal(e.evaluate('navTooltip({time:{year:2000,month:2,day:1},seriesData:new Map([[bt.navS,{close:1.089}]])})'), html);
+  assert.match(e.evaluate('navTooltip({time:"2000-01-01",seriesData:new Map([[bt.navS,{close:0.99}]])})'), /-1\.00%/);
+  assert.equal(e.evaluate('navTooltip({time:"2000-02-01",seriesData:new Map()})'), null);
+  assert.equal(e.evaluate('navTooltip({time:"2001-01-01",seriesData:new Map([[bt.navS,{close:1}]])})'), null);
+  e.evaluate('bt.benchmarkMonths = new Map();');
+  assert.match(e.evaluate('navTooltip({time:"2000-02-01",seriesData:new Map([[bt.navS,{close:1.089}]])})'), /标普 500 当月涨跌<b class="">—/);
+});
+
+test('monthly tooltip returns cannot count a new contribution as investment profit', () => {
+  const e = tooltipEngine();
+  e.context.result = e.run({ initial: 0, monthly: 1000 });
+  assert.equal(e.context.result.final, 1500);
+  close(e.evaluate('navMonthStats(result).get("2000-02-01").change'), -0.5);
+});
+
+test('chart tooltips hide on mouse exit, outside the chart and missing data', () => {
+  const e = tooltipEngine(), events = {}, attributes = {};
+  const tip = { hidden: true, style: {}, offsetWidth: 210, setAttribute(name, value) { attributes[name] = value; } };
+  const host = { style: {}, append(node) { assert.equal(node, tip); } };
+  const element = { id: 'navChart', parentElement: host, clientWidth: 400, clientHeight: 300,
+    offsetLeft: 0, offsetTop: 0, setAttribute(name, value) { attributes[name] = value; }, addEventListener(name, fn) { events[name] = fn; } };
+  let move;
+  e.context.document = { createElement: () => tip };
+  e.context.chart = { subscribeCrosshairMove(fn) { move = fn; } };
+  e.context.element = element;
+  assert.equal(e.evaluate('attachTip(chart,element,param=>param.hasData ? "monthly return" : null)'), tip);
+  assert.equal(attributes.role, 'tooltip');
+  assert.equal(attributes['aria-describedby'], 'navChartTip');
+  move({ time: '2000-02-01', point: { x: 200, y: 100 }, hasData: true });
+  assert.equal(tip.hidden, false);
+  assert.equal(tip.innerHTML, 'monthly return');
+  events.mouseleave(); assert.equal(tip.hidden, true);
+  for (const point of [{ x: -1, y: 50 }, { x: 400, y: 50 }, { x: 50, y: 300 }]) {
+    tip.hidden = false;
+    move({ time: '2000-02-01', point, hasData: true });
+    assert.equal(tip.hidden, true);
+  }
+  move({ time: '2000-02-01', point: { x: 200, y: 100 }, hasData: false });
+  assert.equal(tip.hidden, true);
+});
+
 test('custom models save and reapply both the sales policy and contribution allocation', () => {
   const e = engine(driftingAssets());
   e.context.S = { ...driftConfig, preset: 'custom-example', start: '2000-01', fee: 0, mode: 'threshold', allowSell: false, cashflow: true };

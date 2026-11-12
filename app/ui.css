@@ -1275,7 +1275,7 @@ ul.clean li {
   z-index: 3;
   pointer-events: none;
   min-width: 170px;
-  background: rgba(255,255,255,.97);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 10px 14px;
@@ -1326,6 +1326,33 @@ ul.clean li {
   border-top: 1px solid var(--line);
   padding-top: 5px;
   margin-top: 2px;
+}
+
+.ctip-ohlc {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 16px;
+  color: var(--ink-2);
+}
+
+.ctip-ohlc span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ctip-ohlc b {
+  font: 500 12px var(--f-latin);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.ctip-note {
+  max-width: 230px;
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--ink-3);
 }
 
 .yr td {

@@ -1380,7 +1380,7 @@ ul.clean li {
   z-index: 3;
   pointer-events: none;
   min-width: 170px;
-  background: rgba(255,255,255,.97);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 10px 14px;
@@ -1431,6 +1431,33 @@ ul.clean li {
   border-top: 1px solid var(--line);
   padding-top: 5px;
   margin-top: 2px;
+}
+
+.ctip-ohlc {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 16px;
+  color: var(--ink-2);
+}
+
+.ctip-ohlc span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ctip-ohlc b {
+  font: 500 12px var(--f-latin);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.ctip-note {
+  max-width: 230px;
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--ink-3);
 }
 
 .yr td {
@@ -5951,6 +5978,14 @@ let sampleFn = null;
 let bt = { nav: null, navS: null, b1: null, asset: null, assetS: null, val: null, valS: null, invS: null, sel: null, syncing: false };
 function navMonthly(r) { const out = []; let cur = null; for (const p of r.nav) { const m = ym(p.i); if (!cur || cur.m !== m) { if (cur) out.push(cur); cur = { m, time: m + '-01', open: p.o, high: p.h, low: p.l, close: p.c }; } else { cur.high = Math.max(cur.high, p.h); cur.low = Math.min(cur.low, p.l); cur.close = p.c; } } if (cur) out.push(cur); return out.map(({ time, open, high, low, close }) => ({ time, open, high, low, close })); }
 function navLine(r) { const out = []; let lastM = null; for (const p of r.nav) { const m = ym(p.i); if (m !== lastM) { out.push({ time: m + '-01', value: p.c }); lastM = m; } else out[out.length - 1].value = p.c; } return out; }
+function navMonthStats(r) {
+  let previousClose = 1;
+  return new Map(navMonthly(r).map(candle => {
+    const change = previousClose > 0 ? candle.close / previousClose - 1 : null;
+    previousClose = candle.close;
+    return [candle.time, { ...candle, change }];
+  }));
+}
 const KPI_HELP = { '定投年化（XIRR）': '按每笔投入的日期和金额计算的年化收益，也就是你实际体验到的收益率', '净值年化': '单位净值的年化增长，不受每月投入多少影响，用来衡量策略本身', '最大回撤': '历史上从最高点跌到最低点的最大幅度', '再平衡次数': '回测期间实际触发再平衡的次数' };
 function renderBacktest() {
   $('#backtestResults').hidden = sumW() !== 100;
@@ -5992,6 +6027,7 @@ function renderBacktest() {
     refreshSeriesColors.push(() => { bt.navS.applyOptions(candleOpts()); bt.assetS.applyOptions(candleOpts()); bt.b1.applyOptions({ color: '#737985' }); bt.valS.applyOptions({ lineColor: css('--accent'), topColor: css('--accent') + '33', bottomColor: css('--accent') + '05' }); bt.invS.applyOptions({ color: css('--ink-3') }); bt.val.applyOptions({ localization: { locale: 'zh-CN', priceFormatter: p => fmtMoney(p) } }); setMarkers(); });
     // charts built while the page is hidden get a zero width; fit them once they are actually laid out
     if (window.ResizeObserver) new ResizeObserver(() => { if ($('#valChart').clientWidth > 0) bt.val.timeScale().fitContent(); if (!bt.navFitted && $('#navChart').clientWidth > 0) { bt.navFitted = true; bt.nav.timeScale().fitContent(); } }).observe($('#backtest'));
+    bt.navTip = attachTip(bt.nav, $('#navChart'), navTooltip);
     attachTip(bt.val, $('#valChart'), param => {
       const v = param.seriesData.get(bt.valS), iv = param.seriesData.get(bt.invS); if (!v || !iv) return null;
       const gain = v.value - iv.value;
@@ -6010,6 +6046,8 @@ function renderBacktest() {
     segBind('#navScale', b => bt.nav.applyOptions({ rightPriceScale: { mode: b.dataset.v === '1' ? 1 : 0 } }));
   }
   bt.r = r;
+  bt.navMonths = navMonthStats(r); bt.benchmarkMonths = navMonthStats(b1);
+  if (bt.navTip) bt.navTip.hidden = true;
   bt.navS.setData(navMonthly(r)); bt.b1.setData(navLine(b1)); setMarkers();
   const vm = []; const im = []; let lm = null; r.val.forEach(([i, v], k) => { const m = ym(i); if (m !== lm) { vm.push({ time: m + '-01', value: v }); im.push({ time: m + '-01', value: r.inv[k][1] }); lm = m; } else { vm[vm.length - 1].value = v; im[im.length - 1].value = r.inv[k][1]; } });
   bt.valS.setData(vm); bt.invS.setData(im); bt.val.timeScale().fitContent();
@@ -6033,17 +6071,35 @@ function renderBacktest() {
 }
 // floating hover card for a chart: build(param) returns HTML, or null to hide
 const tipDate = (t, full) => { const s = typeof t === 'string' ? t : t && typeof t === 'object' ? `${t.year}-${String(t.month).padStart(2, '0')}-${String(t.day).padStart(2, '0')}` : new Date(t * 1000).toISOString().slice(0, 10); return full ? s : s.slice(0, 7).replace('-', ' 年 ') + ' 月'; };
+function navTooltip(param) {
+  if (!Number.isFinite(param.seriesData.get(bt.navS)?.close)) return null;
+  const time = tipDate(param.time, true), strategy = bt.navMonths?.get(time), benchmark = bt.benchmarkMonths?.get(time);
+  if (!strategy) return null;
+  const nav = value => Number.isFinite(value) ? value.toFixed(3) : '—';
+  const change = value => `<b class="${value > 0 ? 'pos' : value < 0 ? 'neg' : ''}">${fmtPct(value, 2, true)}</b>`;
+  return `<div class="ctip-d">${tipDate(param.time)}</div>
+    <div class="ctip-r"><i style="background:var(--accent)"></i>本策略净值<b>${nav(strategy.close)}</b></div>
+    <div class="ctip-r">本策略当月涨跌${change(strategy.change)}</div>
+    <div class="ctip-r ctip-sep"><i style="background:#737985"></i>标普 500 净值<b>${nav(benchmark?.close)}</b></div>
+    <div class="ctip-r">标普 500 当月涨跌${change(benchmark?.change)}</div>
+    <div class="ctip-ohlc ctip-sep">${[['开', strategy.open], ['高', strategy.high], ['低', strategy.low], ['收', strategy.close]].map(([label, value]) => `<span>${label}<b>${nav(value)}</b></span>`).join('')}</div>
+    <div class="ctip-note">当月涨跌按上月收盘净值计算；首月相对起始净值 1.00。</div>`;
+}
 function attachTip(chart, el, build) {
   const host = el.parentElement; host.style.position = 'relative';
   const tip = document.createElement('div'); tip.className = 'ctip'; tip.hidden = true; host.append(tip);
+  tip.id = el.id + 'Tip'; tip.setAttribute('role', 'tooltip');
+  el.setAttribute('aria-describedby', tip.id);
+  el.addEventListener('mouseleave', () => { tip.hidden = true; });
   chart.subscribeCrosshairMove(param => {
-    if (!param.time || !param.point || param.point.x < 0 || param.point.y < 0) { tip.hidden = true; return; }
+    if (!param.time || !param.point || param.point.x < 0 || param.point.y < 0 || param.point.x >= el.clientWidth || param.point.y >= el.clientHeight) { tip.hidden = true; return; }
     const html = build(param); if (!html) { tip.hidden = true; return; }
     tip.innerHTML = html; tip.hidden = false;
     const w = tip.offsetWidth, x0 = el.offsetLeft, maxX = el.offsetLeft + el.clientWidth - 70 - w;
     let x = x0 + param.point.x + 16; if (x > maxX) x = x0 + param.point.x - w - 16;
     tip.style.left = Math.max(x0 + 4, x) + 'px'; tip.style.top = (el.offsetTop + 10) + 'px';
   });
+  return tip;
 }
 function setMarkers() {
   if (!bt.r) return;
