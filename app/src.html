@@ -101,6 +101,13 @@
     </div>
     <div class="panel ledger-panel">
       <div class="panel-h"><h2>记账明细</h2><div class="ledger-actions"><button class="btn sm" id="ledgerBackfill" type="button">补录历史成交</button><button class="btn sm" id="ledgerSetup" type="button">设置期初成本</button></div></div>
+      <div id="ledgerFilters" class="ledger-filters" role="group" aria-label="记账日期筛选">
+        <label for="ledgerFrom">开始日期<input type="date" id="ledgerFrom"></label>
+        <span class="ledger-date-separator" aria-hidden="true">至</span>
+        <label for="ledgerTo">结束日期<input type="date" id="ledgerTo"></label>
+        <button class="btn sm" id="ledgerClearDates" type="button" disabled>清除筛选</button>
+      </div>
+      <p id="ledgerFilterError" class="small ledger-filter-error" role="alert" hidden>开始日期不能晚于结束日期。</p>
       <p id="ledgerInfo" class="small muted" hidden></p>
       <button class="btn sm" id="ledgerAdjust" type="button" hidden>核对股数变动</button>
       <form id="ledgerForm" hidden>
@@ -121,7 +128,12 @@
         </div>
         <button type="submit" class="btn primary">保存成交</button> <button type="button" id="pastCancel" class="btn">取消</button>
       </form>
+      <div id="ledgerPastStatus" class="ledger-past-status" hidden></div>
       <div id="ledgerList"></div>
+      <nav class="ledger-pagination" aria-label="记账明细翻页">
+        <span id="ledgerPageStatus" class="small muted" role="status" aria-live="polite"></span>
+        <div class="ledger-page-buttons"><button class="btn sm" id="ledgerPrev" type="button" disabled>上一页</button><button class="btn sm" id="ledgerNext" type="button" disabled>下一页</button></div>
+      </nav>
     </div>
   </section>
 

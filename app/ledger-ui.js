@@ -9,6 +9,29 @@ function ledgerTrades(rows) {
   return '<div class="tbl-wrap"><table><thead><tr><th>标的</th><th>操作</th><th class="r">股数</th><th class="r">参考价 · USD</th><th class="r">金额 · USD</th></tr></thead><tbody>' +
     rows.map(r => '<tr><td>'+esc(r.id)+'</td><td>'+(r.quantity>0?'买入':'卖出')+'</td><td class="r">'+Math.abs(r.quantity)+'</td><td class="r">'+formatLedgerMoney(r.price)+'</td><td class="r">'+formatLedgerMoney(Math.abs(r.quantity)*r.price)+'</td></tr>').join('') + '</tbody></table></div>';
 }
+let ledgerPageNumber = 1;
+function ledgerHistoryRecords(book, legacy) {
+  const records = (book?.entries || []).slice().reverse().map(value => ({type:'entry',date:value.date || '',value}));
+  if (book) records.push({type:'opening',date:book.date || '',value:book});
+  for (const value of (book?.past || []).slice().reverse()) records.push({type:'past',date:value.date || '',value});
+  if (legacy && !legacy.example) records.push({type:'legacy',date:legacy.date || legacy.confirmedOn || '',value:legacy});
+  return records.sort((a,b) => b.date.localeCompare(a.date));
+}
+function paginateLedgerHistory(records, from = '', to = '', page = 1) {
+  const invalid = !!(from && to && from > to);
+  const filtered = invalid ? [] : records.filter(row => (!from || row.date >= from) && (!to || row.date && row.date <= to));
+  const total = filtered.length, pages = Math.max(1,Math.ceil(total / 10));
+  page = Math.max(1,Math.min(pages,Math.trunc(Number(page)) || 1));
+  return {rows:filtered.slice((page-1)*10,page*10),total,pages,page,invalid};
+}
+function ledgerHistoryRow(row) {
+  const value = row.value;
+  if (row.type === 'entry') return '<details class="ledger-row"><summary><span>'+esc(row.date)+'</span><b>'+esc(value.kind)+'</b><span>净投入 '+formatLedgerMoney(value.flow)+'</span></summary>'+
+    '<p class="small muted">'+esc(value.model || '')+' · 参考行情 '+esc(value.priceDate)+(value.kind==='股数核对'?' · 净投入按手动填写金额':' · 金额按确认股数和参考价估算')+'</p>'+ledgerTrades(value.trades)+'</details>';
+  if (row.type === 'opening') return '<details class="ledger-row"><summary><span>'+esc(row.date)+'</span><b>期初持仓</b><span>'+(value.usePast?'依据历史成交':value.cost==null?'成本待填写':formatLedgerMoney(value.cost))+'</span></summary><p class="small muted">'+(value.positions.map(r=>esc(r.id)+' '+r.quantity+' 股').join('、') || '从空仓开始')+'</p></details>';
+  if (row.type === 'past') return '<details class="ledger-row"><summary><span>'+esc(row.date)+'</span><b>'+esc(value.id)+' · '+(value.quantity>0?'买入':'卖出')+'</b><span>'+formatLedgerMoney(Math.abs(value.flow))+'</span></summary><p class="small muted">手动补录 · '+Math.abs(value.quantity)+' 股 · 含费用 <button class="linkbtn" type="button" data-remove-fill="'+esc(value.key)+'">删除这条补录</button></p></details>';
+  return '<div class="ledger-row"><b>'+esc(row.date)+'　旧版操作记录</b><p class="small muted">'+esc(value.note || '已核对持仓')+' 旧版没有保留逐笔金额，此项仅供查阅。</p></div>';
+}
 function renderLedger() {
   const book = S.ledger;
   const changed = !!book && !S.holdingsExample && holdingChanges().length > 0;
@@ -30,21 +53,26 @@ function renderLedger() {
     book.cost == null ? '' : window.privateAccount?.sync ? '已确认的买卖会计入共享账本。' : '按清单确认后的买卖会保存在这个浏览器。';
   $('#ledgerInfo').hidden = !$('#ledgerInfo').textContent;
   const legacy = book ? book.legacy : S.lastAppliedOps;
-  const rows = (book?.entries || []).slice().reverse().map(entry =>
-    '<details class="ledger-row"><summary><span>'+esc(entry.date)+'</span><b>'+esc(entry.kind)+'</b><span>净投入 '+formatLedgerMoney(entry.flow)+'</span></summary>'+
-    '<p class="small muted">'+esc(entry.model || '')+' · 参考行情 '+esc(entry.priceDate)+(entry.kind==='股数核对'?' · 净投入按手动填写金额':' · 金额按确认股数和参考价估算')+'</p>'+
-    ledgerTrades(entry.trades)+'</details>');
-  if (book) rows.push('<details class="ledger-row"><summary><span>'+esc(book.date)+'</span><b>期初持仓</b><span>'+ (book.usePast?'依据历史成交':book.cost==null?'成本待填写':formatLedgerMoney(book.cost))+'</span></summary><p class="small muted">'+(book.positions.map(r=>esc(r.id)+' '+r.quantity+' 股').join('、') || '从空仓开始')+'</p></details>');
+  const records = ledgerHistoryRecords(book,legacy), from = $('#ledgerFrom').value, to = $('#ledgerTo').value;
+  const page = paginateLedgerHistory(records,from,to,ledgerPageNumber);
+  ledgerPageNumber = page.page;
+  $('#ledgerFrom').max = to;
+  $('#ledgerTo').min = from;
+  $('#ledgerClearDates').disabled = !from && !to;
+  $('#ledgerFilterError').hidden = !page.invalid;
+  $('#ledgerFrom').setAttribute('aria-invalid',String(page.invalid));
+  $('#ledgerTo').setAttribute('aria-invalid',String(page.invalid));
+  $('#ledgerList').innerHTML = page.rows.map(ledgerHistoryRow).join('') || '<p class="small muted ledger-empty">'+(page.invalid?'请调整日期范围。':from || to?'该日期范围内没有记账记录。':'还没有已确认的投资记录。')+'</p>';
+  $('#ledgerPageStatus').textContent = '共 '+page.total+' 条'+(page.total?' · 第 '+page.page+' / '+page.pages+' 页':'');
+  $('#ledgerPrev').disabled = page.page <= 1;
+  $('#ledgerNext').disabled = page.page >= page.pages;
+  $('#ledgerPastStatus').hidden = !book?.past?.length;
+  $('#ledgerPastStatus').innerHTML = '';
   if (book?.past?.length) {
     const past = Ledger.pastFlows(book);
-    rows.push('<p class="small muted">'+(book.usePast?'已将完整历史流水计入收益，同日买卖按净额计算。':past?'补录股数已与期初持仓吻合。确认已录入全部历史买卖后，可以据此计算收益。':'补录流水尚未与期初股数吻合，目前仅供查阅。')+
-      (past && !book.usePast?' <button class="btn sm" type="button" id="usePast">使用完整流水计算收益</button>':'')+'</p>');
-    for (const fill of [...book.past].sort((a,b)=>b.date.localeCompare(a.date))) {
-      rows.push('<details class="ledger-row"><summary><span>'+esc(fill.date)+'</span><b>'+esc(fill.id)+' · '+(fill.quantity>0?'买入':'卖出')+'</b><span>'+formatLedgerMoney(Math.abs(fill.flow))+'</span></summary><p class="small muted">手动补录 · '+Math.abs(fill.quantity)+' 股 · 含费用 <button class="linkbtn" type="button" data-remove-fill="'+esc(fill.key)+'">删除这条补录</button></p></details>');
-    }
+    $('#ledgerPastStatus').innerHTML = '<p class="small muted">'+(book.usePast?'已将完整历史流水计入收益，同日买卖按净额计算。':past?'补录股数已与期初持仓吻合。确认已录入全部历史买卖后，可以据此计算收益。':'补录流水尚未与期初股数吻合，目前仅供查阅。')+
+      (past && !book.usePast?' <button class="btn sm" type="button" id="usePast">使用完整流水计算收益</button>':'')+'</p>';
   }
-  if (legacy && !legacy.example) rows.push('<div class="ledger-row"><b>'+esc(legacy.date || legacy.confirmedOn || '')+'　旧版操作记录</b><p class="small muted">'+esc(legacy.note || '已核对持仓')+' 旧版没有保留逐笔金额，此项仅供查阅。</p></div>');
-  $('#ledgerList').innerHTML = rows.join('') || '<p class="small muted">还没有已确认的投资记录。</p>';
 }
 function saveLedgerChange(previous) {
   if (S.ledger) S.ledger.revision = crypto.randomUUID();
@@ -55,6 +83,11 @@ function saveLedgerChange(previous) {
 }
 function bindLedger() {
   const form = $('#ledgerForm'), amount = $('#ledgerAmount');
+  for (const id of ['#ledgerFrom','#ledgerTo']) $(id).onchange = () => { ledgerPageNumber=1; renderLedger(); };
+  $('#ledgerClearDates').onclick = () => { $('#ledgerFrom').value=''; $('#ledgerTo').value=''; ledgerPageNumber=1; renderLedger(); };
+  for (const [id,direction] of [['#ledgerPrev',-1],['#ledgerNext',1]]) $(id).onclick = () => {
+    ledgerPageNumber+=direction; renderLedger(); $('#ledgerFilters').scrollIntoView({block:'start'});
+  };
   let snapshot;
   function open(adjust) {
     $('#pastTradeForm').hidden=true;
@@ -97,7 +130,7 @@ function bindLedger() {
       renderLedger();
     });
   };
-  $('#ledgerList').onclick=event=>{
+  const ledgerAction=event=>{
     const remove=event.target.closest('[data-remove-fill]'), use=event.target.closest('#usePast');
     if (!remove && !use) return;
     withCurrentHoldings(()=>{
@@ -108,6 +141,8 @@ function bindLedger() {
       saveLedgerChange(previous); renderLedger();
     });
   };
+  $('#ledgerList').onclick=ledgerAction;
+  $('#ledgerPastStatus').onclick=ledgerAction;
   form.onsubmit=event=>{
     event.preventDefault();
     const value=amount.valueAsNumber;
