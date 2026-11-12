@@ -2228,6 +2228,15 @@ button, summary, a {
 
 .ai-settings {
   width: min(520px, calc(100% - 32px));
+  border-radius: 26px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ai-settings::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .settings-heading, .settings-key, .settings-utilities {
