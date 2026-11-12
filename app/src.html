@@ -1360,7 +1360,7 @@ function renderBacktest() {
     bt.navS = bt.nav.addCandlestickSeries(candleOpts());
     bt.b1 = bt.nav.addLineSeries({ color: '#737985', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
     bt.asset = makeChart($('#assetChart'), true); bt.assetS = bt.asset.addCandlestickSeries(candleOpts());
-    for (const chart of [bt.nav, bt.asset]) chart.timeScale().applyOptions({ fixLeftEdge: true, fixRightEdge: true, rightOffset: 0 });
+    for (const chart of [bt.nav, bt.asset]) chart.timeScale().applyOptions({ fixLeftEdge: true, fixRightEdge: false, rightOffset: 0 });
     bt.val = makeChart($('#valChart'), false);
     bt.valS = bt.val.addAreaSeries({ lineColor: css('--accent'), topColor: css('--accent') + '33', bottomColor: css('--accent') + '05', lineWidth: 1.5, priceLineVisible: false });
     bt.invS = bt.val.addLineSeries({ color: css('--ink-3'), lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false });
