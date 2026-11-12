@@ -165,7 +165,58 @@ test('resetting one operation cannot spend or unlock the other kind', () => {
   assert.equal(Investment.rebalanceDone(state,'2026-11-09'),true);
   const calendar = actions({mode:'calendar',lastBalanceCheckDate:'2026-11-09',investmentResets:{rebalance:{id:'force-calendar',period:'2026-11'}}});
   assert.equal(calendar.rebalanceEnabled,true);
-  assert.equal(actions({allowSell:false,investmentResets:{rebalance:{id:'force-calendar',period:'2026-11'}}}).rebalanceEnabled,false);
+  const buyOnly=actions({allowSell:false,investmentResets:{rebalance:{id:'force-calendar',period:'2026-11'}}});
+  assert.equal(buyOnly.rebalanceEnabled,true); // the unlocked review opens; execution still respects the sell restriction
+  assert.equal(buyOnly.rebalancePlan.rebalance,false);
+  assert.equal(buyOnly.rebalancePlan.sell,0);
+});
+
+function executionIssue(plan, overrides={}) {
+  const ctx=vm.createContext({S:{allowSell:true,...overrides},sumW:()=>100,holdingChanges:()=>[],plan});
+  vm.runInContext(source.slice(source.indexOf('function rebalanceExecutionIssue('),source.indexOf('function applyOps(')),ctx);
+  return vm.runInContext('rebalanceExecutionIssue(plan)',ctx);
+}
+
+test('an unlocked rebalance opens even when holdings are already on target or no trade meets the minimum',()=>{
+  const investmentResets={rebalance:{id:'review-balanced',period:'2026-11'}};
+  const balanced=actions({holdings:{A:50,B:50},lastBalanceCheckDate:'2026-11-09',investmentResets});
+  assert.equal(balanced.rebalanceEnabled,true);
+  assert.equal(balanced.rebalanceDone,false);
+  assert.equal(balanced.rebalancePlan.buy+balanced.rebalancePlan.sell,0);
+  assert.match(executionIssue(balanced.rebalancePlan),/无需买卖/);
+  assert.match(executionIssue(balanced.rebalancePlan),/机会会保留/);
+  const tiny=actions({holdings:{A:0.005,B:0},wholeShares:true,investmentResets});
+  assert.equal(tiny.rebalanceEnabled,true);
+  assert.equal(tiny.rebalancePlan.buy+tiny.rebalancePlan.sell,0);
+  assert.ok(executionIssue(tiny.rebalancePlan));
+});
+
+test('unlocked previews explain missing holdings and sell restrictions without authorizing execution',()=>{
+  const investmentResets={rebalance:{id:'review-blocked',period:'2026-11'}};
+  const empty=actions({holdings:{A:0,B:0},investmentResets});
+  assert.equal(empty.rebalanceEnabled,true);
+  assert.match(executionIssue(empty.rebalancePlan),/没有持仓/);
+  const buyOnly=actions({allowSell:false,investmentResets});
+  assert.equal(buyOnly.rebalanceEnabled,true);
+  assert.match(executionIssue(buyOnly.rebalancePlan,{allowSell:false}),/只买不卖/);
+  assert.equal(executionIssue(actions({investmentResets}).rebalancePlan),'');
+});
+
+test('opening an unlocked no-trade preview cannot create a zero-trade receipt or consume the reset',async()=>{
+  const state={allowSell:true,investmentResets:{rebalance:{id:'review-only',period:'2026-11'}}};
+  const action=actions({...state,holdings:{A:50,B:50}}),submit={disabled:false},dialog={open:false,showModal(){this.open=true;}};
+  let recorded=0;
+  const ctx=vm.createContext({S:state,Investment,crypto:{randomUUID:()=> 'draft'},todayStr:()=> '2026-11-09',
+    sumW:()=>100,holdingChanges:()=>[],investmentActionState:()=>action,planRebalance:()=>action.rebalancePlan,
+    opsContext:()=> 'unchanged',renderRebalancePreview:()=>{},rebalanceError:()=>{},
+    $:id=>id==='#opsConfirm'?dialog:submit,recordInvestment:()=>{recorded++;},
+    withCurrentHoldings:async run=>run()});
+  vm.runInContext('let pendingOps=null;'+source.slice(source.indexOf('function rebalanceExecutionIssue('),source.indexOf('function bindRebalance(')),ctx);
+  vm.runInContext('applyOps()',ctx);
+  assert.equal(dialog.open,true);assert.equal(submit.disabled,true);
+  await vm.runInContext('confirmOps({preventDefault(){},currentTarget:{reportValidity:()=>true}})',ctx);
+  assert.equal(recorded,0);
+  assert.equal(Investment.pendingReset(state,'rebalance','2026-11-09').id,'review-only');
 });
 
 function recordReset(kind, persist) {

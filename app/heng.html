@@ -5841,7 +5841,7 @@ function investmentActionState() {
   const rebalancePlan = planRebalance({kind:'rebalance',amountCny:0,period:today.slice(0,7),id:'rebalance-preview'});
   return { monthlyDone, rebalanceDone, valid, rebalancePlan,
     monthlyEnabled: valid && !monthlyDone,
-    rebalanceEnabled: valid && !rebalanceDone && rebalancePlan.rebalance && (rebalancePlan.buy > 0 || rebalancePlan.sell > 0) };
+    rebalanceEnabled: valid && !rebalanceDone && (!!rebalancePlan.resetId || (rebalancePlan.rebalance && (rebalancePlan.buy > 0 || rebalancePlan.sell > 0))) };
 }
 function renderOps(plan) {
   const state = investmentActionState(), monthly = $('#monthlyAction'), rebalance = $('#rebalanceAction');
@@ -5853,12 +5853,12 @@ function renderOps(plan) {
   rebalance.textContent = state.rebalanceEnabled ? '再平衡' : '本期已再平衡';
   rebalance.classList.toggle('is-complete', rebalance.disabled);
   rebalance.title = !state.valid ? '请先配置权重合计为 100% 的定投模型' : state.rebalanceDone ? '本月再平衡已完成' : !S.allowSell ? '当前为只买不卖，暂不执行再平衡' : '当前未触发再平衡条件，或没有需要买卖的标的';
-  if (state.rebalancePlan.resetId) rebalance.title = state.rebalanceEnabled ? '已解锁一次，可提前执行再平衡' : '已解锁一次；当前没有可执行的买卖，或设置为只买不卖，机会会保留';
+  if (state.rebalancePlan.resetId) rebalance.title = state.valid ? '已解锁一次，点击查看再平衡检查结果' : '已解锁一次，请先配置权重合计为 100% 的定投模型';
   const nBuy = plan.ids.filter(id => plan.delta[id] > 0).length, nSell = plan.ids.filter(id => plan.delta[id] < 0).length;
   $('#rbOps').textContent = `买 ${nBuy} · 卖 ${nSell}`;
 }
 function renderRebalancePreview(plan) {
-  $('#opsConfirmIntro').textContent = plan.manual ? '本次使用设置中解锁的一次再平衡机会。核对买卖金额和股数，在券商完成操作后再确认更新持仓。' : '核对需要买入、卖出的金额和股数。在券商完成操作后，再确认更新持仓。';
+  $('#opsConfirmIntro').textContent = plan.resetId ? '本次使用设置中解锁的一次再平衡机会。核对检查结果；需要买卖时，在券商完成操作后再确认更新持仓。' : '核对需要买入、卖出的金额和股数。在券商完成操作后，再确认更新持仓。';
   $('#opsAsOf').textContent = `按 ${D.asOf} 参考价估算；标的金额以美元显示，合计按当前汇率折算为人民币。`;
   const cny = amount => '¥' + (amount * S.fx).toLocaleString('zh-CN', {minimumFractionDigits:2,maximumFractionDigits:2});
   $('#opsConfirmBuy').textContent = cny(plan.buy);
@@ -5874,7 +5874,7 @@ function renderRebalancePreview(plan) {
       <td data-label="占比变化"><span class="wto">${fmtPct(plan.cur[id])} → <b>${fmtPct(plan.after[id])}</b><span class="muted"> / 目标 ${fmtPct(plan.tw[id])}</span></span></td>
       <td class="why" data-label="原因">${why}</td></tr>`;
   }).join('');
-  $('#opsTable').innerHTML = `<thead><tr><th>标的</th><th>操作</th><th class="r">金额</th><th class="r">${S.wholeShares ? '股数' : '约合股数'}</th><th>占比变化</th><th>原因</th></tr></thead><tbody>${rows}</tbody>`;
+  $('#opsTable').innerHTML = `<thead><tr><th>标的</th><th>操作</th><th class="r">金额</th><th class="r">${S.wholeShares ? '股数' : '约合股数'}</th><th>占比变化</th><th>原因</th></tr></thead><tbody>${rows || `<tr><td colspan="6" class="muted" data-label="检查结果">${esc(rebalanceExecutionIssue(plan) || '当前没有需要买卖的标的。')}</td></tr>`}</tbody>`;
 
 }
 
@@ -5996,6 +5996,8 @@ function renderResetSettings() {
   const monthly = Investment.pendingReset(S,'monthly',todayStr()), rebalance = Investment.pendingReset(S,'rebalance',todayStr());
   $('#resetMonthly').disabled = !!monthly;
   $('#resetRebalance').disabled = !!rebalance;
+  $('#resetMonthly').textContent = monthly ? '定投已解锁' : '重置定投';
+  $('#resetRebalance').textContent = rebalance ? '再平衡已解锁' : '重置再平衡';
   $('#investmentResetStatus').textContent = `定投：${monthly ? '已解锁一次，待使用' : '可解锁一次'}；再平衡：${rebalance ? '已解锁一次，待使用' : '可解锁一次'}。`;
 }
 async function resetInvestmentAction(kind) {
@@ -6014,7 +6016,7 @@ async function resetInvestmentAction(kind) {
       if (current==='history') renderLedger();
       renderResetSettings();
       const state = investmentActionState();
-      $('#investmentResetStatus').textContent = !state.valid ? `已解锁一次${label}，请先配置有效的定投模型。` : kind==='rebalance' && !state.rebalanceEnabled ? '已解锁一次再平衡；当前没有可执行的买卖，或设置为只买不卖，机会会保留。' : `已解锁一次${label}，关闭设置后即可使用；确认记账后机会自动用完。`;
+      $('#investmentResetStatus').textContent = !state.valid ? `已解锁一次${label}，请先配置有效的定投模型。` : kind==='rebalance' ? '再平衡已解锁。关闭设置后点击主页「再平衡」查看检查结果；确认记账后机会自动用完。' : `已解锁一次${label}，关闭设置后即可使用；确认记账后机会自动用完。`;
     });
     if (!checked) { renderResetSettings(); $('#investmentResetStatus').textContent='持仓已在其他页面更新，请核对后重新点击重置。'; }
   } finally { button.disabled = !!Investment.pendingReset(S,kind,todayStr()); }
@@ -6103,16 +6105,27 @@ async function confirmMonthlyInvestment(event) {
     if (dialog.open && monthlyDraft===draft) submit.disabled=!(draft.plan?.buy>0) || sumW()!==100 || Investment.monthlyDone(S,todayStr()) || !!S.holdingsExample;
   }
 }
+function rebalanceExecutionIssue(plan) {
+  const retained = plan.resetId ? '已解锁的机会会保留。' : '';
+  if (!plan.ids.length || sumW()!==100) return '请先配置权重合计为 100% 的定投模型。'+retained;
+  if (S.holdingsExample) return '当前为示例持仓，仅供预览；请先填写真实持仓后再记账。'+retained;
+  if (S.ledger && holdingChanges().length) return '持仓股数与账本有差异，请先到「投资记录」核对。'+retained;
+  if (!(plan.V>0)) return '当前没有持仓，无需再平衡。请先完成定投或录入实际持仓。'+retained;
+  if (!S.allowSell) return '当前设置为「只买不卖」，暂不执行再平衡。请在「定投模型 → 定投与再平衡规则」中允许卖出后重试。'+retained;
+  if (!(plan.buy>0 || plan.sell>0)) return '当前持仓已接近目标，或偏离金额、股数不足成交门槛，本次无需买卖。'+retained;
+  if (!plan.rebalance) return '当前未触发再平衡，请关闭后重新检查。'+retained;
+  return '';
+}
 function applyOps() {
   const state = investmentActionState();
   if (!state.rebalanceEnabled) { renderOps(planRebalance()); return; }
   const today = todayStr(), intent = {kind:'rebalance',amountCny:0,period:today.slice(0,7),id:crypto.randomUUID()};
   const plan = planRebalance(intent);
   pendingOps = {intent,context:opsContext(),today,kind:'rebalance',operationId:plan.operationId,period:intent.period};
-  renderRebalancePreview(plan); rebalanceError('');
-  $('#opsConfirmContinue').disabled = !!S.holdingsExample || !!(S.ledger && holdingChanges().length);
-  if (S.holdingsExample) rebalanceError('当前为示例持仓，仅供预览；请先填写真实持仓后再记账。');
-  else if (S.ledger && holdingChanges().length) rebalanceError('持仓股数与账本有差异，请先到「投资记录」核对。');
+  renderRebalancePreview(plan);
+  const issue = rebalanceExecutionIssue(plan);
+  rebalanceError(plan.buy>0 || plan.sell>0 ? issue : '');
+  $('#opsConfirmContinue').disabled = !!issue;
   $('#opsConfirm').showModal();
 }
 async function confirmOps(event) {
@@ -6125,13 +6138,13 @@ async function confirmOps(event) {
       if (!dialog.open || pendingOps!==request) return;
       if (request.today!==todayStr() || request.context!==opsContext()) { dialog.close(); renderRebalance(); toast('日期或持仓已变化，请重新核对再平衡清单。'); return; }
       if (Investment.rebalanceDone(S,todayStr())) { dialog.close(); renderRebalance(); return; }
-      if (S.holdingsExample || (S.ledger && holdingChanges().length)) { rebalanceError('请先核对真实持仓与账本后再确认。'); return; }
       const plan = planRebalance(request.intent);
-      if (sumW()!==100 || !plan.rebalance || !(plan.buy>0 || plan.sell>0)) { rebalanceError('当前已无需执行再平衡，请关闭后重新检查。'); return; }
+      const issue = rebalanceExecutionIssue(plan);
+      if (issue) { renderRebalancePreview(plan); rebalanceError(plan.buy>0 || plan.sell>0 ? issue : ''); return; }
       if (!recordInvestment(plan,request)) { rebalanceError('未能保存再平衡记录，持仓已恢复。请检查存储空间后重试。'); return; }
       dialog.close(); renderRebalance(); toast('本期再平衡已记账，持仓已更新');
     });
-  } finally { if (dialog.open) submit.disabled=false; }
+  } finally { if (dialog.open) submit.disabled=!!rebalanceExecutionIssue(planRebalance(request.intent)); }
 }
 
 function bindRebalance() {
