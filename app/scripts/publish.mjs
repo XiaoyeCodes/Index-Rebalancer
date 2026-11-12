@@ -7,7 +7,7 @@ import { randomBytes, createCipheriv, publicEncrypt } from 'node:crypto';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const app = path.join(root, 'app');
 const output = path.join(root, 'dist');
-const allowed = new Set(['index.html', '.nojekyll', 'pages-login.js', 'workspace-sync.js', 'browser-model.js', 'application.bin', 'assets']);
+const allowed = new Set(['index.html', '.nojekyll', 'pages-login.js', 'workspace-sync.js', 'browser-model.js', 'browser-session.js', 'application.bin', 'assets']);
 fs.mkdirSync(output, {recursive:true});
 for (const entry of fs.readdirSync(output, {withFileTypes:true})) {
   if (!allowed.has(entry.name) || (entry.name==='assets' ? !entry.isDirectory() : !entry.isFile())) {
@@ -54,5 +54,5 @@ if (endpoint && new URL(endpoint).protocol!=='https:') throw Error('Shared works
 const envelope = {...access, syncEndpoint:endpoint, wrapped:wrapped.toString('base64'), appIv:iv.toString('base64')};
 const shell = fs.readFileSync(path.join(app,'login.html'),'utf8').split('<!-- login runtime -->')[0];
 fs.writeFileSync(path.join(output,'index.html'),shell+'<script id="access" type="application/json">'+JSON.stringify(envelope)+'</script><script type="module" src="./pages-login.js"></script></body></html>');
-for (const name of ['pages-login.js','workspace-sync.js','browser-model.js']) fs.copyFileSync(path.join(app,name),path.join(output,name));
+for (const name of ['pages-login.js','workspace-sync.js','browser-model.js','browser-session.js']) fs.copyFileSync(path.join(app,name),path.join(output,name));
 fs.writeFileSync(path.join(output,'.nojekyll'),'');

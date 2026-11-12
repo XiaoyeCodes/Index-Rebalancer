@@ -26,9 +26,10 @@ export async function accountGate(req,res,url){
   const token=
     /(?:^|;\s*)heng_session=([A-Za-z0-9_-]+)/.exec(req.headers.cookie || '')?.[1];
   if(route==='/api/account/login' && verb==='POST'){
-    const {password}=await body(req,4096);
-    const session=await login(password,audience);
-    res.setHeader('Set-Cookie','heng_session='+session+'; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800');
+    const {password,remember=false}=await body(req,4096);
+    if(typeof remember!=='boolean')throw fail(400,'保持登录选项无效。');
+    const session=await login(password,audience,remember);
+    res.setHeader('Set-Cookie','heng_session='+session+'; HttpOnly; SameSite=Strict; Path=/'+(remember?'; Max-Age=2592000':'')+(url.protocol==='https:'?'; Secure':''));
     send(res,200,{ok:true});return true;
   }
   if(!authenticated(token,audience))throw fail(401,'请先输入密码登录。');

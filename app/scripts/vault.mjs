@@ -44,7 +44,7 @@ export function modelSettings(){
 }
 const hashToken=token=>createHash('sha256').update(token).digest('hex');
 const error=(status,message)=>Object.assign(new Error(message),{status});
-export async function login(password,audience){
+export async function login(password,audience,remember=false){
   const now=Date.now(), t=db.prepare('SELECT * FROM attempts WHERE id=1').get();
   if(t && t.until>now && t.count>=8)throw error(429,'尝试次数过多，请在 10 分钟后再试。');
   const row=db.prepare('SELECT salt,verifier FROM account WHERE id=1').get();
@@ -55,7 +55,7 @@ export async function login(password,audience){
   db.prepare('DELETE FROM attempts').run();
   db.prepare('DELETE FROM sessions WHERE expires<=?').run(now);
   const token=randomBytes(32).toString('base64url');
-  db.prepare('INSERT INTO sessions VALUES(?,?,?)').run(hashToken(token),audience,now+8*3600000);
+  db.prepare('INSERT INTO sessions VALUES(?,?,?)').run(hashToken(token),audience,now+(remember?30*24:8)*3600000);
   return token;
 }
 export function authenticated(token,audience){
