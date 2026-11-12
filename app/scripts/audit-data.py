@@ -115,7 +115,7 @@ for scenario in browser["scenarios"]:
             units += addition/(total/units if units else 1)
             invested += addition
             flows.append((dates[i],-addition))
-            if cfg["cashflow"]:
+            if cfg["mode"] != "none" and (cfg.get("allowSell") is False or cfg["cashflow"]):
                 gaps = [max(0,w*(total+addition)-v) for w,v in zip(target,values)]
                 missing = sum(gaps)
                 allocation = [addition*g/missing for g in gaps] if missing>=addition else [g+(addition-missing)*w for g,w in zip(gaps,target)]
@@ -128,7 +128,7 @@ for scenario in browser["scenarios"]:
         threshold = any(abs(v-w)*100>=cfg["abs"] or abs(v-w)/w*100>=cfg["rel"] for v,w in zip(weights,target))
         calendar = new_month and i>begin and dates[i].month in ([1,4,7,10] if cfg["period"]=="Q" else [1])
         hit = (cfg["mode"] in ["threshold","hybrid"] and threshold) or (cfg["mode"] in ["calendar","hybrid"] and calendar)
-        if hit:
+        if hit and cfg.get("allowSell") is not False:
             trades = [w*total-v for w,v in zip(target,values)]
             gross = sum(abs(t) for t in trades if abs(t)>.5)
             if gross/total>.002:

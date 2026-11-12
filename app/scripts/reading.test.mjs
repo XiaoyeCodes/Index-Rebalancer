@@ -35,6 +35,7 @@ function fixture() {
     const contributionApplied = () => appliedContribution;
     const opsContext = () => JSON.stringify([S,receiptApplied,appliedContribution]);
     let readCtl = null;
+    ${section('function modelBacktestConfig(', 'function investmentPolicy(')}
     ${section('function planRebalance(', 'function marketRead(')}
     ${section('function marketRead(', 'function renderOps(')}
     ${section('let modelBt = null', 'function renderRebalance(')}
@@ -144,4 +145,22 @@ test('risk cache respects fees and data dates; invalid and empty models clear ol
   f.sandbox.S.weights = {}; f.render();
   assert.equal(f.evaluate('modelBt'), null);
   assert.match(f.$('#readSummary').innerHTML, /选择标的和目标权重/);
+});
+
+test('risk history uses the same selected funding, start and sell policy as the backtest page', () => {
+  const f = fixture();
+  Object.assign(f.sandbox.S, { start: '2025-02', monthly: 5000, initial: 20000 });
+  f.render();
+  const first = f.sandbox.backtests.at(-1);
+  assert.equal(first.start, '2025-02');
+  assert.equal(first.monthly, 5000);
+  assert.equal(first.initial, 20000);
+  f.sandbox.S.allowSell = false; f.render();
+  assert.equal(f.sandbox.backtests.length, 2);
+  assert.equal(f.sandbox.backtests.at(-1).allowSell, false);
+  f.sandbox.S.monthly = 6000; f.render();
+  assert.equal(f.sandbox.backtests.length, 3);
+  assert.equal(f.sandbox.backtests.at(-1).monthly, 6000);
+  Object.assign(f.sandbox.S, { mode: 'none', cashflow: true }); f.render();
+  assert.equal(f.sandbox.backtests.at(-1).cashflow, false);
 });

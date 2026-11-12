@@ -128,3 +128,137 @@ test('saved built-in model labels follow their renamed titles without changing w
   assert.equal(migrated.weights.VOO, 50);
   assert.equal(Object.values(migrated.weights).reduce((sum, weight) => sum + weight, 0), 100);
 });
+
+const driftingAssets = () => ({ AAA: asset([100, 200, 200, 200, 200, 200, 400]), BBB: asset(Array(7).fill(100)) });
+const driftConfig = { weights: { AAA: 50, BBB: 50 }, initial: 1000, monthly: 100, abs: 1, rel: 1 };
+
+test('fixed DCA, buy-only deficit funding and buy/sell rebalancing produce distinct cash-conserving paths', () => {
+  const e = engine(driftingAssets());
+  const fixed = e.run({ ...driftConfig, mode: 'none', cashflow: true, allowSell: true });
+  const buyOnly = e.run({ ...driftConfig, mode: 'threshold', cashflow: true, allowSell: false });
+  const rebalanced = e.run({ ...driftConfig, mode: 'threshold', cashflow: true, allowSell: true });
+  // January receives 1100, February 100. Fixed buys 50/50 in February even
+  // though AAA is overweight; buy-only puts that entire 100 into BBB.
+  close(fixed.final, 2900);
+  close(buyOnly.final, 2850);
+  close(rebalanced.final, 2625);
+  assert.equal(fixed.cfg.cashflow, false);
+  assert.equal(fixed.rebCount, 0);
+  assert.equal(buyOnly.rebCount, 0);
+  assert.equal(buyOnly.log.length, 0);
+  assert.equal(buyOnly.marks.length, 0);
+  assert.equal(rebalanced.rebCount, 2);
+  assert.ok(rebalanced.log.every(entry => entry.trades.some(([, n]) => n < 0) && entry.trades.some(([, n]) => n > 0)));
+  for (const r of [fixed, buyOnly, rebalanced]) assert.equal(r.invested, 1200);
+  const benchmark = e.run({ ...driftConfig, mode: 'none', cashflow: false, allowSell: false });
+  assert.equal(JSON.stringify(fixed.nav), JSON.stringify(benchmark.nav));
+  assert.equal(JSON.stringify(fixed.val), JSON.stringify(benchmark.val));
+});
+
+test('sell restrictions apply to calendar and hybrid triggers as well as threshold triggers', () => {
+  const assets = { AAA: asset(Array.from({ length: 60 }, (_, i) => 100 + i * 5)), BBB: asset(Array(60).fill(100)) };
+  for (const mode of ['calendar', 'hybrid', 'threshold']) {
+    const e = engine(assets);
+    const r = e.run({ ...driftConfig, monthly: 0, mode, allowSell: false, cashflow: false, period: 'Q' });
+    close(r.final, 2475);
+    assert.equal(r.rebCount, 0);
+    assert.equal(r.cfg.cashflow, true);
+    assert.ok(e.run({ ...driftConfig, monthly: 0, mode, allowSell: true, period: 'Q' }).rebCount > 0);
+  }
+});
+
+test('policy controls prevent conflicting fixed, buy-only and buy/sell settings', () => {
+  const e = engine(driftingAssets()), nodes = new Map();
+  e.context.$ = selector => { if (!nodes.has(selector)) nodes.set(selector, {}); return nodes.get(selector); };
+  e.context.S = { ...driftConfig, mode: 'none', cashflow: true, allowSell: true };
+  e.evaluate(section('function syncModelControls(', 'function syncTradeSettings('));
+  for (const policy of ['fixed', 'buy-only', 'rebalance']) {
+    e.evaluate(`setInvestmentPolicy('${policy}'); syncModelControls()`);
+    assert.equal(nodes.get('#pPolicy').value, policy);
+    assert.equal(nodes.get('#pMode').disabled, policy !== 'rebalance');
+    assert.equal(nodes.get('#pCash').disabled, policy !== 'rebalance');
+    assert.equal(e.evaluate('modelBacktestConfig(S).allowSell'), policy === 'rebalance');
+    if (policy === 'fixed') assert.equal(nodes.get('#pCash').checked, false);
+    if (policy === 'buy-only') assert.equal(nodes.get('#pCash').checked, true);
+  }
+});
+
+test('every backtest chart and comparison rerenders from the current complete model configuration', () => {
+  const e = engine(driftingAssets()), nodes = new Map();
+  e.context.A = { AAA: { color: '#111111' }, BBB: { color: '#222222' } };
+  e.context.D.assets.SPY = asset(Array(7).fill(100));
+  const series = () => ({ setData(data) { this.data = data; } });
+  const scale = { fitContent() {} };
+  const chart = { timeScale: () => scale };
+  e.context.fixture = { nav: chart, navS: series(), b1: series(), b2: series(), val: chart, valS: series(), invS: series() };
+  e.context.S = { ...driftConfig, start: '2000-01', fee: 0, mode: 'none', cashflow: false, allowSell: false };
+  e.context.$ = selector => { if (!nodes.has(selector)) nodes.set(selector, {}); return nodes.get(selector); };
+  e.context.fmtMoney = e.context.fmtPct = e.context.esc = value => String(value);
+  e.context.sumW = () => 100;
+  for (const name of ['setMarkers', 'setAssetChart', 'renderStack', 'renderYears', 'renderLog']) e.context[name] = () => {};
+  e.evaluate(section('let bt =', '// floating hover card'));
+  e.evaluate(section('const STRAT =', 'const pctFmt ='));
+  e.evaluate(section('function renderLog(', '/* ---------------- 00 rebalance view'));
+  e.evaluate('bt = fixture');
+  for (const [policy, expected] of [['fixed', 2900], ['buy-only', 2850], ['rebalance', 2625]]) {
+    e.evaluate(`setInvestmentPolicy('${policy}'); S.mode = S.mode === 'none' ? 'none' : 'threshold'; renderBacktest()`);
+    close(e.evaluate('bt.r.final'), expected);
+    assert.equal(JSON.stringify(e.context.fixture.navS.data), e.evaluate('JSON.stringify(navMonthly(bt.r))'));
+    assert.equal(e.context.fixture.valS.data.at(-1).value, expected);
+    assert.equal(e.context.fixture.invS.data.at(-1).value, 1200);
+    assert.equal(e.context.fixture.valS.data.at(-1).value, e.evaluate('bt.r.final'));
+    assert.equal(e.evaluate('JSON.stringify(cmpData(STRAT))'), e.evaluate('JSON.stringify(navLine(bt.r))'));
+    assert.ok(nodes.get('#cmpTable').innerHTML.includes(String(expected)));
+    if (policy === 'fixed') {
+      assert.equal(JSON.stringify(e.context.fixture.b2.data), e.evaluate('JSON.stringify(navLine(bt.r))'));
+      assert.match(nodes.get('#cmpNote').innerHTML, /完全相同/);
+    }
+    if (policy === 'buy-only') {
+      assert.match(nodes.get('#cmpNote').innerHTML, /新钱补低配/);
+      assert.match(nodes.get('#logTable').innerHTML, /没有卖出或存量调仓/);
+    }
+  }
+  e.context.S.monthly = 200;
+  e.context.S.initial = 2000;
+  e.evaluate('renderBacktest()');
+  close(e.context.fixture.invS.data.at(-1).value, 2400);
+  close(e.context.fixture.valS.data.at(-1).value, 5250);
+});
+
+test('an unfunded model has no invented NAV or annualized return', () => {
+  const r = engine(driftingAssets()).run({ ...driftConfig, initial: 0, monthly: 0 });
+  assert.equal(r.final, 0);
+  assert.equal(r.nav.length, 0);
+  assert.equal(r.xirr, null);
+  assert.equal(r.twr, null);
+  assert.equal(r.vol, null);
+});
+
+test('custom models save and reapply both the sales policy and contribution allocation', () => {
+  const e = engine(driftingAssets());
+  e.context.S = { ...driftConfig, preset: 'custom-example', start: '2000-01', fee: 0, mode: 'threshold', allowSell: false, cashflow: true };
+  e.context.customPresets = [{ key: 'custom-example', name: 'Example', w: { AAA: 50, BBB: 50 }, rule: { mode: 'threshold', abs: 1, rel: 1, period: 'Y' } }];
+  const storage = new Map([['heng.templates', JSON.stringify(e.context.customPresets)]]);
+  e.context.localStorage = { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) };
+  e.context.window = {};
+  e.context.$ = () => ({ reportValidity: () => true });
+  e.context.sumW = () => 100;
+  e.context.save = () => true;
+  for (const name of ['strategySaveStatus', 'ensureRebalanceState', 'computePresetStats', 'renderPresets', 'renderStrategy', 'renderAssets']) e.context[name] = () => {};
+  e.evaluate(section('function saveStrategy(', 'function renderTiers('));
+  e.evaluate(section('function applyPreset(', 'let templateDraft ='));
+  e.evaluate('saveStrategy()');
+  const saved = JSON.parse(storage.get('heng.templates'))[0];
+  assert.equal(saved.rule.allowSell, false);
+  assert.equal(saved.rule.cashflow, true);
+  e.context.S.allowSell = true;
+  e.context.S.cashflow = false;
+  e.context.saved = saved;
+  e.evaluate('applyPreset(saved)');
+  assert.equal(e.context.S.allowSell, false);
+  assert.equal(e.context.S.cashflow, true);
+  e.context.saved.rule = { mode: 'none', cashflow: true, allowSell: true };
+  e.evaluate('applyPreset(saved)');
+  assert.equal(e.context.S.allowSell, false);
+  assert.equal(e.context.S.cashflow, false);
+});

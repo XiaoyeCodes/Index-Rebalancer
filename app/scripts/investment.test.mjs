@@ -44,6 +44,16 @@ test('monthly and bonus purchases only buy; rebalance has zero contribution', ()
   assert.equal(rebalance.A, 0); assert.ok(rebalance.sell > 0);
 });
 
+test('fixed-ratio contributions keep buying an overweight asset while buy-only balancing funds the deficit', () => {
+  const fixed = plan('monthly', { mode: 'none', cashflow: true, allowSell: true });
+  assert.equal(fixed.alloc.A, 50);
+  assert.equal(fixed.alloc.B, 50);
+  const buyOnly = plan('monthly', { mode: 'hybrid', cashflow: true, allowSell: false });
+  assert.equal(buyOnly.alloc.A, 0);
+  assert.equal(buyOnly.alloc.B, 100);
+  assert.equal(buyOnly.sell, 0);
+});
+
 test('completed monthly and bonus operations cannot produce another funded plan', () => {
   assert.equal(plan('monthly', {contributionMonth:'2026-11'}).buy, 0);
   const extra = plan('bonus', {ledger:{entries:[{investmentType:'bonus',operationId:'bonus-1'}]}});

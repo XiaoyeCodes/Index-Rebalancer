@@ -24,6 +24,8 @@ const output = vm.runInContext(`(() => {
   const scenarios = PRESETS.map(p=>({key:p.key,name:p.name,cfg:{weights:p.w,start:'2000-01',monthly:3000,initial:0,...p.rule,fee:0.05,cashflow:true}}));
   for (const mode of ['none','calendar','threshold','hybrid']) for (const cashflow of [true,false])
     scenarios.push({key:'audit-'+mode+'-'+cashflow,cfg:{weights:{SPY:30,QQQM:20,HSI:15,BND:25,GLD:10},start:'2010-01',monthly:1500,initial:50000,mode,abs:5,rel:30,period:'Q',fee:0.15,cashflow}});
+  for (const mode of ['calendar','threshold','hybrid']) for (const cashflow of [true,false])
+    scenarios.push({key:'audit-buy-only-'+mode+'-'+cashflow,cfg:{weights:{SPY:30,QQQM:20,HSI:15,BND:25,GLD:10},start:'2010-01',monthly:1500,initial:50000,mode,abs:5,rel:30,period:'Q',fee:0.15,cashflow,allowSell:false}});
   return {catalogue:A,statistics:ST,presets:PRESETS,scenarios:scenarios.map(s=>({...s,result:backtest(s.cfg)}))};
 })()`,context);
 const facts=JSON.parse(fs.readFileSync(path.join(root,'app/data/fund-facts.json'),'utf8'));

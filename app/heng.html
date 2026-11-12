@@ -4206,19 +4206,20 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
                 <div class="field"><label for="pMonthly">每月定投金额（元）</label><input type="number" id="pMonthly" min="0" step="100" value="3000"><span class="hint">动态再平衡页按汇率换算成美元</span></div>
                 <div class="field"><label for="pInitial">初始投入（元）</label><input type="number" id="pInitial" min="0" step="1000" value="0"></div>
                 <div class="field"><label for="pStart">回测起点</label><input type="month" id="pStart" min="2000-01" value="2000-01"></div>
-                <div class="field"><label for="pMode">再平衡触发</label>
-                  <select id="pMode"><option value="hybrid">阈值 + 定期兜底</option><option value="threshold">仅阈值</option><option value="calendar">仅定期</option><option value="none">不再平衡（只定投）</option></select></div>
+                <div class="field"><label for="pPolicy">资金配置方式</label><select id="pPolicy"><option value="fixed">固定比例定投（不再平衡）</option><option value="buy-only">只买不卖（新钱补低配）</option><option value="rebalance">允许买卖再平衡</option></select></div>
+                <div class="field full"><span class="hint" id="pPolicyHint"></span></div>
+                <div class="field"><label for="pMode">买卖再平衡触发</label>
+                  <select id="pMode"><option value="hybrid">阈值 + 定期兜底</option><option value="threshold">仅阈值</option><option value="calendar">仅定期</option></select></div>
                 <div class="field"><label for="pAbs">绝对偏离阈值（百分点）</label><input type="number" id="pAbs" min="1" max="30" step="0.5" value="5"></div>
                 <div class="field"><label for="pRel">相对偏离阈值（%）</label><input type="number" id="pRel" min="5" max="100" step="5" value="30"></div>
                 <div class="field"><label for="pPeriod">定期检查</label><select id="pPeriod"><option value="Y">每年 1 月</option><option value="Q">每季度首月</option></select></div>
                 <div class="field"><label for="pFee">单边交易成本（%）</label><input type="number" id="pFee" min="0" max="1" step="0.01" value="0.05"></div>
                 <div class="field full"><div class="checks"><label><input type="checkbox" id="pCash" checked> 新投入的钱优先补给低配资产</label></div>
-                  <span class="hint">偏离判定：任一资产的当前权重与目标相差 ≥ 绝对阈值，或相差幅度 ≥ 目标权重 × 相对阈值。触发后整个组合调回目标，执行前会提醒核对定投日期。</span></div>
+                  <span class="hint">仅决定新增资金怎么分配。允许买卖时，任一资产偏离 ≥ 绝对阈值，或偏离 ≥ 目标权重 × 相对阈值，即按触发规则检查并调回目标；只买不卖时不触发存量持仓买卖。</span></div>
                 <h3 class="form-title">交易设置</h3>
-                <div class="field full"><span class="hint">用于操作清单和执行前的日期提醒。</span></div>
+                <div class="field full"><span class="hint">以下汇率、股数与上次执行日期用于实际操作清单；历史回测采用复权周线、允许碎股，金额为固定汇率等值。</span></div>
                 <div class="field"><label for="rbFx">美元兑人民币汇率</label><input type="number" id="rbFx" min="1" max="20" step="0.01"><span class="hint" id="rbFxHint">默认取最新市场汇率；人民币资产按此折算</span><button type="button" class="btn sm ghost" id="restoreAutoFx" hidden>恢复自动汇率</button></div>
                 <div class="field"><label for="rbLast">上次再平衡日期</label><input type="date" id="rbLast"><span class="hint" id="rbLastHint"></span></div>
-                <div class="field full"><span class="lab" id="rbSellLabel">超出阈值时</span><div class="seg" id="rbSell" role="group" aria-labelledby="rbSellLabel"><button type="button" data-v="1" aria-pressed="true">按模型规则卖出</button><button type="button" data-v="0" aria-pressed="false">只买不卖</button></div></div>
                 <div class="field full"><span class="lab" id="rbWholeLabel">股数</span><div class="seg" id="rbWhole" role="group" aria-labelledby="rbWholeLabel"><button type="button" data-v="0" aria-pressed="true">允许碎股</button><button type="button" data-v="1" aria-pressed="false">只买整数股 / 整手</button></div></div>
               </form>
               <div class="strategy-actions">
@@ -5349,6 +5350,10 @@ const PRESETS = [
 // Retain older execution receipts while removing the retired timing restriction.
 function migrateExecutionState(state) {
   if (!state) return state;
+  // "No rebalancing" always means fixed-ratio contributions. Buy-only balancing
+  // keeps an active rule but disables sales and directs new cash to deficits.
+  if (state.mode === 'none') { state.cashflow = false; state.allowSell = false; }
+  else if (state.allowSell === false) state.cashflow = true;
   const preset = PRESETS.find(p => p.key === state.preset);
   if (preset) state.label = preset.name;
   delete state.cooldownOverride;
@@ -5403,7 +5408,7 @@ try {
     if (!p || typeof p.key !== 'string' || !/^custom-[a-z0-9-]+$/i.test(p.key) || keys.has(p.key) || typeof p.name !== 'string' || !p.name.trim()) continue;
     const w = Object.fromEntries(Object.entries(p.w || {}).filter(([id, value]) => IDS.includes(id) && Number.isInteger(value) && value > 0 && value <= 100));
     if (Object.values(w).reduce((sum, value) => sum + value, 0) !== 100) continue;
-    const rule = { mode: ['hybrid', 'threshold', 'calendar', 'none'].includes(p.rule?.mode) ? p.rule.mode : 'hybrid', abs: Math.max(1, Math.min(30, +p.rule?.abs || 5)), rel: Math.max(5, Math.min(100, +p.rule?.rel || 30)), period: p.rule?.period === 'Q' ? 'Q' : 'Y' };
+    const rule = { mode: ['hybrid', 'threshold', 'calendar', 'none'].includes(p.rule?.mode) ? p.rule.mode : 'hybrid', abs: Math.max(1, Math.min(30, +p.rule?.abs || 5)), rel: Math.max(5, Math.min(100, +p.rule?.rel || 30)), period: p.rule?.period === 'Q' ? 'Q' : 'Y', allowSell: p.rule?.allowSell !== false, cashflow: p.rule?.cashflow !== false };
     customPresets.push({ key: p.key, name: p.name.trim().slice(0, 30), w, rule }); keys.add(p.key);
   }
 } catch (e) { }
@@ -5435,7 +5440,26 @@ function xirr(flows) {
   for (let k = 0; k < 200; k++) { const mid = (lo + hi) / 2, fm = f(mid); if (Math.abs(fm) < 1e-10) return mid; if (flo * fm < 0) { hi = mid; fhi = fm; } else { lo = mid; flo = fm; } }
   return (lo + hi) / 2;
 }
+function modelBacktestConfig(state) {
+  return { weights: { ...state.weights }, start: state.start, startWeek: state.startWeek,
+    monthly: state.monthly, initial: state.initial, mode: state.mode, abs: state.abs,
+    rel: state.rel, period: state.period, fee: state.fee,
+    allowSell: state.mode !== 'none' && state.allowSell !== false,
+    cashflow: state.mode !== 'none' && (state.allowSell === false || !!state.cashflow) };
+}
+function investmentPolicy(state) {
+  return state.mode === 'none' ? 'fixed' : state.allowSell === false ? 'buy-only' : 'rebalance';
+}
+function setInvestmentPolicy(policy) {
+  if (policy === 'fixed') { S.mode = 'none'; S.allowSell = false; S.cashflow = false; }
+  else {
+    if (S.mode === 'none') S.mode = 'hybrid';
+    S.allowSell = policy === 'rebalance';
+    if (policy === 'buy-only') S.cashflow = true;
+  }
+}
 function backtest(cfg) {
+  cfg = modelBacktestConfig(cfg);
   const flowDate = i => D.dates?.[i] ? Date.parse(D.dates[i] + 'T00:00:00Z') : wDate(i).getTime();
   const ids = Object.keys(cfg.weights).filter(id => cfg.weights[id] > 0);
   const s0 = Math.max(startIndex(cfg.start), commonHistoryStart(ids), cfg.startWeek || 0); const fee = (cfg.fee || 0) / 100;
@@ -5472,7 +5496,7 @@ function backtest(cfg) {
     const m = +ym(i).slice(5, 7);
     const calHit = newMonth && i > s0 && (cfg.period === 'Q' ? [1, 4, 7, 10].includes(m) : m === 1) && Vc > 0;
     const doReb = (cfg.mode === 'threshold' && thrHit) || (cfg.mode === 'calendar' && calHit) || (cfg.mode === 'hybrid' && (thrHit || calHit));
-    if (doReb) {
+    if (doReb && cfg.allowSell) {
       const trades = []; let gross = 0;
       for (const id of ids) { const tgtV = (tw[id] || 0) * Vc, curV = sh[id] * (P(id, i) || 0); const dlt = tgtV - curV; if (Math.abs(dlt) > 0.5) { trades.push([id, dlt]); gross += Math.abs(dlt); } }
       if (gross / Vc > 0.002) {
@@ -5503,13 +5527,13 @@ function backtest(cfg) {
     const nextNew = i === N - 1 || ym(i + 1) !== ym(i);
     if (nextNew) wHist.push({ i, w: Object.fromEntries(ids.map(id => [id, post > 0 ? sh[id] * (P(id, i) || 0) / post : 0])) });
   }
-  const final = val.at(-1)[1];
+  const final = val.at(-1)?.[1] || 0;
   const xr = xirr([...flows, [flowDate(N - 1), final]]);
-  const yrs = D.dates ? (flowDate(N-1)-flowDate(s0))/864e5/365.25 : (N - 1 - s0) / 52.1775; const twr = yrs > 0 ? Math.pow(nav.at(-1).c, 1 / yrs) - 1 : null;
+  const yrs = D.dates ? (flowDate(N-1)-flowDate(s0))/864e5/365.25 : (N - 1 - s0) / 52.1775; const twr = yrs > 0 && nav.length ? Math.pow(nav.at(-1).c, 1 / yrs) - 1 : null;
   // Unit NAV starts at 1 before the first purchase, so the initial fee also counts.
   let pk = 1, mdd = 0, mddAt = null; for (const p of nav) { if (p.c > pk) pk = p.c; const d = p.c / pk - 1; if (d < mdd) { mdd = d; mddAt = p.i; } }
   const r = []; for (let k = 1; k < nav.length; k++) r.push(Math.log(nav[k].c / nav[k - 1].c));
-  const mu = r.reduce((a, b) => a + b, 0) / r.length; const vol = Math.sqrt(r.reduce((a, b) => a + (b - mu) ** 2, 0) / r.length * 52.1775);
+  const mu = r.reduce((a, b) => a + b, 0) / r.length; const vol = r.length ? Math.sqrt(r.reduce((a, b) => a + (b - mu) ** 2, 0) / r.length * 52.1775) : null;
   const years = {}; let prev = null;
   for (const p of nav) { const y = ym(p.i).slice(0, 4); if (!years[y]) years[y] = { s: prev ? prev.c : 1 }; years[y].e = p.c; prev = p; }
   return { cfg, s0, ids, nav, val, inv, log, wHist, marks, final, invested, contributionCount: flows.length, durationYears: yrs, xirr: xr, twr, mdd, mddAt, vol, rebCount, turnYear: yrs > 0 ? turnSum / yrs : 0, years };
@@ -5659,7 +5683,7 @@ function bindDrawer() {
 
 /* ---------------- 02 strategy view ---------------- */
 let presetStats = {};
-function computePresetStats(presets = allPresets()) { for (const p of presets) presetStats[p.key] = backtest({ weights: p.w, start: '2000-01', monthly: 3000, initial: 0, mode: p.rule.mode, abs: p.rule.abs, rel: p.rule.rel, period: p.rule.period, fee: 0.05, cashflow: true }); }
+function computePresetStats(presets = allPresets()) { for (const p of presets) presetStats[p.key] = backtest({ weights: p.w, start: '2000-01', monthly: 3000, initial: 0, fee: 0.05, cashflow: true, ...p.rule }); }
 function allocBar(w) { const tot = Object.values(w).reduce((a, b) => a + b, 0) || 1; return `<div class="bar">${Object.entries(w).filter(([, v]) => v > 0).map(([id, v]) => `<span title="${id} ${v}%" style="width:${v / tot * 100}%;background:${A[id].color}"></span>`).join('')}</div>`; }
 function renderPresets() {
   $('#presets').innerHTML = allPresets().map(p => { const r = presetStats[p.key], custom = p.key.startsWith('custom-');
@@ -5720,7 +5744,7 @@ function saveStrategy() {
   ensureRebalanceState();
   if (!save()) { strategySaveStatus('保存失败，请核对当前持仓或浏览器存储后重试。'); return; }
   if (custom) {
-    const p = { ...custom, w: Object.fromEntries(Object.entries(S.weights).filter(([, weight]) => weight > 0)), rule: { mode: S.mode, abs: S.abs, rel: S.rel, period: S.period } };
+    const p = { ...custom, w: Object.fromEntries(Object.entries(S.weights).filter(([, weight]) => weight > 0)), rule: { mode: S.mode, abs: S.abs, rel: S.rel, period: S.period, allowSell: S.allowSell, cashflow: S.cashflow } };
     const next = customPresets.map(item => item.key === p.key ? p : item);
     try { localStorage.setItem('heng.templates', JSON.stringify(next)); }
     catch { strategySaveStatus('模板未能保存，请检查浏览器存储空间后重试。'); return; }
@@ -5737,6 +5761,8 @@ function renderTiers() {
 function applyPreset(p) {
   S.weights = { ...p.w }; S.preset = p.key; S.label = p.name;
   S.mode = p.rule.mode; S.abs = p.rule.abs; S.rel = p.rule.rel; S.period = p.rule.period;
+  const cfg = modelBacktestConfig({ ...S, allowSell: p.rule.allowSell !== false, cashflow: p.rule.cashflow !== false });
+  S.allowSell = cfg.allowSell; S.cashflow = cfg.cashflow;
   save(); renderStrategy(); renderAssets();
 }
 let templateDraft = null;
@@ -5752,7 +5778,7 @@ function updateTemplateSummary() {
 }
 function openTemplateEditor(key = null) {
   const p = customPresets.find(item => item.key === key);
-  templateDraft = { source:JSON.stringify(p), key: p?.key || null, w: { ...(p?.w || {}) }, rule: p ? { ...p.rule } : { mode: S.mode, abs: S.abs, rel: S.rel, period: S.period } };
+  templateDraft = { source:JSON.stringify(p), key: p?.key || null, w: { ...(p?.w || {}) }, rule: p ? { ...p.rule } : { mode: S.mode, abs: S.abs, rel: S.rel, period: S.period, allowSell: S.allowSell, cashflow: S.cashflow } };
   $('#templateTitle').textContent = p ? '编辑模板' : '新建模板';
   $('#templateName').value = p?.name || ''; $('#templateSearch').value = ''; templateError('');
   $('#templateAssets').innerHTML = LAYERS.flatMap(layer => layer.ids).map(id => {
@@ -5841,10 +5867,9 @@ function bindStrategy() {
   $('#addAsset').addEventListener('change', e => { if (e.target.value) toggleAsset(e.target.value); });
   $('#normBtn').onclick = () => { const s = sumW(); const ids = Object.keys(S.weights); if (!ids.length) return; if (!s) ids.forEach(id => S.weights[id] = Math.floor(100 / ids.length)); else ids.forEach(id => S.weights[id] = Math.round(S.weights[id] * 100 / s)); let d = 100 - sumW(); const big = ids.sort((a, b) => S.weights[b] - S.weights[a])[0]; S.weights[big] += d; markStrategyChanged(); save(); renderStrategy(); };
   const map = { pMonthly: 'monthly', pInitial: 'initial', pStart: 'start', pMode: 'mode', pAbs: 'abs', pRel: 'rel', pPeriod: 'period', pFee: 'fee' };
-  $('#ruleForm').addEventListener('input', e => { const k = map[e.target.id]; if (k) S[k] = ['start', 'mode', 'period'].includes(k) ? e.target.value : +e.target.value; if (e.target.id === 'pCash') S.cashflow = e.target.checked; save(); });
+  $('#ruleForm').addEventListener('input', e => { const k = map[e.target.id]; if (k) S[k] = ['start', 'mode', 'period'].includes(k) ? e.target.value : +e.target.value; if (e.target.id === 'pCash') S.cashflow = e.target.checked; if (e.target.id === 'pPolicy') setInvestmentPolicy(e.target.value); save(); syncTradeSettings(); });
   $('#rbFx').addEventListener('input', e => { const v = +e.target.value; if (v > 0) { S.fx = v; S.fxManual = true; save(); syncTradeSettings(); } });
   $('#restoreAutoFx').addEventListener('click',()=>{S.fxManual=false;ensureRebalanceState();save();syncTradeSettings();renderRebalance();});
-  segBind('#rbSell', b => { S.allowSell = b.dataset.v === '1'; save(); syncTradeSettings(); });
   segBind('#rbWhole', b => { S.wholeShares = b.dataset.v === '1'; save(); syncTradeSettings(); });
   $('#rbLast').addEventListener('change', e => { S.lastRebalance = e.target.value || null; save(); syncTradeSettings(); });
   $('#ruleForm').addEventListener('click', e => { if (e.target.closest('#rbLastClear')) { S.lastRebalance = null; save(); syncTradeSettings(); } });
@@ -5863,13 +5888,16 @@ const KPI_HELP = { '定投年化（XIRR）': '按每笔投入的日期和金额�
 function renderBacktest() {
   $('#backtestResults').hidden = sumW() !== 100;
   if (sumW() !== 100) { $('#btTitle').textContent = '权重合计不是 100%'; $('#btDesc').textContent = '请先在策略配置中把目标权重调整到合计 100%。'; return; }
-  const cfg = { weights: { ...S.weights }, start: S.start, monthly: S.monthly, initial: S.initial, mode: S.mode, abs: S.abs, rel: S.rel, period: S.period, fee: S.fee, cashflow: S.cashflow };
+  const cfg = modelBacktestConfig(S);
   const r = backtest(cfg);
+  if (!r.nav.length) { $('#backtestResults').hidden = true; $('#btTitle').textContent = '回测区间内没有投入'; $('#btDesc').textContent = '请设置大于 0 的每月定投金额或初始投入后重新回测。'; return; }
   const b1 = backtest({ ...cfg, startWeek: r.s0, weights: { SPY: 100 }, mode: 'none', cashflow: false });
   const b2 = backtest({ ...cfg, startWeek: r.s0, mode: 'none', cashflow: false });
   const modeTxt = { hybrid: `阈值（${S.abs} 个百分点 / ${S.rel}%）+ ${S.period === 'Q' ? '季度' : '年度'}兜底`, threshold: `仅阈值（${S.abs} 个百分点 / ${S.rel}%）`, calendar: `${S.period === 'Q' ? '每季度' : '每年'}定期`, none: '不再平衡' }[S.mode];
   $('#btTitle').textContent = `${S.label || '自定义'}组合 · ${ymd(wDate(r.s0)).slice(0, 7)} 至今`;
-  $('#btDesc').innerHTML = `${Object.entries(S.weights).filter(([, v]) => v > 0).map(([id, v]) => `${id} ${v}%`).join(' · ')}<br>每月定投 ${S.monthly.toLocaleString('zh-CN')} 元${S.initial ? `，初始 ${S.initial.toLocaleString('zh-CN')} 元` : ''}；再平衡：${modeTxt}${S.cashflow ? '；新钱优先补低配' : ''}。${r.s0 > startIndex(S.start) ? `<br>全部标的真实行情自 ${ymd(wDate(r.s0))} 起齐备，已从该日开始；对照组合使用相同区间。` : ''}`;
+  const policy = investmentPolicy(cfg);
+  const policyTxt = policy === 'fixed' ? '固定比例定投；每期按目标权重买入，不补低配、不卖出' : policy === 'buy-only' ? '只买不卖；每期用新钱优先补低配，不卖出存量持仓' : `允许买卖再平衡；触发：${modeTxt}；新钱${cfg.cashflow ? '优先补低配' : '按固定目标比例买入'}`;
+  $('#btDesc').innerHTML = `${Object.entries(cfg.weights).filter(([, v]) => v > 0).map(([id, v]) => `${id} ${v}%`).join(' · ')}<br>每月定投 ${cfg.monthly.toLocaleString('zh-CN')} 元${cfg.initial ? `，初始 ${cfg.initial.toLocaleString('zh-CN')} 元` : ''}；${policyTxt}；单边成本 ${cfg.fee}%。<br>按复权周线模拟：每月首个交易周投入，周收盘检查和成交，允许碎股，金额按固定汇率等值；整股、实际定投日和上次执行日期仅用于实盘清单。K 线高低点为周线组合近似值。${r.s0 > startIndex(cfg.start) ? `<br>全部标的真实行情自 ${ymd(wDate(r.s0))} 起齐备，已从该日开始；对照组合使用相同区间和投入。` : ''}`;
   const yrs = (N - 1 - r.s0) / 52.1775;
   $('#kpis').innerHTML = [
     ['累计投入', fmtMoney(r.invested), `${r.contributionCount} 次投入`],
@@ -5881,7 +5909,8 @@ function renderBacktest() {
   ].map(([l, v, c]) => `<div title="${esc(KPI_HELP[l] || '')}"><div class="l">${l}</div><div class="v">${v}</div><div class="c">${c}</div></div>`).join('');
   $('#kpiHelp').innerHTML = `<b>怎么读：</b>定投年化把每笔钱投入的时间算进去，是你实际体验到的年化收益；净值年化不受投入节奏影响，衡量策略本身；最大回撤是历史上从高点到低点最深的一次下跌。`;
   const dx = r.xirr - b2.xirr, dm = r.mdd - b2.mdd, ds = r.xirr - b1.xirr;
-  $('#cmpNote').innerHTML = `<b>怎么读：</b>和「只定投不再平衡」相比，再平衡让定投年化${dx >= 0 ? '提高' : '降低'} ${Math.abs(dx * 100).toFixed(1)} 个百分点，最大回撤${dm >= 0 ? '减少' : '加深'} ${Math.abs(dm * 100).toFixed(1)} 个百分点；和同额定投标普 500 相比，年化${ds >= 0 ? '高' : '低'} ${Math.abs(ds * 100).toFixed(1)} 个百分点。再平衡的主要作用是把风险控制在目标附近，不一定提高收益。`;
+  const comparison = policy === 'fixed' ? '本策略采用固定比例定投，与「只定投不再平衡」使用完全相同的规则，结果应一致。' : `和「只定投不再平衡」相比，${policy === 'buy-only' ? '新钱补低配' : '当前买卖与新钱分配规则'}使定投年化${dx >= 0 ? '提高' : '降低'} ${Math.abs(dx * 100).toFixed(1)} 个百分点，最大回撤${dm >= 0 ? '减少' : '加深'} ${Math.abs(dm * 100).toFixed(1)} 个百分点。`;
+  $('#cmpNote').innerHTML = `<b>怎么读：</b>${comparison}和同额定投标普 500 相比，年化${ds >= 0 ? '高' : '低'} ${Math.abs(ds * 100).toFixed(1)} 个百分点。对照「只定投不再平衡」始终按目标比例投入，不因仓位高低改变买入分配。`;
   $('#cmpTable').innerHTML = `<thead><tr><th></th><th class="r">定投年化</th><th class="r">期末市值</th><th class="r">最大回撤</th><th class="r">年化波动</th></tr></thead><tbody>${[['本策略', r, 'var(--accent)'], ['只定投不再平衡', b2, 'var(--brass)'], ['同额定投标普 500', b1, 'var(--ink-3)']].map(([n, x, c]) => `<tr><td><span class="dot" style="background:${c};margin-right:8px"></span>${n}</td><td class="r num">${fmtPct(x.xirr)}</td><td class="r num">${fmtMoney(x.final)}</td><td class="r num neg">${fmtPct(x.mdd)}</td><td class="r num">${fmtPct(x.vol)}</td></tr>`).join('')}</tbody>`;
 
   // charts
@@ -6022,7 +6051,8 @@ function renderYears(r, b1) {
 }
 function renderLog(r) {
   $('#logCount').textContent = `共 ${r.rebCount} 次`;
-  $('#logTable').innerHTML = r.log.length ? `<thead><tr><th>日期</th><th>原因</th><th class="r">换手</th><th>主要调整</th></tr></thead><tbody>${r.log.slice().reverse().slice(0, 300).map(e => `<tr><td class="num">${ymd(wDate(e.i))}</td><td>${esc(e.reason)}</td><td class="r num">${fmtPct(e.turn, 1)}</td><td class="small">${e.trades.slice(0, 3).map(([id, d]) => `<span class="${d > 0 ? 'pos' : 'neg'}">${d > 0 ? '买' : '卖'} ${id}</span>`).join(' · ')}</td></tr>`).join('')}</tbody>` : `<tbody><tr><td class="muted">该设置下没有发生再平衡。</td></tr></tbody>`;
+  const empty = r.cfg.allowSell ? '该设置下没有发生再平衡。' : r.cfg.cashflow ? '仅通过每期定投的新钱补低配，没有卖出或存量调仓记录。' : '固定比例定投，不进行再平衡。';
+  $('#logTable').innerHTML = r.log.length ? `<thead><tr><th>日期</th><th>原因</th><th class="r">换手</th><th>主要调整</th></tr></thead><tbody>${r.log.slice().reverse().slice(0, 300).map(e => `<tr><td class="num">${ymd(wDate(e.i))}</td><td>${esc(e.reason)}</td><td class="r num">${fmtPct(e.turn, 1)}</td><td class="small">${e.trades.slice(0, 3).map(([id, d]) => `<span class="${d > 0 ? 'pos' : 'neg'}">${d > 0 ? '买' : '卖'} ${id}</span>`).join(' · ')}</td></tr>`).join('')}</tbody>` : `<tbody><tr><td class="muted">${empty}</td></tr></tbody>`;
 }
 
 /* ---------------- 00 rebalance view (home) ---------------- */
@@ -6093,7 +6123,7 @@ function planRebalance(options = investmentIntent) {
   const T = V + A;
   const cur = Object.fromEntries(ids.map(id => [id, V > 0 ? v[id] / V : 0]));
   const alloc = {};
-  if (S.cashflow && V > 0) {
+  if (S.mode !== 'none' && (S.allowSell === false || S.cashflow) && V > 0) {
     const gaps = Object.fromEntries(ids.map(id => [id, Math.max(0, tw[id] * T - v[id])])); const gs = ids.reduce((a, id) => a + gaps[id], 0);
     for (const id of ids) alloc[id] = gs >= A ? (gs > 0 ? A * gaps[id] / gs : 0) : gaps[id] + (A - gs) * tw[id];
   } else for (const id of ids) alloc[id] = A * tw[id];
@@ -6106,7 +6136,7 @@ function planRebalance(options = investmentIntent) {
   const cal = kind === 'rebalance' && !completed && (S.mode === 'calendar' || S.mode === 'hybrid') && calMonth && V > 0;
   const manual = kind === 'rebalance' && !completed && !!reset && V > 0;
   const needSell = thr || cal || manual;
-  const rebalance = needSell && S.allowSell;
+  const rebalance = needSell && S.mode !== 'none' && S.allowSell !== false;
   const delta = Object.fromEntries(ids.map(id => [id, rebalance ? tw[id] * T - v[id] : alloc[id]]));
   const intended = { ...delta };
   let leftover = 0; for (const id of ids) if (Math.abs(delta[id]) < 1) { if (delta[id] > 0) leftover += delta[id]; delta[id] = 0; }
@@ -6154,7 +6184,7 @@ function readingAction(plan) {
   if (currentOpsApplied()) return { title: '本次操作已记账', detail: '持仓已按清单更新，无需重复执行同一笔操作。', tone: 'good' };
   if (plan.kind === 'monthly' || plan.kind === 'bonus') {
     return { title: !plan.A ? '填写本次投入金额' : !buys.length ? '本次暂不成交' : plan.kind === 'monthly' ? '本月定投买入' : '奖金加仓买入',
-      detail: !plan.A ? '输入投入总金额后查看买入清单。' : `按模型${S.cashflow ? '优先补充低配资产' : '目标比例分配新增资金'}，本次只买入。${buys.length ? `买入 ${buys.length} 个标的，共 ${usd(plan.buy)}。` : '当前金额与股数限制下没有可成交的买入。'}${afterOver.length ? `操作后仍有 ${afterOver.length} 个标的超出阈值，可在「检查再平衡」中单独处理。` : ''}${plan.leftover >= 0.01 ? `未投入现金 ${usd(plan.leftover)}。` : ''}`, tone: afterOver.length ? 'warn' : 'good' };
+      detail: !plan.A ? '输入投入总金额后查看买入清单。' : `按模型${S.mode !== 'none' && S.cashflow ? '优先补充低配资产' : '目标比例分配新增资金'}，本次只买入。${buys.length ? `买入 ${buys.length} 个标的，共 ${usd(plan.buy)}。` : '当前金额与股数限制下没有可成交的买入。'}${afterOver.length ? `操作后仍有 ${afterOver.length} 个标的超出阈值${S.mode !== 'none' && S.allowSell !== false ? '，可在「检查再平衡」中单独处理' : '，后续仍按所选资金配置方式投入'}。` : ''}${plan.leftover >= 0.01 ? `未投入现金 ${usd(plan.leftover)}。` : ''}`, tone: afterOver.length ? 'warn' : 'good' };
   }
   const trades = [buys.length ? `买入 ${buys.length} 个标的，共 ${usd(plan.buy)}` : '', sells.length ? `卖出 ${sells.length} 个标的，共 ${usd(plan.sell)}` : ''].filter(Boolean).join('；');
   const reason = plan.V <= 0 ? '按目标比例开始建仓。' : plan.rebalance ? `${plan.thr ? '新钱分配后仍触及偏离阈值' : `本月是${S.period === 'Q' ? '季度' : '年度'}定期检查月`}，按模型调整配置。` : plan.needSell ? '模型已触发再平衡，但设置为「只买不卖」。' : plan.overNow.length && !afterOver.length ? '当前有标的超出阈值，按清单投入新钱后可回到范围内。' : plan.overNow.length ? '当前有标的超出阈值，按现有规则本月不触发卖出。' : '当前配置在阈值内，本月按模型分配新钱。';
@@ -6201,8 +6231,8 @@ function renderInvestmentSchedule(state = investmentActionState()) {
   const today = todayStr(), schedule = Investment.nextSchedule(S,today), monthly = schedule.monthly, rebalance = schedule.rebalance;
   $('#nextMonthlyTime').textContent = state.valid ? monthly.date : '请先配置模型';
   $('#nextMonthlyHint').textContent = !state.valid ? '目标权重需合计 100%' : monthly.reset ? '已解锁一次，可提前定投' : monthly.overdue ? `原计划 ${monthly.planned}，本期待完成` : monthly.date===today && !monthly.done ? '今天可定投' : `每月 ${monthly.day} 日计划`;
-  $('#nextRebalanceTime').textContent = !state.valid ? '请先配置模型' : rebalance.date || (rebalance.reset ? '现在可检查' : S.mode==='none' ? '未启用再平衡' : '达到偏离阈值时');
-  $('#nextRebalanceHint').textContent = !state.valid ? '目标权重需合计 100%' : rebalance.reset ? '已解锁一次，可提前检查' : S.mode==='none' ? '当前仅执行定投' : !S.allowSell ? '当前为只买不卖，暂不执行' : S.mode==='threshold' ? (rebalance.done ? '本期已完成，下月起按阈值检查' : state.rebalancePlan.thr ? '已达到阈值，可查看买卖清单' : '随持仓占比变化触发') : rebalance.overdue ? '计划日期已到，尚待检查' : state.rebalancePlan.thr ? '已达阈值，可提前检查' : `${S.period==='Q'?'季度':'年度'}检查${S.mode==='hybrid'?'，达到阈值可提前':''}`;
+  $('#nextRebalanceTime').textContent = !state.valid ? '请先配置模型' : S.mode !== 'none' && S.allowSell === false && !rebalance.reset ? '随每期定投补低配' : rebalance.date || (rebalance.reset ? '现在可检查' : S.mode==='none' ? '未启用再平衡' : '达到偏离阈值时');
+  $('#nextRebalanceHint').textContent = !state.valid ? '目标权重需合计 100%' : rebalance.reset ? '已解锁一次，可提前检查' : S.mode==='none' ? '按固定目标比例定投，不调整存量持仓' : S.allowSell === false ? '仅用新钱补低配，不卖出已有持仓' : S.mode==='threshold' ? (rebalance.done ? '本期已完成，下月起按阈值检查' : state.rebalancePlan.thr ? '已达到阈值，可查看买卖清单' : '随持仓占比变化触发') : rebalance.overdue ? '计划日期已到，尚待检查' : state.rebalancePlan.thr ? '已达阈值，可提前检查' : `${S.period==='Q'?'季度':'年度'}检查${S.mode==='hybrid'?'，达到阈值可提前':''}`;
 }
 function renderRebalancePreview(plan) {
   $('#opsConfirmIntro').textContent = plan.resetId ? '本次使用设置中解锁的一次再平衡机会。核对检查结果；需要买卖时，在券商完成操作后再确认更新持仓。' : '核对需要买入、卖出的金额和股数。在券商完成操作后，再确认更新持仓。';
@@ -6265,9 +6295,10 @@ function renderReading(plan) {
   }
   const ids = plan.ids;
   if (!ids.length) { modelBt = null; modelBtKey = ''; $('#readSummary').innerHTML = '<p>先到「定投模型」选择标的和目标权重，再查看持仓解读。</p>'; $('#readMini').innerHTML = ''; $('#readCards').innerHTML = ''; return; }
-  const key = JSON.stringify([D.asOf, S.weights, S.mode, S.abs, S.rel, S.period, S.fee, S.cashflow]);
+  const cfg = modelBacktestConfig(S);
+  const key = JSON.stringify([D.asOf, cfg]);
   if (sumW() !== 100) { modelBt = null; modelBtKey = ''; }
-  else if (key !== modelBtKey) { modelBt = backtest({ weights: { ...S.weights }, start: '2000-01', monthly: 3000, initial: 0, mode: S.mode, abs: S.abs, rel: S.rel, period: S.period, fee: S.fee, cashflow: S.cashflow }); modelBtKey = key; }
+  else if (key !== modelBtKey) { modelBt = backtest(cfg); modelBtKey = key; }
   const history = modelBt && N - 1 - modelBt.s0 >= 52 && Number.isFinite(modelBt.vol) && Number.isFinite(modelBt.mdd) ? modelBt : null;
   const reads = Object.fromEntries(ids.map(id => [id, marketRead(id)]));
   const observed = plan.V > 0 ? ids.filter(id => plan.v[id] > 0) : ids;
@@ -6308,12 +6339,22 @@ function renderRebalance() {
   window.__plan = plan; updateBalance(plan);
 }
 function refreshRebalance() { const plan = planRebalance(); syncTradeSettings(); renderOps(plan); renderHoldings(plan, false); renderReading(plan); window.__plan = plan; updateBalance(plan); }
+function syncModelControls() {
+  const cfg = modelBacktestConfig(S), policy = investmentPolicy(cfg), rebalance = policy === 'rebalance';
+  $('#pPolicy').value = policy;
+  $('#pMode').value = cfg.mode === 'none' ? 'hybrid' : cfg.mode;
+  $('#pMode').disabled = !rebalance;
+  $('#pAbs').disabled = $('#pRel').disabled = !rebalance || cfg.mode === 'calendar';
+  $('#pPeriod').disabled = !rebalance || cfg.mode === 'threshold';
+  $('#pCash').checked = cfg.cashflow;
+  $('#pCash').disabled = !rebalance;
+  $('#pPolicyHint').textContent = policy === 'fixed' ? '每期按固定目标比例买入所有正权重标的；即使某个标的已经超配，也不会因此停买。不补低配、不卖出。' : policy === 'buy-only' ? '每期只用新投入的钱补低配；超配标的可能少买或不买，已有持仓不会卖出。新钱不足时不能保证立即回到目标。' : '每期按下方方式分配新钱；达到阈值或定期条件时，允许卖出超配资产、买入低配资产，整体调回目标。';
+}
 function syncTradeSettings() {
-  const effSell = S.allowSell;
+  syncModelControls();
   if (document.activeElement !== $('#rbFx')) $('#rbFx').value = S.fx;
   $('#rbFxHint').textContent=S.fxManual?'手动固定汇率；不会随每日行情变化。':`自动汇率 · 截至 ${D.fxAsOf?.CNY || D.asOf}；人民币资产按此折算。`;
   $('#restoreAutoFx').hidden=!S.fxManual;
-  [...$('#rbSell').children].forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === effSell));
   [...$('#rbWhole').children].forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!S.wholeShares));
   if (document.activeElement !== $('#rbLast')) $('#rbLast').value = S.lastRebalance || '';
   $('#rbLastHint').innerHTML = !S.lastRebalance
