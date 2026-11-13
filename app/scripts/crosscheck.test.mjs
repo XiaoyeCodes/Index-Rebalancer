@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {compareCloses,verifySecondaryCloses} from './crosscheck.mjs';
+import {compareCloses,verifySecondaryCloses,requestJSON} from './crosscheck.mjs';
 
 const primary = [
   {date:'2026-11-10',close:749.9199829},
@@ -67,4 +67,33 @@ test('complete data needs only one request; missing primary dates and request er
   assert.equal(calls,1);assert.equal(result.attempts,1);
   await assert.rejects(verifySecondaryCloses(setup({primary:[],request:async()=>assert.fail('request without primary dates')})),/missing primary/);
   await assert.rejects(verifySecondaryCloses(setup({request:async()=>{throw Error('network failed');},wait:async()=>assert.fail('requestJSON already handles network retries')})),/network failed/);
+});
+
+test('TLS and invalid-JSON failures get bounded network backoff and fresh retry headers',async()=>{
+  const calls=[],delays=[];
+  const result=await requestJSON('https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.512050',{
+    run:async(binary,args)=>{
+      calls.push({binary,args});
+      if(calls.length===1)throw Error('OpenSSL SSL_read: unexpected eof while reading');
+      return {stdout:calls.length===2?'upstream unavailable':'{"data":{"klines":["2026-11-12,1,1,1,1"]}}'};
+    },wait:async ms=>delays.push(ms),
+  });
+  assert.equal(calls.length,3);
+  assert.equal(result.data.klines.length,1);
+  assert.deepEqual(delays,[2000,6000]);
+  for(const call of calls){
+    assert.equal(call.binary,'curl');
+    assert.ok(call.args.includes('--http1.1'));
+    assert.ok(call.args.includes('Referer: https://quote.eastmoney.com/'));
+  }
+  assert.ok(calls[1].args.includes('Cache-Control: no-cache'));
+});
+
+test('each source receives its own referer and exhausted network failures still stop the update',async()=>{
+  for(const [url,referer]of [['https://api.nasdaq.com/api/quote/SPY/historical','https://www.nasdaq.com/'],['https://web.ifzq.gtimg.cn/appstock/app/kline/kline','https://gu.qq.com/']]){
+    await requestJSON(url,{run:async(_,args)=>{assert.ok(args.includes('Referer: '+referer));return {stdout:'{}'};}});
+  }
+  let calls=0;const delays=[],failure=Error('TLS connection failed');
+  await assert.rejects(requestJSON(url,{run:async()=>{calls++;throw failure;},wait:async ms=>delays.push(ms)}),error=>error===failure);
+  assert.equal(calls,3);assert.deepEqual(delays,[2000,6000]);
 });
