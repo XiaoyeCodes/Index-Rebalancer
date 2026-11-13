@@ -7,10 +7,11 @@ import {fileURLToPath} from 'node:url';
 import {CHAINS,RAW_DIR,fileFor} from './assets.mjs';
 import {tradingDate,isClosed} from './process.mjs';
 const run = promisify(execFile);
-export async function requestJSON(url) {
+export async function requestJSON(url,{fresh=false}={}) {
   let error;
   for(let attempt=0;attempt<3;attempt++) try {
-    const {stdout} = await run('curl',['-f','-sS','-L','-m','25','-A','Mozilla/5.0','-H','Accept: application/json','-H','Referer: https://www.nasdaq.com/',url],{maxBuffer:4*1024*1024});
+    const headers=fresh?['-H','Cache-Control: no-cache','-H','Pragma: no-cache']:[];
+    const {stdout} = await run('curl',['-f','-sS','-L','-m','25','-A','Mozilla/5.0','-H','Accept: application/json','-H','Referer: https://www.nasdaq.com/',...headers,url],{maxBuffer:4*1024*1024});
     return JSON.parse(stdout);
   } catch(e) {error=e;}
   throw error;
@@ -18,12 +19,36 @@ export async function requestJSON(url) {
 export function compareCloses(primary, secondary, tolerance) {
   if(!primary.length) throw new Error('missing primary closing dates');
   const matched = primary.map(p=>({primary:p,secondary:secondary.find(s=>s.date===p.date)}));
-  if(matched.some(p=>!p.secondary)) throw new Error('secondary feed is missing a required closing date');
-  const differences = matched.map(({primary:p,secondary:s})=>({date:p.date,primary:p.close,secondary:s.close,difference:Math.abs(p.close-s.close)}));
+  // Even a partial response must not hide a known invalid or conflicting price.
+  if(primary.some(p=>!Number.isFinite(p.close)||p.close<=0)||matched.some(({secondary:s})=>s&&(!Number.isFinite(s.close)||s.close<=0))) throw new Error('invalid closing price in cross-source verification');
+  const differences = matched.filter(p=>p.secondary).map(({primary:p,secondary:s})=>({date:p.date,primary:p.close,secondary:s.close,difference:Math.abs(p.close-s.close)}));
   if(differences.some(p=>p.difference>tolerance)) throw new Error('closing-price disagreement: '+JSON.stringify(differences));
+  const missing=matched.filter(p=>!p.secondary).map(p=>p.primary.date);
+  if(missing.length) {
+    const latest=secondary.map(p=>p.date).sort().at(-1)||'none';
+    const error=new Error(`secondary feed is missing required closing dates: ${missing.join(', ')}; latest available: ${latest}`);
+    error.code='MISSING_SECONDARY_CLOSE';
+    throw error;
+  }
   return differences;
 }
-export async function crosscheck(data, {rawDir=RAW_DIR,request=requestJSON,now=Date.now()}={}) {
+export async function verifySecondaryCloses({primary,url,parse,tolerance,request=requestJSON,
+  retryDelays=[10000,30000],wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),now=Date.now(),log=console.warn,label='secondary feed'}) {
+  if(!primary.length)throw new Error('missing primary closing dates');
+  for(let attempt=0;attempt<=retryDelays.length;attempt++) {
+    const requestUrl=new URL(url);
+    if(attempt)requestUrl.searchParams.set('_',`${now}-${attempt}`);
+    const secondary=parse(await request(requestUrl.href,{fresh:attempt>0}));
+    try {
+      return {secondary,observations:compareCloses(primary,secondary,tolerance),url:requestUrl.href,attempts:attempt+1};
+    } catch(error) {
+      if(error.code!=='MISSING_SECONDARY_CLOSE'||attempt===retryDelays.length)throw error;
+      log(`${label}: ${error.message}; retry ${attempt+2}/${retryDelays.length+1} in ${retryDelays[attempt]/1000}s`);
+      await wait(retryDelays[attempt]);
+    }
+  }
+}
+export async function crosscheck(data, {rawDir=RAW_DIR,request=requestJSON,now=Date.now(),retryDelays,wait,log=console.warn}={}) {
   const entries = Object.entries(CHAINS), results = [], failures = [];
   let cursor=0;
   const worker=async()=>{
@@ -34,26 +59,26 @@ export async function crosscheck(data, {rawDir=RAW_DIR,request=requestJSON,now=D
         const close=raw.indicators.quote[0].close;
         const primary=raw.timestamp.map((ts,i)=>({date:tradingDate(ts,raw.meta.exchangeTimezoneName),close:close[i],ts}))
           .filter(p=>p.close>0&&p.date<=data.asOf&&isClosed(p.ts,raw.meta,now)).slice(-3);
-        let source,url,secondary;
+        if(!primary.length)throw new Error('missing primary closing dates');
+        let source,url,parse;
         if(/\.(SS|SZ|HK)$/.test(ticker)) {
           const code=ticker.endsWith('.HK')?'hk'+ticker.split('.')[0].padStart(5,'0'):(ticker.endsWith('.SZ')?'sz':'sh')+ticker.split('.')[0];
           source='Tencent Finance';url=`https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=${code},day,,,20`;
-          const response=await request(url);
-          secondary=(response.data?.[code]?.day||[]).map(row=>({date:row[0],close:+row[2]}));
+          parse=response=>(response.data?.[code]?.day||[]).map(row=>({date:row[0],close:+row[2]}));
         } else {
           source='Nasdaq';
           const symbol=ticker==='BRK-B'?'BRK.B':ticker;
           const assetclass=['NVDA','MSFT','TSLA','AAPL','AMZN','SPCX','AXP','BRK-B','GOOG'].includes(id)?'stocks':'etf';
           url=`https://api.nasdaq.com/api/quote/${encodeURIComponent(symbol)}/historical?assetclass=${assetclass}&limit=10&fromdate=${primary[0].date}&todate=${data.asOf}`;
-          const response=await request(url);
-          secondary=(response.data?.tradesTable?.rows||[]).map(row=>({date:new Date(row.date+' 00:00:00 UTC').toISOString().slice(0,10),close:+row.close.replace(/[$,]/g,'')}));
+          parse=response=>(response.data?.tradesTable?.rows||[]).map(row=>({date:new Date(row.date+' 00:00:00 UTC').toISOString().slice(0,10),close:+row.close.replace(/[$,]/g,'')}));
         }
         // Listed US/HK prices are quoted to cents; mainland ETFs to 0.001 yuan.
         const tolerance=id==='SSE'?.006:/\.(SS|SZ|HK)$/.test(ticker)?.00051:.011;
-        const observations=compareCloses(primary,secondary,tolerance);
+        const verified=await verifySecondaryCloses({primary,url,parse,tolerance,request,now,retryDelays,wait,log,label:`${id} / ${source}`});
+        const {secondary,observations}=verified;
         const secondaryLast=secondary.filter(p=>p.date<=data.asOf&&p.close>0).sort((a,b)=>a.date.localeCompare(b.date)).at(-1)?.date;
         if(secondaryLast>primary.at(-1).date)throw Error(`primary closes stop at ${primary.at(-1).date}; second feed has ${secondaryLast}`);
-        results.push({id,ticker,source,url,tolerance,observations});
+        results.push({id,ticker,source,url:verified.url,attempts:verified.attempts,tolerance,observations});
       } catch(e) {failures.push(`${id}: ${e.message}`);}
     }
   };
