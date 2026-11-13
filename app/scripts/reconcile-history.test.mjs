@@ -103,7 +103,7 @@ test('a new non-week-end source disagreement remains unresolved and is not hidde
     input.timestamp=['2026-11-09','2026-11-10','2026-11-11'].map(d=>Date.parse(d+'T14:30Z')/1000);
     fs.writeFileSync(path.join(dir,fileFor(symbol)),JSON.stringify({chart:{result:[input]}}));
   }
-  const result=await auditHistory({asOf:'2026-11-11',dates:['2026-11-11']},{rawDir:pathToFileURL(dir+path.sep),request:async url=>({data:{tradesTable:{rows:['11/11/2026','11/10/2026','11/09/2026'].map(date=>({date,close:url.includes('/quote/GLD/')&&date==='11/09/2026'?'101.00':'100.00'}))}}})});
+  const result=await auditHistory({asOf:'2026-11-11',dates:['2026-11-11']},{rawDir:pathToFileURL(dir+path.sep),retryDelays:[],request:async url=>({data:{symbol:decodeURIComponent(new URL(url).pathname.split('/')[3]),totalRecords:3,tradesTable:{rows:['11/11/2026','11/10/2026','11/09/2026'].map(date=>({date,close:url.includes('/quote/GLD/')&&date==='11/09/2026'?'101.00':'100.00'}))}}})});
   assert.equal(result.unresolvedDisagreements,1);
   const gold=result.results.find(r=>r.id==='GLD');
   assert.equal(gold.weeklyDifferences.length,0);
