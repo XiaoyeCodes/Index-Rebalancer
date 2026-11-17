@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "reviewedAt": "2026-11-12T06:15:00.271Z",
-  "basis": "USD regular-session market close, adjusted for subsequent share splits only",
-  "scope": "The 17 dated disagreements found on 2026-11-12. No general allowance for future discrepancies.",
+  "basis": "Regular-session market prices in each record currency; adjusted for subsequent share splits only. Cash-dividend factors are maintained separately.",
+  "scope": "Only the listed dated, independently corroborated differences. No general allowance for future discrepancies.",
   "records": [
     {
       "id": "AAPL",
@@ -1233,6 +1233,78 @@
       "originalPrimaryFields": {
         "close": 56.220001220703125
       }
+    },
+    {
+      "id": "SOEDIV",
+      "date": "2026-11-16",
+      "currency": "CNY",
+      "basis": "Shanghai exchange market OHLC; unadjusted for cash dividends",
+      "basisThrough": "2026-11-16",
+      "reviewedAt": "2026-11-17T05:57:43.319Z",
+      "action": "correct-primary",
+      "originalPrimaryClose": 1.2924000024795532,
+      "originalSecondaryClose": 1.29,
+      "acceptedClose": 1.29,
+      "splitDivisorAtReview": 1,
+      "splitsAtReview": [],
+      "finding": "Yahoo reports a flat OHLC of 1.2924000024795532 with zero volume. Tencent and Eastmoney agree on the exact same-date exchange OHLC. This finding does not infer the vendor internal cause or alter other dates or volume.",
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/561580.SS?period1=1794268800&period2=1794894961&interval=1d&events=div,split",
+          "retrievedAt": "2026-11-17T05:56:02.778Z",
+          "sha256": "3828467e74188a2c77c5115b05cce608e566a5437f0614acd3890123a6779b41",
+          "field": "indicators.quote[0]",
+          "value": 1.2924000024795532,
+          "bar": {
+            "open": 1.2924000024795532,
+            "high": 1.2924000024795532,
+            "low": 1.2924000024795532,
+            "close": 1.2924000024795532
+          },
+          "volume": 0
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=sh561580,day,,,30",
+          "retrievedAt": "2026-11-17T05:56:03.777Z",
+          "sha256": "4d66f1200468eaf4a9d5e3e5fed6bcb108d8a2fa7a694eb6d482312f75324684",
+          "field": "data.sh561580.day",
+          "value": 1.29,
+          "bar": {
+            "open": 1.277,
+            "high": 1.292,
+            "low": 1.27,
+            "close": 1.29
+          }
+        },
+        {
+          "name": "Eastmoney",
+          "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.561580&klt=101&fqt=0&beg=20261110&end=20261116&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56",
+          "retrievedAt": "2026-11-17T05:56:03.922Z",
+          "sha256": "b5d053bd2fb6e88f956ce72ccfb793610d5e98272744d334a0f5505985010ceb",
+          "field": "data.klines; fqt=0",
+          "value": 1.29,
+          "bar": {
+            "open": 1.277,
+            "high": 1.292,
+            "low": 1.27,
+            "close": 1.29
+          }
+        }
+      ],
+      "acceptedFields": {
+        "open": 1.277,
+        "high": 1.292,
+        "low": 1.27,
+        "close": 1.29
+      },
+      "originalPrimaryFields": {
+        "open": 1.2924000024795532,
+        "high": 1.2924000024795532,
+        "low": 1.2924000024795532,
+        "close": 1.2924000024795532
+      }
     }
   ],
   "corporateActionSources": {
@@ -1256,5 +1328,6 @@
         "value": "3.0"
       }
     }
-  }
+  },
+  "updatedAt": "2026-11-17T05:57:43.319Z"
 }

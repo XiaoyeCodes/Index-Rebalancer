@@ -87,12 +87,48 @@ test('a reviewed comparison exception matches only its exact security, date and 
   for(const extra of [{date:'2020-07-10'},{id:'BBB'},{canonicalClose:99},{secondaryClose:102}])assert.equal(classifyDisagreement({...input,...extra}),null);
 });
 
-test('the seventeen reviewed records carry two corroborating feeds and explicitly separate nine corrections from eight retained prices',()=>{
+test('the reviewed records carry two corroborating feeds and separate ten corrections from eight retained prices',()=>{
   const evidence=loadResolutions();
-  assert.equal(evidence.records.length,17);
-  assert.equal(evidence.records.filter(r=>r.action==='correct-primary').length,9);
+  assert.equal(evidence.records.length,18);
+  assert.equal(evidence.records.filter(r=>r.action==='correct-primary').length,10);
   assert.equal(evidence.records.filter(r=>r.action==='retain-primary').length,8);
   for(const record of evidence.records)assert.ok(record.sources.length>=3);
+});
+
+test('the dated SOE dividend ETF correction preserves its ex-dividend factor and is repeatable',()=>{
+  const reviewed=loadResolutions().records.find(r=>r.id==='SOEDIV'&&r.date==='2026-11-16');
+  assert.ok(reviewed);
+  const bad=1.2924000024795532;
+  const input={meta:{symbol:'561580.SS',currency:'CNY',exchangeTimezoneName:'Asia/Shanghai'},
+    timestamp:['2026-11-13','2026-11-16','2026-11-17'].map(date=>Date.parse(date+'T01:30Z')/1000),
+    indicators:{quote:[{open:[1.269,bad,1.288],high:[1.285,bad,1.291],low:[1.265,bad,1.279],close:[1.28,bad,1.289],volume:[67477200,0,53566300]}],
+      adjclose:[{adjclose:[1.275,bad,1.289]}]}};
+  input.events={dividends:{ex:{date:input.timestamp[1],amount:.005}}};
+  const output=reconcileRaw(input,[reviewed]);
+  const quote=output.raw.indicators.quote[0];
+  assert.deepEqual(Object.fromEntries(['open','high','low','close'].map(k=>[k,quote[k][1]])),{open:1.277,high:1.292,low:1.27,close:1.29});
+  assert.deepEqual(output.raw.indicators.adjclose[0].adjclose,[1.275,1.29,1.289]);
+  assert.deepEqual(quote.volume,input.indicators.quote[0].volume);
+  assert.equal(output.checks[0].sourceClose,bad);
+  assert.equal(output.checks[0].reviewedAt,reviewed.reviewedAt);
+  assert.deepEqual(reconcileRaw(output.raw,[reviewed]).raw.indicators,output.raw.indicators);
+  const vendorFixed=structuredClone(output.raw);delete vendorFixed.historicalReconciliations;
+  assert.equal(reconcileRaw(vendorFixed,[reviewed]).checks[0].status,'vendor-correct');
+});
+
+test('the ETF correction requires the exact mapped exchange ticker, currency, date and observed values',()=>{
+  const reviewed=loadResolutions().records.find(r=>r.id==='SOEDIV'&&r.date==='2026-11-16');
+  const bad=reviewed.originalPrimaryClose;
+  const input={meta:{symbol:'561580.SS',currency:'CNY',exchangeTimezoneName:'Asia/Shanghai'},timestamp:[Date.parse('2026-11-16T01:30Z')/1000],
+    indicators:{quote:[Object.fromEntries(['open','high','low','close'].map(k=>[k,[bad]]))],adjclose:[{adjclose:[bad]}]}};
+  for(const [field,value]of [['symbol','561580.SZ'],['currency','USD']]){
+    const wrong=structuredClone(input);wrong.meta[field]=value;
+    assert.throws(()=>reconcileRaw(wrong,[reviewed]),/changed/);
+  }
+  const changed=structuredClone(input);changed.indicators.quote[0].close[0]=1.291;
+  assert.throws(()=>reconcileRaw(changed,[reviewed]),/unreviewed Yahoo close/);
+  const nextDay=structuredClone(input);nextDay.timestamp[0]+=86400;
+  assert.throws(()=>reconcileRaw(nextDay,[reviewed]),/reviewed historical bar is missing/);
 });
 
 test('a new non-week-end source disagreement remains unresolved and is not hidden by old reviewed cases',async t=>{

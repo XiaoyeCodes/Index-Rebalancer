@@ -43,7 +43,8 @@ export function reconcileRaw(input,records,{reviewedAt}={}) {
   const prior=raw.historicalReconciliations||[];const checks=[];
   for(const record of records) {
     if(raw.meta?.currency&&raw.meta.currency!==record.currency)throw Error(`${record.id}: price currency changed`);
-    if(raw.meta?.symbol&&raw.meta.symbol!==record.id)throw Error(`${record.id}: security symbol changed`);
+    const expectedSymbol=CHAINS[record.id]?.at(-1)||record.id;
+    if(raw.meta?.symbol&&raw.meta.symbol!==expectedSymbol)throw Error(`${record.id}: security symbol changed`);
     const i=dates.indexOf(record.date),scale=resolutionScale(raw,record),target=record.acceptedClose*scale;
     if(i<0||!(q.close[i]>0)||!(a[i]>0))throw Error(`${record.id} ${record.date}: reviewed historical bar is missing`);
     const price=q.close[i],old=prior.find(p=>p.date===record.date);
@@ -80,7 +81,7 @@ export function reconcileRaw(input,records,{reviewedAt}={}) {
         for(let j=0;j<=i;j++)if(a[j]>0)a[j]*=ratio;
       }
     }
-    checks.push({id:record.id,date:record.date,action:record.action,status,sourceClose:sourceFields.close,close:target,sourceFields,fields,scale,reviewedAt});
+    checks.push({id:record.id,date:record.date,action:record.action,status,sourceClose:sourceFields.close,close:target,sourceFields,fields,scale,reviewedAt:record.reviewedAt||reviewedAt});
   }
   raw.historicalReconciliations=checks;
   return {raw,checks};
@@ -92,9 +93,9 @@ export function classifyDisagreement({id,date,sourceClose,canonicalClose,seconda
   const scale=resolutionScale(raw,record),target=record.acceptedClose*scale;
   if(!near(canonicalClose,target))return null;
   if(record.action==='correct-primary'&&near(sourceClose,record.originalPrimaryClose*scale)&&corroborates(secondaryClose,target))
-    return {status:'primary-corrected',acceptedClose:target,reviewedAt:evidence.reviewedAt};
+    return {status:'primary-corrected',acceptedClose:target,reviewedAt:record.reviewedAt||evidence.reviewedAt};
   if(record.action==='retain-primary'&&near(sourceClose,target)&&corroborates(secondaryClose,record.originalSecondaryClose*scale))
-    return {status:'secondary-record-reviewed',acceptedClose:target,reviewedAt:evidence.reviewedAt};
+    return {status:'secondary-record-reviewed',acceptedClose:target,reviewedAt:record.reviewedAt||evidence.reviewedAt};
   return null;
 }
 
