@@ -30,9 +30,9 @@ function fixture(t) {
   }
   return pathToFileURL(directory+path.sep);
 }
-async function run(t,mutate) {
+async function run(t,mutate,extra={}) {
   const requests=[],delays=[],rawDir=fixture(t);
-  const report=await auditHistory(data,{rawDir,evidence:{records:[]},retryDelays:[10,30],
+  const report=await auditHistory(data,{rawDir,evidence:{records:[]},retryDelays:[10,30],...extra,
     now:123456,wait:async delay=>delays.push(delay),log:()=>{},request:async(url,options)=>{
       const symbol=decodeURIComponent(new URL(url).pathname.split('/')[3]);
       const body=response(symbol);
@@ -120,4 +120,40 @@ test('Nasdaq share-class aliases identify the same security without relaxing the
   assert.equal(report.failures.length,0);
   assert.equal(report.unresolvedDisagreements,0);
   assert.equal(report.results.find(r=>r.id==='BRK-B').compared,3);
+});
+
+const latestProof=()=>({results:[{id:'MSFT',ticker:'MSFT',observations:[
+  {date:'2026-11-10',primary:533.1599731445312,secondary:533.16,source:'Nasdaq',verified:true,supportingSources:['Yahoo Finance','Nasdaq']},
+  {date:'2026-11-12',primary:523,secondary:523,source:'Tencent Finance',verified:true,supportingSources:['Yahoo Finance','Tencent Finance']},
+]}]});
+
+test('late long-history data can use a separately verified latest close without omitting the older audit',async t=>{
+  const result=await run(t,body=>{body.data.tradesTable.rows.shift();body.data.totalRecords=2;},{recentVerification:latestProof()});
+  assert.equal(result.report.failures.length,0);
+  assert.equal(result.msft.compared,2);
+  assert.equal(result.msft.to,'2026-11-11');
+  assert.equal(result.msft.snapshotThrough,'2026-11-12');
+  assert.equal(result.msft.latestCloseSource,'Tencent Finance');
+});
+
+test('late history accepts two actual external sources rather than counting a repaired Yahoo value as a vote',async t=>{
+  const proof=latestProof();proof.results[0].observations[1].supportingSources=['Nasdaq','Tencent Finance'];
+  const result=await run(t,body=>{body.data.tradesTable.rows.shift();body.data.totalRecords=2;},{recentVerification:proof});
+  assert.equal(result.report.failures.length,0);assert.equal(result.msft.latestCloseSource,'Tencent Finance');
+});
+
+test('a wrong asset, date, price, duplicate source vote or unverified flag cannot bypass missing history',async t=>{
+  for(const scenario of ['ticker','date','price','duplicate-source','unverified','coverage-gap']){
+    await t.test(scenario,async child=>{
+      const proof=latestProof(),result=proof.results[0],last=result.observations[1];
+      if(scenario==='ticker')result.ticker='OTHER';
+      if(scenario==='date')last.date='2026-11-11';
+      if(scenario==='price')last.primary=524;
+      if(scenario==='duplicate-source')last.supportingSources=['Tencent Finance','Tencent Finance'];
+      if(scenario==='unverified')last.verified=false;
+      if(scenario==='coverage-gap')result.observations[0].date='2026-11-12';
+      const checked=await run(child,body=>{body.data.tradesTable.rows.shift();body.data.totalRecords=2;},{recentVerification:proof});
+      assert.equal(checked.msft,undefined);assert.equal(checked.report.failures.length,1);
+    });
+  }
 });

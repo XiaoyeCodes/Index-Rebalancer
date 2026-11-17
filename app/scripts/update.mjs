@@ -10,12 +10,13 @@ import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { fetchAll } from './fetch.mjs';
 import { buildWeekly } from './process.mjs';
-import { CHAINS, DATA_FILE } from './assets.mjs';
+import { CHAINS, DATA_FILE, RAW_DIR } from './assets.mjs';
 import { validateSnapshot } from './freshness.mjs';
-import { crosscheck } from './crosscheck.mjs';
-import {repairQuotes} from './repair-quotes.mjs';
 import {auditHistory} from './audit-history.mjs';
-import {reconcileHistory} from './reconcile-history.mjs';
+import {reconcileHistory,loadResolutions} from './reconcile-history.mjs';
+import Calendar from '../market-calendar.js';
+import {tradingDate,isClosed} from './process.mjs';
+import {AUTOMATIC_FILE,loadAutomaticArchive,importLegacyRepairs,mergeQuoteEvidence,replayAutomaticArchive,recoverRecentQuotes,resolveHistoricalQuotes} from './automatic-quotes.mjs';
 
 // Restore every publication input if any build or independent calculation fails.
 export async function withRollback(files,action) {
@@ -47,6 +48,11 @@ function check(next, prev) {
   return problems;
 }
 
+export function targetClosingDate(spy,now=Date.now()) {
+  const latest=spy.timestamp.filter((time,index)=>spy.indicators.quote[0].close[index]>0&&isClosed(time,spy.meta,now)).at(-1);
+  return [Calendar.expectedUSDate(now),latest?tradingDate(latest,spy.meta.exchangeTimezoneName):''].sort().at(-1);
+}
+
 async function main() {
   const skipFetch = process.argv.includes('--skip-fetch');
   const prev = fs.existsSync(DATA_FILE) ? JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')) : null;
@@ -54,27 +60,59 @@ async function main() {
 
   if (!skipFetch) { console.log('1/3 下载行情…'); fetchAll(); } else console.log('1/3 跳过下载，使用已有原始数据');
 
+  const now=Date.now(),manual=loadResolutions();
   const repairFile=new URL('../data/quote-repairs.json',import.meta.url);
-  const repaired=await repairQuotes({archive:fs.existsSync(repairFile)?JSON.parse(fs.readFileSync(repairFile,'utf8')):[]});
-  console.log(`备用来源核对并填补 ${repaired.applied.length} 个空日线，累计保留 ${repaired.evidence.length} 条证据。`);
-  const reconciled=reconcileHistory();
+  const legacyRepairs=fs.existsSync(repairFile)?JSON.parse(fs.readFileSync(repairFile,'utf8')):[];
+  let automatic=importLegacyRepairs(loadAutomaticArchive(),legacyRepairs),replayed=replayAutomaticArchive(automatic);
+  let evidence=mergeQuoteEvidence(manual,automatic,replayed.active);
+  console.log(`已重放 ${replayed.active.length} 条自动核实记录，${replayed.pending.length} 条变化后的记录等待重新核实。`);
+  let reconciled=reconcileHistory({evidence});
   console.log(`历史复核 ${reconciled.reviewedCases} 条：${reconciled.primaryCorrectionCases} 条收盘价修正记录，${reconciled.retainedPrimaryCases} 条保留已核实主源价格。`);
   console.log('2/3 生成周线数据并校验…');
-  const next = buildWeekly();
-  const health = validateSnapshot(next,prev);
-  const problems = [...check(next, prev),...health.problems];
+  const spy=JSON.parse(fs.readFileSync(new URL('SPY.json',RAW_DIR),'utf8')).chart.result[0];
+  const targetAsOf=targetClosingDate(spy,now);
+  const recovered=await recoverRecentQuotes({asOf:targetAsOf,archive:automatic,manual,pending:replayed.pending,now});
+  automatic=recovered.automatic;
+  replayAutomaticArchive(automatic);
+  evidence=mergeQuoteEvidence(manual,automatic);
+  reconciled=reconcileHistory({evidence});
+  let next = buildWeekly(RAW_DIR,{now});
+  let health = validateSnapshot(next,prev,{now});
+  let problems = [...check(next, prev),...health.problems];
   if (problems.length) throw new Error(`校验未通过，原有数据未改动：\n  ${problems.join('\n  ')}`);
   console.log('3/3 与 Nasdaq / Tencent 核对最近三个收盘价，并独立复算…');
-  const external=await crosscheck(next);
-  const history=await auditHistory(next);
+  let external=recovered.verification,newResolutions=recovered.newRecords.length;
+  let history=await auditHistory(next,{evidence,recentVerification:external});
+  if(!history.failures.length&&history.unresolvedDisagreements){
+    const resolved=await resolveHistoricalQuotes(history,{asOf:next.asOf,archive:automatic,manual,now});
+    automatic=resolved.automatic;
+    newResolutions+=resolved.newRecords.length;
+    replayAutomaticArchive(automatic);
+    evidence=mergeQuoteEvidence(manual,automatic);
+    reconciled=reconcileHistory({evidence});
+    const checkedAgain=await recoverRecentQuotes({asOf:targetAsOf,archive:automatic,manual,now});
+    automatic=checkedAgain.automatic;external=checkedAgain.verification;newResolutions+=checkedAgain.newRecords.length;
+    replayAutomaticArchive(automatic);evidence=mergeQuoteEvidence(manual,automatic);reconciled=reconcileHistory({evidence});
+    next=buildWeekly(RAW_DIR,{now});health=validateSnapshot(next,prev,{now});
+    problems=[...check(next,prev),...health.problems];
+    if(problems.length)throw Error('Post-recovery validation failed: '+problems.join('; '));
+    history=await auditHistory(next,{evidence,recentVerification:external});
+  }
   if(history.failures.length || history.unresolvedDisagreements)throw Error('Unreviewed historical price disagreement: '+JSON.stringify(history.failures.concat(history.results.filter(r=>r.unresolvedDifferences.length).map(r=>({id:r.id,differences:r.unresolvedDifferences})))));
+  // A historical correction may never leave the published latest close out of
+  // step with the independently verified recent snapshot.
+  for(const result of external.results){
+    const a=next.assets[result.id],last=result.observations.at(-1);
+    if(a.asOf!==last.date||Math.abs(a.lastClose-last.primary)>result.tolerance)throw Error(`${result.id}: rebuilt snapshot differs from verified close`);
+  }
   next.health={checkedAt:external.checkedAt,expectedUSDate:health.expectedUSDate,warnings:health.warnings,
     crosscheck:{assets:external.assets,observations:external.observations,sources:['Yahoo Finance','Nasdaq','Tencent Finance','Eastmoney']},
     history:{assets:history.assets,observations:history.observations,weeklyComparisons:history.weeklyComparisons,nonWeeklyDisagreements:history.nonWeeklyDisagreements,sourceDisagreements:history.sourceDisagreements,canonicalVsNasdaqDisagreements:history.canonicalVsNasdaqDisagreements,reviewedCases:history.reviewedCases,primaryCorrectionCases:history.primaryCorrectionCases,retainedPrimaryCases:history.retainedPrimaryCases,unresolvedDisagreements:history.unresolvedDisagreements},
-    repairedBars:repaired.evidence.length};
+    recovery:{automaticResolutions:automatic.records.length,newResolutions,fallbackAssets:external.results.filter(result=>result.observations.some(row=>row.unavailableSource||(!/\.(SS|SZ|HK)$/.test(result.ticker)&&row.source==='Tencent Finance'))).map(result=>result.id),historyFallbackAssets:history.results.filter(result=>result.latestCloseSource).map(result=>result.id)},
+    repairedBars:automatic.records.filter(record=>record.action==='fill-primary').length};
   const html=new URL('../heng.html',import.meta.url),crossFile=new URL('../data/crosscheck.json',import.meta.url),validationFile=new URL('../data/validation.json',import.meta.url);
   const historyFile=new URL('../data/historical-audit.json',import.meta.url),adjustmentFile=new URL('../data/adjustment-check.json',import.meta.url);
-  await withRollback([DATA_FILE,html,crossFile,validationFile,repairFile,historyFile,adjustmentFile],async()=>{
+  await withRollback([DATA_FILE,html,crossFile,validationFile,repairFile,historyFile,adjustmentFile,AUTOMATIC_FILE],async()=>{
     fs.writeFileSync(DATA_FILE,JSON.stringify(next));
     fs.writeFileSync(crossFile,JSON.stringify(external));
     const scratch=new URL('../../.private/data-validation/',import.meta.url);
@@ -90,8 +128,8 @@ async function main() {
     next.health.calculations={assets:reference.assets,backtests:reference.backtests,weeklyBalances:reference.weeklyBalances,yearlyChecks:reference.yearlyChecks,monthlyWeightChecks:reference.monthlyWeightChecks,maxAbsoluteErrors:reference.maxAbsoluteErrors};
     fs.writeFileSync(DATA_FILE,JSON.stringify(next));
     fs.writeFileSync(validationFile,JSON.stringify(reference));
-    fs.writeFileSync(repairFile,JSON.stringify(repaired.evidence));
     fs.writeFileSync(historyFile,JSON.stringify(history));
+    fs.writeFileSync(AUTOMATIC_FILE,JSON.stringify(automatic,null,2)+'\n');
     execFileSync(process.execPath,[fileURLToPath(new URL('build.mjs', import.meta.url))],{stdio:'inherit'});
   });
 
@@ -103,7 +141,7 @@ async function main() {
 // --git: commit only the regenerated data and page, then push. Never touches other changes in the working tree.
 function commitAndPush(asOf) {
   const root = fileURLToPath(new URL('../..', import.meta.url));
-  const files = ['app/data/prices-weekly.json','app/heng.html','app/data/crosscheck.json','app/data/validation.json','app/data/quote-repairs.json','app/data/historical-audit.json','app/data/adjustment-check.json'];
+  const files = ['app/data/prices-weekly.json','app/heng.html','app/data/crosscheck.json','app/data/validation.json','app/data/quote-repairs.json','app/data/historical-audit.json','app/data/adjustment-check.json','app/data/automatic-quote-resolutions.json'];
   // never let git or the credential manager stop to ask for input during an unattended run
   const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' };
   const git = (...args) => execFileSync('git', args, { cwd: root, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();

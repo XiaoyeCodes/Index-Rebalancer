@@ -48,15 +48,18 @@ export function reconcileRaw(input,records,{reviewedAt}={}) {
     const i=dates.indexOf(record.date),scale=resolutionScale(raw,record),target=record.acceptedClose*scale;
     if(i<0||!(q.close[i]>0)||!(a[i]>0))throw Error(`${record.id} ${record.date}: reviewed historical bar is missing`);
     const price=q.close[i],old=prior.find(p=>p.date===record.date);
+    const priorMultiplier=old?resolutionScale(raw,{...record,basisThrough:old.basisThrough||record.basisThrough})/old.scale:1;
     const fields=Object.fromEntries(Object.entries(record.acceptedFields||{close:record.acceptedClose}).map(([k,v])=>[k,v*scale]));
     const originalFields=record.originalPrimaryFields||{close:record.originalPrimaryClose};
     const sourceFields={};const pending={};
     for(const [field,value]of Object.entries(fields)) {
       const observed=q[field][i],oldField=old?.fields?.[field]??(field==='close'?old?.close:undefined);
-      sourceFields[field]=old&&near(observed,oldField*scale/old.scale)?(old.sourceFields?.[field]??old.sourceClose)*scale/old.scale:observed;
+      const followsPrior=old&&near(observed,oldField*priorMultiplier);
+      sourceFields[field]=followsPrior?(old.sourceFields?.[field]??old.sourceClose)*priorMultiplier:observed;
       if(near(observed,value))continue;
-      const expectedField=originalFields[field]*scale;
-      if(record.action!=='correct-primary'||!near(observed,expectedField))throw Error(`${record.id} ${record.date}: unreviewed Yahoo ${field} ${observed}; expected ${expectedField} or ${value}`);
+      const expectedField=originalFields[field]==null?null:originalFields[field]*scale;
+      const matchesOriginal=(expectedField==null?observed==null:near(observed,expectedField))||(followsPrior&&(expectedField==null?sourceFields[field]==null:near(sourceFields[field],expectedField)));
+      if(record.action!=='correct-primary'||!matchesOriginal)throw Error(`${record.id} ${record.date}: unreviewed Yahoo ${field} ${observed}; expected ${expectedField} or ${value}`);
       pending[field]=value;
     }
     const changes=Object.keys(pending).length>0;
@@ -81,7 +84,7 @@ export function reconcileRaw(input,records,{reviewedAt}={}) {
         for(let j=0;j<=i;j++)if(a[j]>0)a[j]*=ratio;
       }
     }
-    checks.push({id:record.id,date:record.date,action:record.action,status,sourceClose:sourceFields.close,close:target,sourceFields,fields,scale,reviewedAt:record.reviewedAt||reviewedAt});
+    checks.push({id:record.id,date:record.date,action:record.action,status,sourceClose:sourceFields.close,close:target,sourceFields,fields,scale,basisThrough:record.basisThrough,reviewedAt:record.reviewedAt||reviewedAt});
   }
   raw.historicalReconciliations=checks;
   return {raw,checks};

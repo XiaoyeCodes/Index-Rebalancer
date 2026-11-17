@@ -2,12 +2,13 @@
 // Dividends/adjusted total returns are a separate calculation, not exchange closes.
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 import {CHAINS,RAW_DIR,fileFor} from './assets.mjs';
 import {tradingDate} from './process.mjs';
 import {requestJSON} from './crosscheck.mjs';
 import {classifyDisagreement,loadResolutions} from './reconcile-history.mjs';
 
-function auditSnapshot(response,{symbol,id,primary,original,raw,data,evidence,url,attempts}) {
+function auditSnapshot(response,{symbol,id,primary,original,raw,data,evidence,url,attempts,recentVerification}) {
   const rows=response.data?.tradesTable?.rows||[];
   const normalize=value=>String(value||'').toUpperCase().replaceAll('-','.').replaceAll('/','.');
   if(normalize(response.data?.symbol)!==normalize(symbol))throw Error(`exchange history symbol ${response.data?.symbol||'missing'}; expected ${symbol}`);
@@ -26,17 +27,25 @@ function auditSnapshot(response,{symbol,id,primary,original,raw,data,evidence,ur
     if(canonicalDifference>.011)canonicalDisagreements++;
     if(difference>.011||canonicalDifference>.011) {
       const resolution=classifyDisagreement({id,date,sourceClose,canonicalClose:first,secondaryClose:secondary,raw,evidence});
-      const item={date,yahoo:sourceClose,nasdaq:secondary,difference,canonicalClose:first,canonicalDifference,...(resolution?{resolution}:{})};
+      const secondaryBar=Object.fromEntries(['open','high','low','close'].map(key=>[key,Number(String(row[key]??'').replace(/[$,]/g,''))]));
+      const item={date,yahoo:sourceClose,nasdaq:secondary,difference,canonicalClose:first,canonicalDifference,secondaryBar,...(resolution?{resolution}:{})};
       differences.push(item);
       if(!resolution){unresolvedDifferences.push(item);if(weekDates.has(date))weeklyDifferences.push(item);}
     }
   }
-  if(!seen.has(data.asOf))throw Error(`exchange history is missing latest close ${data.asOf}`);
+  const through=[...seen].sort().at(-1);
+  let latestCloseSource=null;
+  if(!seen.has(data.asOf)){
+    const checked=recentVerification?.results?.find(result=>result.id===id&&result.ticker===raw.meta.symbol);
+    const independentlyVerified=checked?.observations?.find(item=>item.date===data.asOf&&item.verified===true&&new Set(item.supportingSources?.filter(source=>['Yahoo Finance','Nasdaq','Tencent Finance'].includes(source))).size>=2&&item.supportingSources.includes(item.source)&&Number.isFinite(item.primary)&&Math.abs(item.primary-primary.get(data.asOf))<=.011&&Math.abs(item.secondary-item.primary)<=.011);
+    if(!independentlyVerified||through<checked.observations[0].date)throw Error(`exchange history is missing latest close ${data.asOf}`);
+    latestCloseSource=independentlyVerified.source;
+  }
   if(!compared)throw Error('exchange history has no matching primary dates');
-  return {id,source:'Nasdaq',url,attempts,from:[...seen].sort()[0],to:data.asOf,compared,maxDifference,differences,unresolvedDifferences,canonicalDisagreements,missing,weeklyComparisons,weeklyDifferences,weeklyDisagreements:differences.filter(item=>weekDates.has(item.date)).length};
+  return {id,source:'Nasdaq',url,attempts,from:[...seen].sort()[0],to:through,snapshotThrough:data.asOf,latestCloseSource,responseSha256:createHash('sha256').update(JSON.stringify(response)).digest('hex'),compared,maxDifference,differences,unresolvedDifferences,canonicalDisagreements,missing,weeklyComparisons,weeklyDifferences,weeklyDisagreements:differences.filter(item=>weekDates.has(item.date)).length};
 }
 
-export async function auditHistory(data,{request=requestJSON,rawDir=RAW_DIR,evidence=loadResolutions(),
+export async function auditHistory(data,{request=requestJSON,rawDir=RAW_DIR,evidence=loadResolutions(),recentVerification,
   retryDelays=[10000,30000],wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),now=Date.now(),log=console.warn}={}) {
   const entries=Object.entries(CHAINS).filter(([,c])=>! /\.(SS|SZ|HK)$/.test(c.at(-1))),results=[],failures=[];
   let cursor=0;
@@ -59,7 +68,7 @@ export async function auditHistory(data,{request=requestJSON,rawDir=RAW_DIR,evid
           const response=await request(requestUrl.href,{fresh:true});
           let result,error;
           try {
-            result=auditSnapshot(response,{symbol,id,primary,original,raw,data,evidence,url:requestUrl.href,attempts:attempt+1});
+            result=auditSnapshot(response,{symbol,id,primary,original,raw,data,evidence,url:requestUrl.href,attempts:attempt+1,recentVerification});
           } catch(e) {error=e;}
           if(!error&&!result.unresolvedDifferences.length) {results.push(result);break;}
           if(attempt===retryDelays.length) {
