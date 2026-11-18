@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import Calendar from '../market-calendar.js';
 
-const statusURL='https://xiaoyecodes.github.io/Index-Rebalancer/data-status.json';
+const site='https://xiaoyecodes.github.io/Index-Rebalancer/';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
 export function backupPlan(snapshot,live,{now=Date.now(),manual=false,dataSha256}={}) {
@@ -18,12 +18,23 @@ export function backupPlan(snapshot,live,{now=Date.now(),manual=false,dataSha256
   return 'deploy';
 }
 
-async function readLive() {
-  const url=new URL(statusURL);url.searchParams.set('check',String(Date.now()));
+async function readPublic(file,version) {
+  const url=new URL(file,site);
+  if(version)url.searchParams.set('v',version);
+  else url.searchParams.set('check',String(Date.now()));
   const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(10000)});
-  if(!response.ok)throw Error('Public data status returned HTTP '+response.status);
-  return response.json();
+  if(!response.ok)throw Error(file+' returned HTTP '+response.status);
+  return response;
 }
+
+const readLive=async()=>(await readPublic('data-status.json')).json();
+
+export function shellMatches(html,version) {
+  const envelope=html.match(/<script id="access" type="application\/json">([^<]+)<\/script>/);
+  return /^[0-9a-f]{64}$/.test(version)&&!!envelope&&JSON.parse(envelope[1]).appVersion===version;
+}
+
+const checkShell=async version=>shellMatches(await (await readPublic('')).text(),version);
 
 export function matchesDeployment(local,live) {
   return ['asOf','checkedAt','dataSha256','applicationSha256','sourceCommit'].every(key=>typeof local[key]==='string'&&local[key].length>0&&local[key]===live?.[key]);
@@ -35,7 +46,12 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===fs.realpathSync(process.arg
     let verified=false;
     for(let attempt=0;attempt<12&&!verified;attempt++){
       if(attempt)await pause(10000);
-      try{verified=matchesDeployment(target,await readLive());}catch(error){console.warn(error.message);}
+      try{
+        if(matchesDeployment(target,await readLive())&&await checkShell(target.applicationSha256)){
+          const response=await readPublic('application.bin',target.applicationSha256);
+          verified=createHash('sha256').update(new Uint8Array(await response.arrayBuffer())).digest('hex')===target.applicationSha256;
+        }
+      }catch(error){console.warn(error.message);}
     }
     if(!verified)throw Error('Pages did not serve the deployed market snapshot '+target.asOf+' at '+target.sourceCommit);
     console.log('Verified public market snapshot '+target.asOf+' at '+target.sourceCommit);
@@ -44,7 +60,11 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===fs.realpathSync(process.arg
     const snapshot=JSON.parse(bytes),dataSha256=createHash('sha256').update(bytes).digest('hex');
     let live;
     try{live=await readLive();}catch(error){console.warn(error.message);}
-    const plan=backupPlan(snapshot,live,{dataSha256,manual:process.env.FORCE_UPDATE==='true'});
+    let plan=backupPlan(snapshot,live,{dataSha256,manual:process.env.FORCE_UPDATE==='true'});
+    if(plan==='current'){
+      try{if(!await checkShell(live.applicationSha256))plan='deploy';}
+      catch(error){console.warn(error.message);plan='deploy';}
+    }
     const message=`Repository close ${snapshot.asOf}, website close ${live?.asOf||'unavailable'}, expected NYSE close ${Calendar.expectedUSDate()}, action ${plan}`;
     console.log(message);
     if(process.env.GITHUB_OUTPUT)fs.appendFileSync(process.env.GITHUB_OUTPUT,'plan='+plan+'\n');

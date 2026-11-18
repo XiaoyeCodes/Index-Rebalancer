@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {backupPlan,matchesDeployment} from './site-freshness.mjs';
+import {backupPlan,matchesDeployment,shellMatches} from './site-freshness.mjs';
 
 const now=Date.parse('2026-11-18T02:13:00Z'),date='2026-11-17',checkedAt='2026-11-18T00:10:00Z';
 const snapshot={asOf:date,fxAsOf:{CNY:date,HKD:date},health:{checkedAt}};
@@ -21,4 +21,11 @@ test('website verification checks the exact dataset, build, timestamp and checke
   const target={...live,sourceCommit:'deployed',applicationSha256:'built'};
   assert.ok(matchesDeployment(target,{...target}));
   for(const key of Object.keys(target))assert.equal(matchesDeployment(target,{...target,[key]:'older'}),false);
+});
+
+test('a current status file with an older public login page requires a fresh deployment',()=>{
+  const version='a'.repeat(64),html='<script id="access" type="application/json">'+JSON.stringify({appVersion:version})+'</script>';
+  assert.equal(shellMatches(html,version),true);
+  assert.equal(shellMatches(html,'b'.repeat(64)),false);
+  assert.equal(shellMatches('<html>stale entry</html>',version),false);
 });
