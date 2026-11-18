@@ -1,39 +1,39 @@
 {
   "tickers": 53,
-  "dailyRows": 260529,
+  "dailyRows": 260571,
   "results": [
     {
       "ticker": "MSFT",
       "type": "EQUITY",
-      "rows": 6759,
+      "rows": 6760,
       "dividendEvents": 91,
-      "maxRelativeFactorDifference": 9.757212298122653e-07
+      "maxRelativeFactorDifference": 9.43248689821985e-07
     },
     {
       "ticker": "600036.SS",
       "type": "EQUITY",
-      "rows": 6044,
+      "rows": 6045,
       "dividendEvents": 26,
-      "maxRelativeFactorDifference": 4.927569248192043e-07
+      "maxRelativeFactorDifference": 5.913965601678228e-07
     },
     {
       "ticker": "AXP",
       "type": "EQUITY",
-      "rows": 6759,
+      "rows": 6760,
       "dividendEvents": 108,
-      "maxRelativeFactorDifference": 9.868859272010866e-07
+      "maxRelativeFactorDifference": 9.598316912384774e-07
     },
     {
       "ticker": "SOXX",
       "type": "ETF",
-      "rows": 6374,
+      "rows": 6375,
       "dividendEvents": 78,
-      "maxRelativeFactorDifference": 9.088544803415033e-07
+      "maxRelativeFactorDifference": 8.358485509285529e-07
     },
     {
       "ticker": "GLD",
       "type": "ETF",
-      "rows": 5533,
+      "rows": 5534,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
@@ -42,124 +42,124 @@
       "type": "MUTUALFUND",
       "rows": 6759,
       "dividendEvents": 108,
-      "maxRelativeFactorDifference": 7.958352659098722e-07
+      "maxRelativeFactorDifference": 8.907570798744047e-07
     },
     {
       "ticker": "510880.SS",
       "type": "EQUITY",
       "rows": 4583,
       "dividendEvents": 13,
-      "maxRelativeFactorDifference": 3.5733448733310524e-07
+      "maxRelativeFactorDifference": 3.388283740246578e-07
     },
     {
       "ticker": "BTC-USD",
       "type": "CRYPTOCURRENCY",
-      "rows": 4444,
+      "rows": 4445,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "AAPL",
       "type": "EQUITY",
-      "rows": 6759,
+      "rows": 6760,
       "dividendEvents": 58,
-      "maxRelativeFactorDifference": 7.922821436689986e-07
+      "maxRelativeFactorDifference": 8.353404585825785e-07
     },
     {
       "ticker": "VXUS",
       "type": "ETF",
-      "rows": 3974,
+      "rows": 3975,
       "dividendEvents": 58,
-      "maxRelativeFactorDifference": 7.062550000380696e-07
+      "maxRelativeFactorDifference": 6.988221793458038e-07
     },
     {
       "ticker": "600900.SS",
       "type": "EQUITY",
-      "rows": 5624,
+      "rows": 5625,
       "dividendEvents": 26,
-      "maxRelativeFactorDifference": 3.7907613681387176e-07
+      "maxRelativeFactorDifference": 4.139366677202716e-07
     },
     {
       "ticker": "GOOG",
       "type": "EQUITY",
-      "rows": 5597,
+      "rows": 5598,
       "dividendEvents": 10,
-      "maxRelativeFactorDifference": 3.428159947027609e-07
+      "maxRelativeFactorDifference": 3.434172506366906e-07
     },
     {
       "ticker": "VGTSX",
       "type": "MUTUALFUND",
       "rows": 6759,
       "dividendEvents": 73,
-      "maxRelativeFactorDifference": 8.634075450153489e-07
+      "maxRelativeFactorDifference": 1.003977439628656e-06
     },
     {
       "ticker": "NVDA",
       "type": "EQUITY",
-      "rows": 6759,
+      "rows": 6760,
       "dividendEvents": 56,
-      "maxRelativeFactorDifference": 9.470647028830825e-07
+      "maxRelativeFactorDifference": 8.845847712102284e-07
     },
     {
       "ticker": "GLDM",
       "type": "ETF",
-      "rows": 2110,
+      "rows": 2111,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "BRK-B",
       "type": "EQUITY",
-      "rows": 6759,
+      "rows": 6760,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "SPY",
       "type": "ETF",
-      "rows": 6759,
+      "rows": 6760,
       "dividendEvents": 108,
-      "maxRelativeFactorDifference": 1.0312479369334326e-06
+      "maxRelativeFactorDifference": 1.2040747764396897e-06
     },
     {
       "ticker": "512800.SS",
       "type": "EQUITY",
-      "rows": 2263,
+      "rows": 2264,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 3.297853368167125e-08
     },
     {
       "ticker": "VNQ",
       "type": "ETF",
-      "rows": 5569,
+      "rows": 5570,
       "dividendEvents": 88,
-      "maxRelativeFactorDifference": 6.947231080411953e-07
+      "maxRelativeFactorDifference": 7.501090821815382e-07
     },
     {
       "ticker": "VEIEX",
       "type": "MUTUALFUND",
       "rows": 6759,
       "dividendEvents": 143,
-      "maxRelativeFactorDifference": 1.1167363263009378e-06
+      "maxRelativeFactorDifference": 1.0270699564163266e-06
     },
     {
       "ticker": "VFISX",
       "type": "MUTUALFUND",
       "rows": 6759,
       "dividendEvents": 333,
-      "maxRelativeFactorDifference": 1.8099897285406286e-06
+      "maxRelativeFactorDifference": 1.4732122304295103e-06
     },
     {
       "ticker": "SHY",
       "type": "ETF",
-      "rows": 6115,
+      "rows": 6116,
       "dividendEvents": 291,
-      "maxRelativeFactorDifference": 1.62950545701257e-06
+      "maxRelativeFactorDifference": 1.3993854917071502e-06
     },
     {
       "ticker": "HKD=X",
       "type": "CURRENCY",
-      "rows": 6416,
+      "rows": 6417,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
@@ -168,140 +168,140 @@
       "type": "ETF",
       "rows": 3344,
       "dividendEvents": 14,
-      "maxRelativeFactorDifference": 2.8821955089242124e-07
+      "maxRelativeFactorDifference": 2.669219677509105e-07
     },
     {
       "ticker": "VWO",
       "type": "ETF",
-      "rows": 5457,
+      "rows": 5458,
       "dividendEvents": 63,
-      "maxRelativeFactorDifference": 7.053148625146832e-07
+      "maxRelativeFactorDifference": 8.69578401507809e-07
     },
     {
       "ticker": "BND",
       "type": "ETF",
-      "rows": 4934,
+      "rows": 4935,
       "dividendEvents": 233,
-      "maxRelativeFactorDifference": 1.1625736633380512e-06
+      "maxRelativeFactorDifference": 1.3227260529102836e-06
     },
     {
       "ticker": "000001.SS",
       "type": "INDEX",
-      "rows": 6505,
+      "rows": 6506,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "AMZN",
       "type": "EQUITY",
-      "rows": 6759,
+      "rows": 6760,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "VOO",
       "type": "ETF",
-      "rows": 4072,
+      "rows": 4073,
       "dividendEvents": 64,
-      "maxRelativeFactorDifference": 6.987504160838043e-07
+      "maxRelativeFactorDifference": 7.489432867213708e-07
     },
     {
       "ticker": "VTSMX",
       "type": "MUTUALFUND",
       "rows": 6759,
       "dividendEvents": 107,
-      "maxRelativeFactorDifference": 9.296570530059611e-07
+      "maxRelativeFactorDifference": 9.973045226319144e-07
     },
     {
       "ticker": "CNY=X",
       "type": "CURRENCY",
-      "rows": 6360,
+      "rows": 6361,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "512050.SS",
       "type": "EQUITY",
-      "rows": 487,
+      "rows": 488,
       "dividendEvents": 0,
-      "maxRelativeFactorDifference": 2.9745985341556036e-08
+      "maxRelativeFactorDifference": 5.2409972361999735e-08
     },
     {
       "ticker": "GC=F",
       "type": "FUTURE",
-      "rows": 6580,
+      "rows": 6581,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "VTI",
       "type": "ETF",
-      "rows": 6393,
+      "rows": 6394,
       "dividendEvents": 102,
-      "maxRelativeFactorDifference": 8.551159669245578e-07
+      "maxRelativeFactorDifference": 1.0783344182030419e-06
     },
     {
       "ticker": "VUSTX",
       "type": "MUTUALFUND",
       "rows": 6759,
       "dividendEvents": 341,
-      "maxRelativeFactorDifference": 1.6448990093342886e-06
+      "maxRelativeFactorDifference": 1.6961894178102455e-06
     },
     {
       "ticker": "SCHD",
       "type": "ETF",
-      "rows": 3790,
+      "rows": 3791,
       "dividendEvents": 60,
-      "maxRelativeFactorDifference": 6.604989177816378e-07
+      "maxRelativeFactorDifference": 5.908603082360742e-07
     },
     {
       "ticker": "QQQ",
       "type": "ETF",
       "rows": 6759,
       "dividendEvents": 90,
-      "maxRelativeFactorDifference": 9.406893779484449e-07
+      "maxRelativeFactorDifference": 9.777792114862294e-07
     },
     {
       "ticker": "QQQM",
       "type": "ETF",
-      "rows": 1531,
+      "rows": 1532,
       "dividendEvents": 24,
-      "maxRelativeFactorDifference": 4.096152109722695e-07
+      "maxRelativeFactorDifference": 4.032247729046645e-07
     },
     {
       "ticker": "IBIT",
       "type": "ETF",
-      "rows": 715,
+      "rows": 716,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "3033.HK",
       "type": "ETF",
-      "rows": 1529,
+      "rows": 1530,
       "dividendEvents": 0,
-      "maxRelativeFactorDifference": 1.1406401156932588e-08
+      "maxRelativeFactorDifference": 3.125960945649098e-08
     },
     {
       "ticker": "SPCX",
       "type": "EQUITY",
-      "rows": 109,
+      "rows": 110,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "2800.HK",
       "type": "ETF",
-      "rows": 4651,
+      "rows": 4652,
       "dividendEvents": 28,
-      "maxRelativeFactorDifference": 4.7617189591342424e-07
+      "maxRelativeFactorDifference": 4.970634440715216e-07
     },
     {
       "ticker": "601088.SS",
       "type": "EQUITY",
-      "rows": 4644,
+      "rows": 4645,
       "dividendEvents": 21,
-      "maxRelativeFactorDifference": 4.0879682949857e-07
+      "maxRelativeFactorDifference": 4.0078045548952446e-07
     },
     {
       "ticker": "^HSI",
@@ -313,65 +313,65 @@
     {
       "ticker": "SGOV",
       "type": "ETF",
-      "rows": 1625,
+      "rows": 1626,
       "dividendEvents": 76,
-      "maxRelativeFactorDifference": 7.978389651164264e-07
+      "maxRelativeFactorDifference": 6.933398171149463e-07
     },
     {
       "ticker": "TLT",
       "type": "ETF",
-      "rows": 6115,
+      "rows": 6116,
       "dividendEvents": 290,
-      "maxRelativeFactorDifference": 1.6188280899109841e-06
+      "maxRelativeFactorDifference": 1.752426831425069e-06
     },
     {
       "ticker": "VGT",
       "type": "ETF",
-      "rows": 5736,
+      "rows": 5737,
       "dividendEvents": 55,
-      "maxRelativeFactorDifference": 7.182154047047362e-07
+      "maxRelativeFactorDifference": 7.012476217482799e-07
     },
     {
       "ticker": "TSLA",
       "type": "EQUITY",
-      "rows": 4122,
+      "rows": 4123,
       "dividendEvents": 0,
       "maxRelativeFactorDifference": 0
     },
     {
       "ticker": "600941.SS",
       "type": "EQUITY",
-      "rows": 1178,
+      "rows": 1179,
       "dividendEvents": 10,
-      "maxRelativeFactorDifference": 2.586462688469737e-07
+      "maxRelativeFactorDifference": 2.485001060481551e-07
     },
     {
       "ticker": "159915.SZ",
       "type": "EQUITY",
-      "rows": 3638,
+      "rows": 3639,
       "dividendEvents": 0,
-      "maxRelativeFactorDifference": 3.592876218760921e-08
+      "maxRelativeFactorDifference": 4.739769532413618e-08
     },
     {
       "ticker": "VBMFX",
       "type": "MUTUALFUND",
       "rows": 6759,
       "dividendEvents": 332,
-      "maxRelativeFactorDifference": 2.037250615760655e-06
+      "maxRelativeFactorDifference": 1.5770226149403044e-06
     },
     {
       "ticker": "561580.SS",
       "type": "EQUITY",
-      "rows": 844,
+      "rows": 845,
       "dividendEvents": 19,
-      "maxRelativeFactorDifference": 4.193136207142345e-07
+      "maxRelativeFactorDifference": 3.9716521360588786e-07
     },
     {
       "ticker": "510300.SS",
       "type": "EQUITY",
-      "rows": 3517,
+      "rows": 3518,
       "dividendEvents": 13,
-      "maxRelativeFactorDifference": 3.7059948809758936e-07
+      "maxRelativeFactorDifference": 4.154462452943264e-07
     }
   ]
 }
