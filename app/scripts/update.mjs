@@ -106,9 +106,9 @@ async function main() {
     if(a.asOf!==last.date||Math.abs(a.lastClose-last.primary)>result.tolerance)throw Error(`${result.id}: rebuilt snapshot differs from verified close`);
   }
   next.health={checkedAt:external.checkedAt,expectedUSDate:health.expectedUSDate,warnings:health.warnings,
-    crosscheck:{assets:external.assets,observations:external.observations,sources:['Yahoo Finance','Nasdaq','Tencent Finance','Eastmoney']},
+    crosscheck:{assets:external.assets,observations:external.observations,sources:[...new Set(external.results.flatMap(result=>result.observations.flatMap(row=>row.supportingSources)))].sort()},
     history:{assets:history.assets,observations:history.observations,weeklyComparisons:history.weeklyComparisons,nonWeeklyDisagreements:history.nonWeeklyDisagreements,sourceDisagreements:history.sourceDisagreements,canonicalVsNasdaqDisagreements:history.canonicalVsNasdaqDisagreements,reviewedCases:history.reviewedCases,primaryCorrectionCases:history.primaryCorrectionCases,retainedPrimaryCases:history.retainedPrimaryCases,unresolvedDisagreements:history.unresolvedDisagreements},
-    recovery:{automaticResolutions:automatic.records.length,newResolutions,fallbackAssets:external.results.filter(result=>result.observations.some(row=>row.unavailableSource||(!/\.(SS|SZ|HK)$/.test(result.ticker)&&row.source==='Tencent Finance'))).map(result=>result.id),historyFallbackAssets:history.results.filter(result=>result.latestCloseSource).map(result=>result.id)},
+    recovery:{automaticResolutions:automatic.records.length,newResolutions,fallbackAssets:external.results.filter(result=>result.observations.some(row=>row.unavailableSource||(!/\.(SS|SZ|HK)$/.test(result.ticker)&&row.supportingSources.some(source=>source==='Tencent Finance'||source==='CNBC')))).map(result=>result.id),historyFallbackAssets:history.results.filter(result=>result.latestCloseSource).map(result=>result.id)},
     repairedBars:automatic.records.filter(record=>record.action==='fill-primary').length};
   const html=new URL('../heng.html',import.meta.url),crossFile=new URL('../data/crosscheck.json',import.meta.url),validationFile=new URL('../data/validation.json',import.meta.url);
   const historyFile=new URL('../data/historical-audit.json',import.meta.url),adjustmentFile=new URL('../data/adjustment-check.json',import.meta.url);

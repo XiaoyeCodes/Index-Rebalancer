@@ -77,6 +77,54 @@ test('an exhausted first-source network error can recover through a verified alt
   assert.equal(result.verification.observations,3);
 });
 
+function usCloseNetwork(f,{quoteTime=asOf+' 16:00:01',regular={},tencentDown=false}={}){
+  const older=dates.slice(0,-1).map(date=>({date,...bar(100)}));
+  const qt=Array(47).fill('');
+  Object.assign(qt,{2:'SPY.AM',3:'100',5:'100',30:quoteTime,33:'101',34:'99',35:'USD'});
+  const base=network(f,{nasdaq:older,tencent:tencentDown?Error('Tencent unavailable'):older,changeResponse:(r,s)=>{
+    if(s==='Tencent Finance')Object.assign(r.data['usSPY.AM'],{qt:{'usSPY.AM':qt},pandata:{last:'120',tag:'after'}});
+    return r;
+  }});
+  return {request:async url=>{
+    if(!url.includes('quote.cnbc.com'))return base.request(url);
+    return {FormattedQuoteResult:{FormattedQuote:[{code:0,symbol:'SPY',exchange:'NYSE Arca',countryCode:'US',currencyCode:'USD',
+      curmktstatus:'POST_MKT',last_time:asOf+'T16:10:00.000-0500',last:'100',open:'100',low:'99',high:'101',
+      ExtendedMktQuote:{last:'120',last_time:asOf+'T19:59:00.000-0500'},...regular}]}};
+  }};
+}
+
+test('a null Yahoo close and two late daily histories recover from two regular-session closes',async t=>{
+  const f=fixture(t,'SPY');f.raw.indicators.quote[0].close[2]=null;f.raw.indicators.adjclose[0].adjclose[2]=null;f.save();
+  const result=await run(f,usCloseNetwork(f));
+  const record=result.newRecords[0],last=result.verification.results[0].observations.at(-1);
+  assert.equal(record.action,'fill-primary');assert.equal(record.originalPrimaryClose,null);
+  assert.deepEqual(last.supportingSources,['Tencent Finance','CNBC']);
+  assert.equal(last.primary,100);assert.equal(last.quoteKind,'regular-session close');
+  assert.deepEqual(record.sources.filter(s=>s.quoteKind).map(s=>s.sessionTime),[asOf+' 16:00:01',asOf+'T16:10:00.000-0500']);
+  replayAutomaticArchive(result.automatic,{rawDir:f.rawDir});assert.equal(f.read().indicators.adjclose[0].adjclose[2],100);
+  const invalid=structuredClone(result.automatic);
+  invalid.records[0].sources.find(s=>s.name==='CNBC').url=invalid.records[0].sources.find(s=>s.name==='CNBC').url.replace('symbols=SPY','symbols=OTHER');
+  assert.throws(()=>validateAutomaticArchive(invalid),/independent|non-primary/);
+});
+
+test('a CNBC close alone can confirm a valid Yahoo bar but cannot supply a missing bar alone',async t=>{
+  const f=fixture(t,'SPY'),net=usCloseNetwork(f,{tencentDown:true});
+  const result=await run(f,net);
+  assert.deepEqual(result.verification.results[0].observations.at(-1).supportingSources,['Yahoo Finance','CNBC']);
+  f.raw.indicators.quote[0].close[2]=null;f.save();
+  await assert.rejects(run(f,net),/unresolved/);
+});
+
+test('stale, intraday and extended quotes, wrong instruments and nonmatching OHLC cannot fill the close',async t=>{
+  const f=fixture(t,'SPY');f.raw.indicators.quote[0].close[2]=null;f.save();
+  for(const options of [{quoteTime:asOf+' 15:59:59'},{quoteTime:asOf+' 18:15:00'},{quoteTime:dates[1]+' 16:00:01'},
+    {regular:{symbol:'SPX'}},{regular:{currencyCode:'CAD'}},{regular:{exchange:'NASDAQ'}},{regular:{high:'103'}},
+    {regular:{curmktstatus:'REG_MKT'}},{regular:{last_time:asOf+'T16:10:00.000-0400'}},{regular:{last_time:asOf+'T20:00:00.000-0500'}}]){
+    await assert.rejects(run(f,usCloseNetwork(f,options)),/unresolved/);
+  }
+  await assert.rejects(run(f,usCloseNetwork(f),{now:Date.parse(asOf+'T20:50:00Z')}),/unresolved/);
+});
+
 test('a new flat ETF quote is automatically replaced only after two external full OHLC bars agree',async t=>{
   const f=fixture(t);flat(f,101);
   const net=network(f),result=await run(f,net);

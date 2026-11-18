@@ -6,11 +6,9 @@ on:
     paths:
       - 'app/**'
       - '.github/workflows/deploy-pages.yml'
-  # GITHUB_TOKEN commits from the data updater do not trigger push workflows.
-  workflow_run:
-    workflows: ['Market data update (manual)']
-    types: [completed]
-    branches: [main]
+  # GITHUB_TOKEN pushes do not trigger push workflows. The public catch-up
+  # job calls this workflow directly only when an actual publication is due.
+  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -24,7 +22,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -46,7 +43,7 @@ jobs:
       - name: Build application with the latest committed data
         run: |
           node app/scripts/build.mjs
-          node app/scripts/publish.mjs
+          PUBLISHED_SOURCE_COMMIT="$(git rev-parse HEAD)" node app/scripts/publish.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
@@ -54,3 +51,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify the deployed market snapshot on the public website
+        run: node app/scripts/site-freshness.mjs --verify

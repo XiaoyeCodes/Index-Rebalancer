@@ -71,5 +71,5 @@ const snapshot=JSON.parse(snapshotBytes);
 fs.writeFileSync(path.join(output,'data-status.json'),JSON.stringify({asOf:snapshot.asOf,...snapshot.health,
   dataSha256:createHash('sha256').update(snapshotBytes).digest('hex'),
   applicationSha256:appVersion,
-  sourceCommit:process.env.GITHUB_SHA||null,
+  sourceCommit:process.env.PUBLISHED_SOURCE_COMMIT||process.env.GITHUB_SHA||null,
   assetDates:Object.fromEntries(Object.entries(snapshot.assets).map(([id,a])=>[id,a.asOf])),fxDates:snapshot.fxAsOf}));

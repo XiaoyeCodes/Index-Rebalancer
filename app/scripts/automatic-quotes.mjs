@@ -6,13 +6,14 @@ import {requestJSON} from './quote-http.mjs';
 import {PRICE_FIELDS,isAsian,currencyFor,toleranceFor,validBar,samePrice,sameBar,fetchBars,sourceObservation,primaryObservation,normalizeSymbol,priceBasisThrough} from './quote-sources.mjs';
 
 export const AUTOMATIC_FILE=new URL('../data/automatic-quote-resolutions.json',import.meta.url);
-const sourceHosts={'Yahoo Finance':'query1.finance.yahoo.com','Nasdaq':'api.nasdaq.com','Tencent Finance':'web.ifzq.gtimg.cn','Eastmoney':'push2his.eastmoney.com'};
+const sourceHosts={'Yahoo Finance':'query1.finance.yahoo.com','Nasdaq':'api.nasdaq.com','Tencent Finance':'web.ifzq.gtimg.cn','Eastmoney':'push2his.eastmoney.com','CNBC':'quote.cnbc.com'};
 const near=(a,b)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=Math.max(1e-5,Math.abs(b)*1e-7);
 function sourceMatches(source,record) {
   const ticker=CHAINS[record.id].at(-1),url=new URL(source.url);
   let identity=false;
   if(source.name==='Yahoo Finance')identity=decodeURIComponent(url.pathname.split('/').at(-1))===ticker;
   if(source.name==='Nasdaq')identity=normalizeSymbol(decodeURIComponent(url.pathname.split('/')[3]))===normalizeSymbol(ticker);
+  if(source.name==='CNBC')identity=!isAsian(ticker)&&url.pathname==='/quote-html-webservice/restQuote/symbolType/symbol'&&url.searchParams.get('symbols')===ticker.replace('-','.');
   if(source.name==='Tencent Finance'){
     const code=url.searchParams.get('param')?.split(',')[0];
     const expected=ticker.endsWith('.HK')?'hk'+ticker.split('.')[0].padStart(5,'0'):(ticker.endsWith('.SZ')?'sz':'sh')+ticker.split('.')[0];
@@ -168,7 +169,7 @@ export function chooseQuote({id,ticker,date,primary,secondary,third,basisThrough
   }else throw Error(`${id} ${date}: sources disagree or the consensus is ambiguous`);
   const sources=[primary,secondary,third].filter(Boolean);
   const record={id,date,currency:currencyFor(ticker),basisThrough,reviewedAt:new Date(now).toISOString(),action,
-    originalPrimaryClose:primary?.value??null,originalSecondaryClose:secondary?.value??null,
+    originalPrimaryClose:primary?.value??null,originalSecondaryClose:secondary?.value??null,originalSecondarySource:secondary?.name??null,
     originalPrimaryFields:primary?.bar||Object.fromEntries(PRICE_FIELDS.map(key=>[key,null])),acceptedFields,acceptedClose:acceptedFields.close,
     sources,automatic:true,finding:'Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources.',
     ...(previous?{previous}: {})};
@@ -190,7 +191,7 @@ function archivedDecision(record,{raw,id,ticker,primary,secondary}) {
   const support=record.sources.filter(source=>samePrice(source.value,record.acceptedClose,tolerance)).map(source=>({...source,value:source.value*scale,
     bar:Object.fromEntries(PRICE_FIELDS.map(key=>[key,source.bar?.[key]*scale])),archived:true}));
   if(samePrice(secondary.value,target,tolerance))return {accepted:target,verifier:secondary,record:null,supportingSources:[...new Set([...support.map(source=>source.name),secondary.name])],archived:true};
-  if(record.action==='retain-primary'&&samePrice(primary.value,target,tolerance)&&samePrice(secondary.value,record.originalSecondaryClose*scale,tolerance)){
+  if(record.action==='retain-primary'&&secondary.name===(record.originalSecondarySource||(isAsian(ticker)?'Tencent Finance':'Nasdaq'))&&samePrice(primary.value,target,tolerance)&&samePrice(secondary.value,record.originalSecondaryClose*scale,tolerance)){
     const verifier=support.find(source=>source.name!=='Yahoo Finance');
     if(verifier)return {accepted:target,verifier,record:null,supportingSources:[...new Set(support.map(source=>source.name))],archived:true};
   }
@@ -212,26 +213,44 @@ export async function recoverRecentQuotes({asOf,rawDir=RAW_DIR,archive={schemaVe
         const firstSource=isAsian(ticker)?'Tencent Finance':'Nasdaq',thirdSource=isAsian(ticker)?'Eastmoney':'Tencent Finance';
         let lastError;
         for(let attempt=0;attempt<=retryDelays.length;attempt++){
-          let first,third,firstError;
+          let first,third,firstError,thirdError;
           try{first=await fetchBars({id,ticker,raw,source:firstSource,from:dates[0],to:asOf,request,now,attempt});}catch(error){firstError=error;}
           const observations=[],proposed=[];
           try{
             for(const date of dates){
               const index=dateIndex(raw,date),primary=index<0?null:primaryObservation({ticker,raw,date,index,now});
-              const secondary=first?sourceObservation(first,date):null,previous=archive.records.find(record=>record.id===id&&record.date===date)||null;
+              let secondary=first?sourceObservation(first,date):null;
+              const previous=archive.records.find(record=>record.id===id&&record.date===date)||null;
               const manualRecord=manual.records.find(record=>record.id===id&&record.date===date);
               const pendingDate=pending.some(record=>record.id===id&&record.date===date);
               let known=pendingDate?null:archivedDecision(manualRecord||previous,{raw,id,ticker,primary,secondary});
               const needsThird=!known&&(previous||!validBar(primary?.bar)||!secondary||!samePrice(primary.value,secondary.value,toleranceFor(id,ticker)));
-              if(needsThird&&!third)third=await fetchBars({id,ticker,raw,source:thirdSource,from:dates[0],to:asOf,request,now,attempt});
-              const last=third?sourceObservation(third,date):null;
+              if(needsThird&&!third&&!thirdError){
+                try{third=await fetchBars({id,ticker,raw,source:thirdSource,from:dates[0],to:asOf,request,now,attempt});}
+                catch(error){thirdError=error;}
+              }
+              let last=third?sourceObservation(third,date):null;
+              if(needsThird&&thirdError&&(isAsian(ticker)||date!==asOf))throw thirdError;
               if(!known&&!pendingDate&&last)known=archivedDecision(manualRecord||previous,{raw,id,ticker,primary,secondary:last});
+              // Only replace a missing independent vote. A disagreement among
+              // three available providers still goes through the normal rules.
+              const verifiedByTencent=last&&validBar(primary?.bar)&&samePrice(primary.value,last.value,toleranceFor(id,ticker));
+              const missingVote=!last||(!secondary&&!verifiedByTencent);
+              if(needsThird&&!known&&!isAsian(ticker)&&date===asOf&&missingVote){
+                const feed=await fetchBars({id,ticker,raw,source:'CNBC',from:date,to:date,request,now,attempt});
+                const backup=sourceObservation(feed,date);
+                if(backup){
+                  secondary=secondary||last;last=backup;
+                  if(!pendingDate)known=archivedDecision(manualRecord||previous,{raw,id,ticker,primary,secondary:backup});
+                }
+              }
               if(isAsian(ticker)&&!primary?.value&&!secondary&&!last&&!pending.some(record=>record.id===id&&record.date===date))continue; // Local holiday: no bar is fabricated.
               const decision=known||chooseQuote({id,ticker,date,primary,secondary,third:last,basisThrough:priceBasisThrough(raw,asOf,now),now,previous});
               if(manualRecord&&decision.record)throw Error(`${id} ${date}: a manually reviewed value changed; human review is required`);
               if(decision.record)proposed.push(decision.record);
               observations.push({date,primary:decision.accepted,secondary:decision.verifier.value,difference:Math.abs(decision.accepted-decision.verifier.value),source:decision.verifier.name,url:decision.verifier.url,
-                verified:true,supportingSources:decision.supportingSources||(decision.record?decision.record.sources.filter(source=>samePrice(source.value,decision.accepted,toleranceFor(id,ticker))).map(source=>source.name):['Yahoo Finance',decision.verifier.name]),
+                verified:true,supportingSources:decision.supportingSources||(decision.record?decision.record.sources.filter(source=>validBar(source.bar)&&samePrice(source.value,decision.accepted,toleranceFor(id,ticker))).map(source=>source.name):['Yahoo Finance',decision.verifier.name]),
+                ...(decision.verifier.quoteKind?{quoteKind:decision.verifier.quoteKind,sessionTime:decision.verifier.sessionTime}:{}),
                 ...(decision.archived?{archivedResolution:true}:{}),
                 ...(decision.record?{resolution:decision.record.action,originalPrimary:primary?.value??null,originalSecondary:secondary?.value??null}:{}),...(firstError?{unavailableSource:firstSource}: {})});
             }

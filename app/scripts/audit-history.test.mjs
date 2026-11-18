@@ -142,6 +142,13 @@ test('late history accepts two actual external sources rather than counting a re
   assert.equal(result.report.failures.length,0);assert.equal(result.msft.latestCloseSource,'Tencent Finance');
 });
 
+test('two regular-session sources can independently cover a day missing from Nasdaq history',async t=>{
+  const proof=latestProof(),last=proof.results[0].observations.at(-1);
+  last.source='CNBC';last.supportingSources=['Tencent Finance','CNBC'];
+  const result=await run(t,body=>{body.data.tradesTable.rows.shift();body.data.totalRecords=2;},{recentVerification:proof});
+  assert.equal(result.report.failures.length,0);assert.equal(result.msft.latestCloseSource,'CNBC');
+});
+
 test('a wrong asset, date, price, duplicate source vote or unverified flag cannot bypass missing history',async t=>{
   for(const scenario of ['ticker','date','price','duplicate-source','unverified','coverage-gap']){
     await t.test(scenario,async child=>{

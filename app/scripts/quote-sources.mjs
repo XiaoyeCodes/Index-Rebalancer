@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {tradingDate} from './process.mjs';
 import {requestJSON} from './quote-http.mjs';
+import Calendar from '../market-calendar.js';
 
 export const PRICE_FIELDS=['open','high','low','close'];
 export const isAsian=ticker=>/\.(SS|SZ|HK)$/.test(ticker);
@@ -14,6 +15,47 @@ const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('h
 const number=value=>typeof value==='number'?value:Number(String(value??'').replace(/[$,]/g,''));
 const stocks=new Set(['NVDA','MSFT','TSLA','AAPL','AMZN','SPCX','AXP','BRK-B','GOOG']);
 const venues={NMS:'OQ',NGM:'OQ',NCM:'OQ',NAS:'OQ',NYQ:'N',NYSE:'N',PCX:'AM',ASE:'AM',BATS:'AM'};
+
+const nyClock=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+
+// Both providers separate the regular-session fields from extended trading.
+// A cached intraday snapshot can still arrive after the bell. Check its own
+// exchange timestamp as well as the actual time and the requested session.
+function closingStamp(stamp,date,raw,now) {
+  if(!/^\d{4}-\d{2}-\d{2} \d\d:[0-5]\d:[0-5]\d$/.test(stamp)||stamp.slice(0,10)!==date||
+    !Calendar.session(date)||raw.meta.exchangeTimezoneName!=='America/New_York')return false;
+  const end=raw.meta.currentTradingPeriod?.regular?.end;
+  const reportedEnd=Number.isFinite(end)?nyClock.format(end*1000):'';
+  const hour=reportedEnd===date+' 13:00:00'?'13':'16';
+  const wallNow=nyClock.format(now);
+  return stamp>=date+' '+hour+':00:00'&&stamp<=date+' '+hour+':15:59'&&stamp<=wallNow&&wallNow>=date+' '+hour+':30:00';
+}
+
+function tencentClosingBar(quote,date,raw,now) {
+  if(quote[35]!=='USD'||!closingStamp(quote[30],date,raw,now))return null;
+  const bar={date,open:number(quote[5]),high:number(quote[33]),low:number(quote[34]),close:number(quote[3]),
+    sessionTime:quote[30],quoteKind:'regular-session close'};
+  return validBar(bar)?bar:null;
+}
+
+function cnbcClosingBar(body,ticker,date,raw,now) {
+  const quotes=body.FormattedQuoteResult?.FormattedQuote;
+  const quote=quotes?.[0],symbol=ticker.replace('-','.');
+  const exchanges={OQ:['NASDAQ'],N:['NYSE'],AM:['NYSE Arca','NYSE American','Cboe BZX']};
+  if(!Array.isArray(quotes)||quotes.length!==1||quote?.code!==0||quote.symbol!==symbol||quote.currencyCode!=='USD'||
+    quote.countryCode!=='US'||!exchanges[venues[raw.meta.exchangeName]]?.includes(quote.exchange)||
+    (ticker==='SPCX'&&!/space\s*(x|exploration)/i.test(quote.name||'')))throw Error(ticker+': CNBC security/currency mismatch');
+  // last/open/high/low are regular-session values. ExtendedMktQuote has a
+  // different timestamp and prices and must never be used to complete a bar.
+  const stamp=String(quote.last_time||'');
+  if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?-0[45]:?00$/.test(stamp))return null;
+  const wall=stamp.slice(0,19).replace('T',' '),instant=Date.parse(stamp);
+  if(!Number.isFinite(instant)||nyClock.format(instant)!==wall||!closingStamp(wall,date,raw,now)||
+    !['POST_MKT','CLOSED','PRE_MKT'].includes(quote.curmktstatus))return null;
+  const bar={date,open:number(quote.open),high:number(quote.high),low:number(quote.low),close:number(quote.last),
+    sessionTime:stamp,quoteKind:'regular-session close'};
+  return validBar(bar)?bar:null;
+}
 
 export function splitFactor(raw,date,through) {
   return Object.values(raw.events?.splits||{}).filter(event=>{
@@ -51,6 +93,7 @@ export async function fetchBars({id,ticker,raw,source,from,to,through,request=re
     const symbol=ticker==='BRK-B'?'BRK.B':ticker;
     url=`https://api.nasdaq.com/api/quote/${encodeURIComponent(symbol)}/historical?assetclass=${stocks.has(id)?'stocks':'etf'}&limit=10000&fromdate=${from}&todate=${to}`;
   }else if(source==='Tencent Finance')url=`https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=${codes.tencent},day,${from},${to},640`;
+  else if(source==='CNBC'&&currency==='USD')url=`https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${encodeURIComponent(ticker.replace('-','.'))}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json`;
   else if(source==='Eastmoney'&&codes.eastmoney)url=`https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${codes.eastmoney}&klt=101&fqt=0&beg=${from.replaceAll('-','')}&end=${to.replaceAll('-','')}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56`;
   else throw Error(`Unsupported quote source ${source} for ${ticker}`);
   const freshUrl=new URL(url);freshUrl.searchParams.set('_',`${now}-${id}-${attempt}`);url=freshUrl.href;
@@ -62,10 +105,17 @@ export async function fetchBars({id,ticker,raw,source,from,to,through,request=re
     rows=table.map(row=>({date:new Date(row.date+' 00:00:00 UTC').toISOString().slice(0,10),...Object.fromEntries(PRICE_FIELDS.map(key=>[key,number(row[key])]))}));
   }else if(source==='Tencent Finance'){
     const detail=body.data?.[codes.tencent],quote=detail?.qt?.[codes.tencent];
-    if(!Array.isArray(detail?.day)||!Array.isArray(quote)||quote[2]!==codes.tencent.replace(/^(us|sh|sz|hk)/,''))throw Error(`${id}: Tencent security mismatch`);
+    if(!Array.isArray(quote)||quote[2]!==codes.tencent.replace(/^(us|sh|sz|hk)/,'')||(!Array.isArray(detail.day)&&currency!=='USD'))throw Error(`${id}: Tencent security mismatch`);
     if(currency==='USD'&&!quote.includes('USD'))throw Error(`${id}: Tencent currency mismatch`);
     if(id==='SPCX'&&!quote.some(value=>typeof value==='string'&&/space\s*(x|exploration)/i.test(value)))throw Error('Tencent SPCX issuer mismatch');
-    rows=detail.day.map(row=>({date:row[0],open:+row[1],close:+row[2],high:+row[3],low:+row[4]}));
+    rows=(detail.day||[]).map(row=>({date:row[0],open:+row[1],close:+row[2],high:+row[3],low:+row[4]}));
+    if(currency==='USD'&&!rows.some(row=>row.date===to)){
+      const regular=tencentClosingBar(quote,to,raw,now);
+      if(regular)rows.push(regular);
+    }
+  }else if(source==='CNBC'){
+    const regular=cnbcClosingBar(body,ticker,to,raw,now);
+    rows=regular?[regular]:[];
   }else{
     const [market,code]=codes.eastmoney.split('.');
     if(String(body.data?.market)!==market||body.data?.code!==code||!Array.isArray(body.data?.klines))throw Error(`${id}: Eastmoney security mismatch`);
@@ -85,6 +135,7 @@ export async function fetchBars({id,ticker,raw,source,from,to,through,request=re
 export function sourceObservation(feed,date) {
   const bar=feed.bars.find(row=>row.date===date);
   return bar?{name:feed.name,url:feed.url,ticker:feed.ticker,currency:feed.currency,date,value:bar.close,
+    ...(bar.quoteKind?{quoteKind:bar.quoteKind,sessionTime:bar.sessionTime}:{}),
     bar:Object.fromEntries(PRICE_FIELDS.map(key=>[key,bar[key]])),splitFactor:bar.splitFactor??1,checkedAt:feed.checkedAt,sha256:feed.sha256}:null;
 }
 

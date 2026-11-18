@@ -37,7 +37,7 @@ function auditSnapshot(response,{symbol,id,primary,original,raw,data,evidence,ur
   let latestCloseSource=null;
   if(!seen.has(data.asOf)){
     const checked=recentVerification?.results?.find(result=>result.id===id&&result.ticker===raw.meta.symbol);
-    const independentlyVerified=checked?.observations?.find(item=>item.date===data.asOf&&item.verified===true&&new Set(item.supportingSources?.filter(source=>['Yahoo Finance','Nasdaq','Tencent Finance'].includes(source))).size>=2&&item.supportingSources.includes(item.source)&&Number.isFinite(item.primary)&&Math.abs(item.primary-primary.get(data.asOf))<=.011&&Math.abs(item.secondary-item.primary)<=.011);
+    const independentlyVerified=checked?.observations?.find(item=>item.date===data.asOf&&item.verified===true&&new Set(item.supportingSources?.filter(source=>['Yahoo Finance','Nasdaq','Tencent Finance','CNBC'].includes(source))).size>=2&&item.supportingSources.includes(item.source)&&Number.isFinite(item.primary)&&Math.abs(item.primary-primary.get(data.asOf))<=.011&&Math.abs(item.secondary-item.primary)<=.011);
     if(!independentlyVerified||through<checked.observations[0].date)throw Error(`exchange history is missing latest close ${data.asOf}`);
     latestCloseSource=independentlyVerified.source;
   }

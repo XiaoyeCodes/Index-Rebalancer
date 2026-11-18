@@ -97,7 +97,7 @@ export function classifyDisagreement({id,date,sourceClose,canonicalClose,seconda
   if(!near(canonicalClose,target))return null;
   if(record.action==='correct-primary'&&near(sourceClose,record.originalPrimaryClose*scale)&&corroborates(secondaryClose,target))
     return {status:'primary-corrected',acceptedClose:target,reviewedAt:record.reviewedAt||evidence.reviewedAt};
-  if(record.action==='retain-primary'&&near(sourceClose,target)&&corroborates(secondaryClose,record.originalSecondaryClose*scale))
+  if(record.action==='retain-primary'&&(!record.originalSecondarySource||record.originalSecondarySource==='Nasdaq')&&near(sourceClose,target)&&corroborates(secondaryClose,record.originalSecondaryClose*scale))
     return {status:'secondary-record-reviewed',acceptedClose:target,reviewedAt:record.reviewedAt||evidence.reviewedAt};
   return null;
 }

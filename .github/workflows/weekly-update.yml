@@ -1,14 +1,19 @@
-# Manual fallback. Scheduled updates run in the private Index-Rebalancer-Automation repository
-# so the public-repository 60-day inactivity rule cannot disable the scheduled updater.
-# Downloads from Yahoo Finance, rebuilds the weekly data and app/heng.html, then commits and pushes
-# the validated snapshot, its evidence, and the rebuilt page. Manual fallback only.
-name: Market data update (manual)
+# The private updater is the primary schedule. This public fallback can also
+# repair Pages when a validated commit arrived but its deployment did not.
+name: Market data catch-up
 
 on:
+  schedule:
+    - cron: '13 0,2,4 * * 2-6'
   workflow_dispatch:
+    inputs:
+      force_update:
+        description: Revalidate even when the public snapshot is current
+        type: boolean
+        default: true
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: weekly-data-update
@@ -17,18 +22,41 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
+    permissions:
+      contents: write
+    outputs:
+      plan: ${{ steps.check.outputs.plan }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
 
       - uses: actions/setup-node@v5
         with:
           node-version: 22
 
+      - name: Compare the expected close with the repository and public website
+        id: check
+        env:
+          FORCE_UPDATE: ${{ github.event_name == 'workflow_dispatch' && inputs.force_update }}
+        run: node app/scripts/site-freshness.mjs
+
       - name: Configure commit identity
+        if: steps.check.outputs.plan == 'update'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Update data, rebuild page, commit and push
-        run: node app/scripts/update.mjs --git
+        if: steps.check.outputs.plan == 'update'
+        run: node app/scripts/update-retry.mjs --git --refresh-checkout
+
+  publish:
+    needs: update
+    if: needs.update.outputs.plan == 'update' || needs.update.outputs.plan == 'deploy'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/deploy-pages.yml
