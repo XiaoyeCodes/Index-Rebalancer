@@ -50,7 +50,7 @@ export function clockRequests(env,fetcher=fetch) {
       let response;
       try{
         response=await fetcher('https://api.github.com/repos/'+repository+'/dispatches',{
-          method:'POST',redirect:'error',signal:AbortSignal.timeout(9000),
+          method:'POST',redirect:'manual',signal:AbortSignal.timeout(9000),
           headers:{Authorization:'Bearer '+env.GITHUB_BACKUP_TOKEN,'User-Agent':'Index-Rebalancer-Market-Clock',
             Accept:'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},
           body:JSON.stringify({event_type:'market-close-clock',client_payload:payload})

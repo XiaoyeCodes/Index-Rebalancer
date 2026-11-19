@@ -50,7 +50,8 @@ test('the clock posts a single fixed event to its own private repository and acc
   await io.dispatch(payload);
   assert.equal(calls[0].url,'https://api.github.com/repos/XiaoyeCodes/Index-Rebalancer-Automation/dispatches');
   assert.deepEqual(JSON.parse(calls[0].options.body),{event_type:'market-close-clock',client_payload:payload});
-  assert.equal(calls[0].options.redirect,'error');
+  assert.equal(calls[0].options.redirect,'manual');
+  await assert.rejects(clockRequests(env,async()=>new Response(null,{status:307,headers:{Location:'https://other.example/'}})).dispatch(payload),/HTTP 307/);
   await assert.rejects(clockRequests({...env,GITHUB_BACKUP_REPOSITORY:'other/repo'},()=>assert.fail()).dispatch(payload),/credential/);
   await assert.rejects(clockRequests(env,async()=>new Response(null,{status:403})).dispatch(payload),/HTTP 403/);
 });
