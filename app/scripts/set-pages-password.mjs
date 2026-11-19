@@ -1,5 +1,5 @@
 // Run locally; pass the shared Pages password on standard input.
-import { generateKeyPairSync, randomBytes, pbkdf2Sync, createCipheriv, createDecipheriv, createHash, hkdfSync } from 'node:crypto';
+import { generateKeyPairSync, randomBytes, pbkdf2Sync, createCipheriv, createDecipheriv } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const accessFile = new URL('../pages-access.json',import.meta.url);
@@ -28,6 +28,4 @@ const sealed = Buffer.concat([cipher.update(privateBytes), cipher.final(), ciphe
 const access = { publicKey, iterations,
   salt:salt.toString('base64'), iv:iv.toString('base64'), sealed:sealed.toString('base64') };
 writeFileSync(accessFile, JSON.stringify(access, null, 2)+'\n');
-const sha = data=>createHash('sha256').update(data).digest();
-const token=Buffer.from(hkdfSync('sha256',sha(privateBytes),'heng.workspace.v1','access',32)).toString('hex');
-writeFileSync(new URL('../../sync/access.json',import.meta.url),JSON.stringify({digest:sha(token).toString('hex')})+'\n');
+privateBytes.fill(0);

@@ -23,4 +23,10 @@ for(const method of ['GET','POST']) {
   const response=await fetch(endpoint+'/backups',{method,headers:{Origin:origin},signal:AbortSignal.timeout(15000)});
   assert.equal(response.status,401,'Unauthenticated users must not list or create investment backups');
 }
-console.log('Verified Pages preflight and unauthenticated workspace/backup access control.');
+for(const path of ['/auth/resume','/auth/history']) {
+  const response=await fetch(new URL(path,endpoint),{headers:{Origin:origin},signal:AbortSignal.timeout(15000)});
+  assert.equal(response.status,401,'Unauthenticated users must not resume or read login history');
+}
+const login=await fetch(new URL('/auth/login',endpoint),{method:'OPTIONS',headers:{Origin:origin,'Access-Control-Request-Method':'POST'},signal:AbortSignal.timeout(15000)});
+assert.equal(login.status,204,'Pages should be able to reach the login service');
+console.log('Verified Pages preflight and workspace, backup, and login-history access control.');

@@ -2394,6 +2394,11 @@ button, summary, a {
 .investment-backup-row {display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);}
 .investment-backup-row:last-child {border-bottom:0;}
 .investment-backup-row span {flex:1 1 200px;font-size:13px;}
+.login-history-settings {margin-top:20px;}
+.login-history-dialog {width:min(880px,calc(100% - 32px));}
+.login-history-controls {display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+.login-history-dialog .tbl-wrap {max-height:54vh;overflow:auto;}
+.login-history-dialog table {min-width:660px;}
 
 .settings-protocol {
   padding: 10px 12px;
@@ -4450,6 +4455,10 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
     <p id="aiSettingsMessage" role="status"></p>
     <div class="hero-buttons"><button id="saveAI" type="submit" class="btn primary">保存配置</button><button type="button" class="btn" id="clearAI" hidden>移除本机密钥</button><button type="button" class="btn" id="accountLogout">退出登录</button></div>
   </form>
+  <aside class="login-history-settings" id="loginHistorySettings" aria-labelledby="loginHistoryHeading" hidden>
+    <h3 class="h3s" id="loginHistoryHeading">登录与访问记录</h3>
+    <button type="button" class="btn sm" id="openLoginHistory">查看记录</button>
+  </aside>
   <aside id="collaboration" hidden aria-labelledby="collaborationTitle">
     <h3 class="h3s" id="collaborationTitle">共享账本</h3>
     <div class="sync-controls">
@@ -4469,6 +4478,19 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
     <p id="homeInstallReady" hidden>已在主屏幕版中打开。你的应用会随网站更新，无需重新安装。</p>
     <button class="btn sm" type="button" id="copyInstallLink">复制网站链接</button><span class="small muted" id="homeInstallMessage" role="status"></span>
   </aside>
+</dialog>
+
+<dialog class="execution-dialog login-history-dialog" id="loginHistoryDialog" aria-labelledby="loginHistoryTitle">
+  <div class="settings-heading"><h2 id="loginHistoryTitle">登录与访问记录</h2><button class="dclose" type="button" id="closeLoginHistory" aria-label="关闭登录与访问记录">×</button></div>
+  <p class="execution-intro">每类显示最近 30 天内的 100 条记录。设备按浏览器识别，IP 为访问时的地址。</p>
+  <div class="login-history-controls">
+    <select id="loginHistoryKind" aria-label="记录类型"><option value="login">登录尝试</option><option value="visit">打开网页</option><option value="verify">操作密码验证</option></select>
+    <button type="button" class="btn sm" id="refreshLoginHistory">刷新</button>
+  </div>
+  <p id="loginHistoryStatus" class="small muted" role="status"></p>
+  <div class="tbl-wrap" id="loginHistoryResults" hidden>
+    <table><thead><tr><th scope="col">北京时间</th><th scope="col">结果</th><th scope="col">浏览器 / 设备</th><th scope="col">IP</th><th scope="col">本轮输错（设备 / IP）</th></tr></thead><tbody id="loginHistoryRows"></tbody></table>
+  </div>
 </dialog>
 
 <dialog class="execution-dialog investment-data-dialog" id="backupNameDialog" aria-labelledby="backupNameTitle">
@@ -7325,6 +7347,45 @@ function go(v, push = true) {
   }
 }
 
+function bindLoginHistory() {
+  const account=window.privateAccount;
+  if (!account?.loginHistory) return;
+  const dialog=$('#loginHistoryDialog'),kind=$('#loginHistoryKind'),refresh=$('#refreshLoginHistory');
+  const status=$('#loginHistoryStatus'),results=$('#loginHistoryResults'),rows=$('#loginHistoryRows');
+  const format=new Intl.DateTimeFormat('zh-CN',{dateStyle:'medium',timeStyle:'medium',timeZone:'Asia/Shanghai',hourCycle:'h23'});
+  const outcomes={opened:'打开网页',success:'验证成功',failed:'密码错误',blocked:'冷却中拦截'};
+  async function load() {
+    if (refresh.disabled) return;
+    refresh.disabled=kind.disabled=true;
+    results.hidden=true;
+    status.textContent='正在读取记录…';
+    try {
+      const {events}=await account.loginHistory(kind.value);
+      rows.replaceChildren(...events.map(event=>{
+        const row=document.createElement('tr');
+        const browser=[['Edge',/Edg(?:A|iOS)?\//],['Firefox',/Firefox\/|FxiOS\//],['Chrome',/Chrome\/|CriOS\//],['Safari',/Safari\//]]
+          .find(([,pattern])=>pattern.test(event.agent))?.[0] || '未知浏览器';
+        const platform=event.agent.match(/iPhone|iPad|Android|Windows|Macintosh|Linux/)?.[0] || '';
+        const device=[browser,platform,event.device===account.device?'本浏览器':event.device.slice(0,8)].filter(Boolean).join(' / ');
+        const result=event.until?`${outcomes[event.outcome]}，冷却至 ${format.format(event.until)}`:outcomes[event.outcome];
+        const counts=event.kind==='visit'?'—':`${event.deviceFailures} / ${event.ip ? event.ipFailures : '—'}`;
+        for (const text of [format.format(event.at),result,device,event.ip||'未知',counts]) {
+          const cell=row.insertCell();cell.textContent=text;
+        }
+        row.cells[2].title=event.agent;
+        return row;
+      }));
+      results.hidden=!events.length;
+      status.textContent=events.length?`显示 ${events.length} 条记录。`:'暂无这类记录。';
+    } catch(error) { status.textContent=error.message; }
+    finally { refresh.disabled=kind.disabled=false; }
+  }
+  $('#loginHistorySettings').hidden=false;
+  $('#openLoginHistory').onclick=()=>{dialog.showModal();load();};
+  $('#closeLoginHistory').onclick=()=>dialog.close();
+  refresh.onclick=kind.onchange=load;
+}
+
 function bindSharedBook() {
   const sync = window.privateAccount?.sync;
   const bar = $('#collaboration');
@@ -7437,6 +7498,7 @@ function boot() {
   mq.addEventListener && mq.addEventListener('change', onTheme);
   new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   AI.bindSettings();
+  bindLoginHistory();
   bindSharedBook();
   bindInvestmentData();
   if (window.claude && claude.use) claude.use('sample').then(fn => { sampleFn = fn; }).catch(() => {});

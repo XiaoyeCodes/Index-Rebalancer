@@ -36,31 +36,32 @@ const browserStorage = {
   clear:()=>profile('readwrite',(store,key)=>store.delete(key)),
 };
 async function fingerprint(access) {
-  // Daily application encryption changes wrapped/appIv; password changes alter these four fields.
-  const data=JSON.stringify([access.iterations,access.salt,access.iv,access.sealed]);
+  // App releases use a new app key; only a password change creates a new salt.
+  const data=JSON.stringify([access.iterations,access.salt]);
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(data));
   return Array.from(new Uint8Array(digest),value=>value.toString(16).padStart(2,'0')).join('');
 }
 function usableKey(key) {
   return key instanceof CryptoKey && key.type==='secret' && !key.extractable && key.algorithm.name==='AES-GCM' && key.algorithm.length===256 && key.usages.includes('decrypt');
 }
+const usableToken=token=>typeof token==='string'&&/^[0-9a-f]{64}$/.test(token);
 export function browserSession(storage=browserStorage,now=Date.now) {
   return {
     async load(access) {
       const record=await storage.read();
       if (!record) return null;
-      if (record.version!==1 || !Number.isFinite(record.createdAt) || !Number.isFinite(record.expiresAt) ||
-        record.expiresAt<=now() || record.expiresAt-record.createdAt!==lifetime || !usableKey(record.key) ||
+      if (record.version!==2 || !Number.isFinite(record.createdAt) || !Number.isFinite(record.expiresAt) ||
+        record.expiresAt<=now() || record.expiresAt-record.createdAt!==lifetime || !usableKey(record.key) || !usableToken(record.token) ||
         record.fingerprint!==await fingerprint(access)) {
         await storage.clear(); return null;
       }
-      return record.key;
+      return {key:record.key,token:record.token};
     },
-    async save(access,key) {
-      if (!usableKey(key)) throw Error('无法保存此登录凭据。');
+    async save(access,key,token) {
+      if (!usableKey(key)||!usableToken(token)) throw Error('无法保存此登录凭据。');
       const createdAt=now();
       // IndexedDB clones a non-exportable CryptoKey. Never store the password or raw private key.
-      await storage.write({version:1,key,createdAt,expiresAt:createdAt+lifetime,fingerprint:await fingerprint(access)});
+      await storage.write({version:2,key,token,createdAt,expiresAt:createdAt+lifetime,fingerprint:await fingerprint(access)});
     },
     clear:()=>storage.clear(),
   };

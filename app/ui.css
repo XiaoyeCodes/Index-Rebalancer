@@ -2284,6 +2284,11 @@ button, summary, a {
 .investment-backup-row {display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);}
 .investment-backup-row:last-child {border-bottom:0;}
 .investment-backup-row span {flex:1 1 200px;font-size:13px;}
+.login-history-settings {margin-top:20px;}
+.login-history-dialog {width:min(880px,calc(100% - 32px));}
+.login-history-controls {display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+.login-history-dialog .tbl-wrap {max-height:54vh;overflow:auto;}
+.login-history-dialog table {min-width:660px;}
 
 .settings-protocol {
   padding: 10px 12px;

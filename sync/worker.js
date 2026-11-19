@@ -1,11 +1,22 @@
 import { DurableObject } from 'cloudflare:workers';
-import config from './access.json';
 import { githubBackups } from './github-backups.js';
 import { bookStore } from './book-store.js';
 import { clockRequests, runMarketTick, sessionForSlot } from './market-clock.js';
+import { loginGuard, loginPaths, loginRequest, sessionDigest } from './login.js';
+export { LoginGuard } from './login.js';
 
 const origin = 'https://xiaoyecodes.github.io';
 const maxBytes = 1536 * 1024;
+async function readJSON(req,limit) {
+  if(Number(req.headers.get('Content-Length'))>limit) return {status:413};
+  const reader=req.body?.getReader(); if(!reader) return {status:400};
+  const chunks=[];let size=0;
+  for (;;) {
+    const {done,value}=await reader.read(); if(done) break;
+    size+=value.length; if(size>limit){await reader.cancel();return {status:413};} chunks.push(value);
+  }
+  try{return {payload:await new Response(new Blob(chunks)).json()};}catch{return {status:400};}
+}
 export class SharedBook extends DurableObject {
   constructor(ctx, env) {
     super(ctx,env);
@@ -44,7 +55,7 @@ export default {
   },
   async fetch(req,env) {
     const headers={'Cache-Control':'no-store','Vary':'Origin'};
-    const answer=(data,status=200)=>Response.json(data,{status,headers});
+    const answer=(data,status=200,extra={})=>Response.json(data,{status,headers:{...headers,...extra}});
     if (req.headers.get('Origin') && req.headers.get('Origin')!==origin) return answer({},403);
     Object.assign(headers,{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Methods':'GET, PUT, POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type'});
     const pathname=new URL(req.url).pathname;
@@ -52,13 +63,14 @@ export default {
       if(req.method!=='GET')return answer({},405);
       return answer(await marketClock(env).status());
     }
-    if(pathname!=='/workspace'&&!/^\/workspace\/backups(?:\/[^/]+)?$/.test(pathname)) return answer({},404);
+    const authRoute=loginPaths.has(pathname);
+    if(!authRoute&&pathname!=='/workspace'&&!/^\/workspace\/backups(?:\/[^/]+)?$/.test(pathname)) return answer({},404);
     if(req.method==='OPTIONS') return new Response(null,{status:204,headers});
-    const token = /^Bearer ([0-9a-f]{64})$/.exec(req.headers.get('Authorization')||'')?.[1];
-    if(!token) return answer({},401);
-    const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token));
-    const expected=Uint8Array.from(config.digest.match(/../g),x=>parseInt(x,16));
-    if(!crypto.subtle.timingSafeEqual(hash,expected)) return answer({},401);
+    const guard=loginGuard(env);
+    const publicAuth=pathname==='/auth/login'||pathname==='/auth/visit';
+    const digest=publicAuth?null:await sessionDigest(req);
+    if(!publicAuth&&(!digest||!(await guard.authorized(digest)))) return answer({},401);
+    if(authRoute) return loginRequest(req,pathname,guard,digest,answer,readJSON);
     if(pathname.startsWith('/workspace/backups')&&req.method==='GET') {
       try {const result=await githubBackups(req,env);return answer(result.data,result.status);}
       catch(error){return answer({detail:error.message},503);}
@@ -69,15 +81,8 @@ export default {
       return answer(await book.read(since===null ? -1 : Number(since)));
     }
     if(!(req.method==='PUT'&&pathname==='/workspace')&&!(req.method==='POST'&&pathname==='/workspace/backups')) return answer({},405);
-    if(Number(req.headers.get('Content-Length'))>maxBytes) return answer({},413);
-    const reader=req.body?.getReader(); if(!reader) return answer({},400);
-    const chunks=[];let size=0;
-    for (;;) {
-      const {done,value}=await reader.read(); if(done) break;
-      size+=value.length; if(size>maxBytes){await reader.cancel();return answer({},413);} chunks.push(value);
-    }
-    let payload;
-    try {payload=await new Response(new Blob(chunks)).json();} catch {return answer({},400);}
+    const {status,payload}=await readJSON(req,maxBytes);
+    if(status) return answer({},status);
     if(pathname==='/workspace/backups') {
       try {const result=await githubBackups(req,env,payload);return answer(result.data,result.status);}
       catch(error){return answer({detail:error.message},503);}

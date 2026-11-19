@@ -46,7 +46,7 @@ const page = fs.readFileSync(path.join(app,'heng.html'),'utf8')
   .replace('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/','./assets/vendor/')
   .replace('https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js','./assets/vendor/charts.js');
 
-const {publicKey, ...access} = JSON.parse(fs.readFileSync(path.join(app,'pages-access.json'),'utf8'));
+const {publicKey,salt,iterations} = JSON.parse(fs.readFileSync(path.join(app,'pages-access.json'),'utf8'));
 const key = randomBytes(32), iv = randomBytes(12);
 const cipher = createCipheriv('aes-256-gcm', key, iv);
 const encrypted = Buffer.concat([cipher.update(gzipSync(Buffer.from(page),{level:9})),cipher.final(),cipher.getAuthTag()]);
@@ -55,14 +55,19 @@ const wrapped = publicEncrypt({key:publicKey,oaepHash:'sha256'},key);
 fs.writeFileSync(path.join(output,'application.bin'),encrypted);
 const {endpoint} = JSON.parse(fs.readFileSync(path.join(app,'sync-deployment.json'),'utf8'));
 if (endpoint && new URL(endpoint).protocol!=='https:') throw Error('Shared workspace requires HTTPS.');
-const envelope = {...access, syncEndpoint:endpoint, wrapped:wrapped.toString('base64'), appIv:iv.toString('base64'), appVersion, appEncoding:'gzip'};
+const envelope = {salt,iterations,syncEndpoint:endpoint,wrapped:wrapped.toString('base64'),appIv:iv.toString('base64'),appVersion,appEncoding:'gzip'};
 const loaderSource = fs.readFileSync(path.join(app,'application-loader.js'),'utf8');
 const loaderFile = 'assets/application-loader.'+createHash('sha256').update(loaderSource).digest('hex').slice(0,16)+'.js';
 fs.writeFileSync(path.join(output,loaderFile),loaderSource);
-const loginSource = fs.readFileSync(path.join(app,'pages-login.js'),'utf8').replace('./application-loader.js','./'+loaderFile);
+let loginSource = fs.readFileSync(path.join(app,'pages-login.js'),'utf8').replace('./application-loader.js','./'+loaderFile);
+for (const name of ['workspace-sync.js','password-check.js','browser-session.js']) {
+  const version=createHash('sha256').update(fs.readFileSync(path.join(app,name))).digest('hex').slice(0,16);
+  loginSource=loginSource.replace('./'+name,'./'+name+'?v='+version);
+}
 const loginVersion = createHash('sha256').update(loginSource).digest('hex').slice(0,16);
 fs.writeFileSync(path.join(output,'pages-login.js'),loginSource);
-const shell = fs.readFileSync(path.join(app,'login.html'),'utf8').split('<!-- login runtime -->')[0];
+const shell = fs.readFileSync(path.join(app,'login.html'),'utf8').split('<!-- login runtime -->')[0]
+  .replace('<p id="connection"></p>','<p id="connection">为保护账本，网页登录会记录访问时间、浏览器和 IP。</p>');
 fs.writeFileSync(path.join(output,'index.html'),shell+'<script id="access" type="application/json">'+JSON.stringify(envelope)+'</script><script type="module" src="./pages-login.js?v='+loginVersion+'"></script></body></html>');
 for (const name of ['workspace-sync.js','investment-book.js','password-check.js','browser-model.js','browser-session.js']) fs.copyFileSync(path.join(app,name),path.join(output,name));
 fs.writeFileSync(path.join(output,'.nojekyll'),'');

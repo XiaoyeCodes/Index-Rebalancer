@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import {workspaceSync,localBook} from '../workspace-sync.js';
 import {InvestmentData} from '../investment-book.js';
 const book=()=>({state:{weights:{SPY:100},holdings:{SPY:2},monthly:3000,investmentDay:11,contributionMonth:'2026-11'},templates:{}});
+const token='f'.repeat(64);
 async function fixture({changedRemote=false,conflict=false}={}) {
   const values=new Map([['heng.state',JSON.stringify(book().state)],['heng.templates','[]']]);
   const original=new Map(['fetch','navigator','document','window','localStorage'].map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
   let remote,uploaded,puts=0,applied=0;
   const files=new Map();
   const mocks={localStorage:{getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value)},navigator:{},window:{addEventListener(){}},document:{hidden:false,addEventListener(){}},fetch:async(url,options)=>{
-    assert.match(options.headers.Authorization,/^Bearer [a-f0-9]{64}$/);
+    assert.equal(options.headers.Authorization,'Bearer '+token);
     if(url.endsWith('/backups')&&options.method==='POST'){const body=JSON.parse(options.body);files.set(body.id,body.backup);uploaded=body;return Response.json({id:body.id,commit:'saved'});}
     if(url.endsWith('/backups'))return Response.json({files:[...files.keys()].map(id=>({id}))});
     if(url.includes('/backups/'))return Response.json(files.get(decodeURIComponent(url.split('/backups/')[1])));
@@ -17,7 +18,7 @@ async function fixture({changedRemote=false,conflict=false}={}) {
     return Response.json({...remote,revision:changedRemote?6:remote.revision});
   }};
   for(const [key,value]of Object.entries(mocks))Object.defineProperty(globalThis,key,{configurable:true,value});
-  const sync=await workspaceSync('https://sync.test/workspace',new Uint8Array(32).fill(1));
+  const sync=await workspaceSync('https://sync.test/workspace',new Uint8Array(32).fill(1),token);
   const hooks={validate:b=>InvestmentData.validate(b,['SPY']),status(){},apply:b=>{applied++;values.set('heng.state',JSON.stringify(b.state));values.set('heng.templates',JSON.stringify(Object.values(b.templates)));}};
   sync.bind(hooks);sync.close();remote={revision:5,blob:(await sync.exportBackup(book())).blob};values.set('heng.shared.v1',JSON.stringify({revision:5,base:book()}));
   return {sync,values,get uploaded(){return uploaded;},get puts(){return puts;},get applied(){return applied;},hooks,
@@ -29,7 +30,7 @@ test('a GitHub round trip preserves holdings and the monthly plan using cipherte
     const result=await f.sync.createBackup(book());
     assert.deepEqual(await f.sync.importBackup(result.backup),book());
     assert.equal(f.uploaded.backup.state,undefined);assert.ok(!JSON.stringify(f.uploaded).includes('holdings'));
-    const wrong=await workspaceSync('https://sync.test/workspace',new Uint8Array(32).fill(2));wrong.bind(f.hooks);wrong.close();
+    const wrong=await workspaceSync('https://sync.test/workspace',new Uint8Array(32).fill(2),token);wrong.bind(f.hooks);wrong.close();
     await assert.rejects(wrong.importBackup(result.backup),/无法解密/);
   } finally {f.cleanup();}
 });
@@ -45,7 +46,7 @@ test('backup listings show timestamps and decrypt optional names while keeping o
       {id:named.id,createdAt:named.backup.createdAt,name}
     ]);
     assert.deepEqual(await f.sync.importBackup(await f.sync.getBackup(named.id)),book());
-    const wrong=await workspaceSync('https://sync.test/workspace',new Uint8Array(32).fill(2));
+    const wrong=await workspaceSync('https://sync.test/workspace',new Uint8Array(32).fill(2),token);
     assert.equal((await wrong.listBackups()).files[1].name,'');
     await assert.rejects(f.sync.createBackup(book(),name+'名'),/30 个字符/);
   } finally {f.cleanup();}

@@ -45,12 +45,10 @@ function b64(data) {
   return btoa(s);
 }
 const enc=new TextEncoder();
-export async function workspaceSync(endpoint,seed) {
+export async function workspaceSync(endpoint,seed,token) {
   if(!endpoint)return null;
   const material=await crypto.subtle.importKey('raw',seed,'HKDF',false,['deriveBits','deriveKey']);
   const parameters=label=>({name:'HKDF',hash:'SHA-256',salt:enc.encode('heng.workspace.v1'),info:enc.encode(label)});
-  const tokenBits=await crypto.subtle.deriveBits(parameters('access'),material,256);
-  const token=Array.from(new Uint8Array(tokenBits),v=>v.toString(16).padStart(2,'0')).join('');
   const key=await crypto.subtle.deriveKey(parameters('content'),material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
   async function seal(value) {
     const iv=crypto.getRandomValues(new Uint8Array(12));
@@ -72,7 +70,7 @@ export async function workspaceSync(endpoint,seed) {
     if(body)headers['Content-Type']='application/json';
     const r=await fetch(endpoint+suffix,{method,headers,body:body&&JSON.stringify(body),cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(suffix.startsWith('/backups')?60000:12000)});
     if(r.status===409)return null;
-    if(!r.ok){const detail=await r.json().catch(()=>({}));throw Error(detail.detail||(r.status===401?'共享服务拒绝登录':r.status===413?'账本超过同步容量':'共享服务暂时不可用'));}
+    if(!r.ok){const detail=await r.json().catch(()=>({}));throw Error(detail.detail||(r.status===401?'登录已过期，请刷新并重新登录':r.status===413?'账本超过同步容量':'共享服务暂时不可用'));}
     return r.json();
   }
   let hooks,timer,busy=false,again=false,choice=null,initialize=false,conflictVersion,stopped=false;
