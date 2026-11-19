@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'sync/**'
+      - 'app/market-calendar.js'
   workflow_dispatch:
 
 permissions:
@@ -30,8 +31,8 @@ jobs:
         with:
           node-version: 24
       - run: npm ci --no-audit --no-fund
-      - name: Test backup storage
-        run: node --test ../app/scripts/github-backups.test.mjs ../app/scripts/book-store.test.mjs
+      - name: Test backup storage and the market scheduler
+        run: node --test ../app/scripts/github-backups.test.mjs ../app/scripts/book-store.test.mjs ../app/scripts/market-clock.test.mjs
       - name: Configure server-side GitHub backup credential
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

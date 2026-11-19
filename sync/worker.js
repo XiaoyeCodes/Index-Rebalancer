@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import config from './access.json';
 import { githubBackups } from './github-backups.js';
 import { bookStore } from './book-store.js';
+import { clockRequests, runMarketTick, sessionForSlot } from './market-clock.js';
 
 const origin = 'https://xiaoyecodes.github.io';
 const maxBytes = 1536 * 1024;
@@ -17,13 +18,40 @@ export class SharedBook extends DurableObject {
     return this.store.write(revision,blob,generation,replace);
   }
 }
+
+export class MarketClock extends DurableObject {
+  async tick(time) {
+    // Serialize duplicate or out-of-order deliveries while recording GitHub's
+    // acceptance. Both network requests have deadlines below the object lock.
+    return this.ctx.blockConcurrencyWhile(async()=>{
+      const previous=await this.ctx.storage.get('tick');
+      const state=await runMarketTick(previous,time,clockRequests(this.env));
+      if(state&&state!==previous)await this.ctx.storage.put('tick',state);
+      return state;
+    });
+  }
+  async status() {
+    return await this.ctx.storage.get('tick')||{outcome:'awaiting-first-tick'};
+  }
+}
+
+const marketClock=env=>env.MARKET_CLOCK.get(env.MARKET_CLOCK.idFromName('us-close'));
 export default {
+  async scheduled(controller,env) {
+    if(!sessionForSlot(controller.scheduledTime))return;
+    const state=await marketClock(env).tick(controller.scheduledTime);
+    if(state?.outcome==='dispatch-failed')throw Error(state.error);
+  },
   async fetch(req,env) {
     const headers={'Cache-Control':'no-store','Vary':'Origin'};
     const answer=(data,status=200)=>Response.json(data,{status,headers});
     if (req.headers.get('Origin') && req.headers.get('Origin')!==origin) return answer({},403);
     Object.assign(headers,{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Methods':'GET, PUT, POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type'});
     const pathname=new URL(req.url).pathname;
+    if(pathname==='/market-update-status'){
+      if(req.method!=='GET')return answer({},405);
+      return answer(await marketClock(env).status());
+    }
     if(pathname!=='/workspace'&&!/^\/workspace\/backups(?:\/[^/]+)?$/.test(pathname)) return answer({},404);
     if(req.method==='OPTIONS') return new Response(null,{status:204,headers});
     const token = /^Bearer ([0-9a-f]{64})$/.exec(req.headers.get('Authorization')||'')?.[1];

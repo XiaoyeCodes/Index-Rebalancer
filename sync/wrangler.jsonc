@@ -3,7 +3,8 @@
   "main": "worker.js",
   "compatibility_date": "2025-12-01",
   "workers_dev": true,
+  "triggers": {"crons":["3,13,23,33,43,53 * * * *"]},
   "vars": {"WORKSPACE_ID":"portfolio", "GITHUB_BACKUP_REPOSITORY":"XiaoyeCodes/Index-Rebalancer-Automation", "GITHUB_BACKUP_BRANCH":"codex/investment-backups"},
-  "durable_objects": {"bindings":[{"name":"BOOKS","class_name":"SharedBook"}]},
-  "migrations": [{"tag":"v1","new_sqlite_classes":["SharedBook"]}]
+  "durable_objects": {"bindings":[{"name":"BOOKS","class_name":"SharedBook"},{"name":"MARKET_CLOCK","class_name":"MarketClock"}]},
+  "migrations": [{"tag":"v1","new_sqlite_classes":["SharedBook"]},{"tag":"v2-market-clock","new_sqlite_classes":["MarketClock"]}]
 }
