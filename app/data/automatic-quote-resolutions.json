@@ -402,6 +402,90 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "A500",
+      "date": "2026-11-19",
+      "currency": "CNY",
+      "basisThrough": "2026-11-19",
+      "reviewedAt": "2026-11-19T22:34:46.323Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 1.017,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 1.0149999856948853,
+        "high": 1.0210000276565552,
+        "low": 1.00600004196167,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 1.015,
+        "high": 1.021,
+        "low": 1.006,
+        "close": 1.017
+      },
+      "acceptedClose": 1.017,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/512050.SS",
+          "ticker": "512050.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": null,
+          "bar": {
+            "open": 1.0149999856948853,
+            "high": 1.0210000276565552,
+            "low": 1.00600004196167,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 1.0149999856948853,
+            "high": 1.0210000276565552,
+            "low": 1.00600004196167,
+            "close": null
+          },
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "da7e711f6e1653ebedec877413c1359605d192f9d90bea790cd96e18d6a8f288"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=sh512050%2Cday%2C2026-11-16%2C2026-11-19%2C640&_=1795127686323-A500-0",
+          "ticker": "512050.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 1.017,
+          "bar": {
+            "open": 1.015,
+            "high": 1.021,
+            "low": 1.006,
+            "close": 1.017
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "9c6d0f9de829a596647c68e2d692f4063ddc9616b7c33eee1d3c80deeceb957e"
+        },
+        {
+          "name": "Eastmoney",
+          "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.512050&klt=101&fqt=0&beg=20261116&end=20261119&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56&_=1795127686323-A500-0",
+          "ticker": "512050.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 1.017,
+          "bar": {
+            "open": 1.015,
+            "high": 1.021,
+            "low": 1.006,
+            "close": 1.017
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "499ce82d4a83d9db0a191415cfc7f3a68b8fa0eaaff0697c13384dec7f06a6be"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "AAPL",
       "date": "2026-11-17",
       "currency": "USD",
@@ -1060,6 +1144,90 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "BANK",
+      "date": "2026-11-19",
+      "currency": "CNY",
+      "basisThrough": "2026-11-19",
+      "reviewedAt": "2026-11-19T22:34:46.323Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 0.915,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 0.9160000085830688,
+        "high": 0.9169999957084656,
+        "low": 0.9070000052452087,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 0.916,
+        "high": 0.917,
+        "low": 0.907,
+        "close": 0.915
+      },
+      "acceptedClose": 0.915,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/512800.SS",
+          "ticker": "512800.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": null,
+          "bar": {
+            "open": 0.9160000085830688,
+            "high": 0.9169999957084656,
+            "low": 0.9070000052452087,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 0.9160000085830688,
+            "high": 0.9169999957084656,
+            "low": 0.9070000052452087,
+            "close": null
+          },
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "cf9a6186106dea85b4de9b49ac97dc27855126ce1b75c60aec198ee16e2b7a87"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=sh512800%2Cday%2C2026-11-16%2C2026-11-19%2C640&_=1795127686323-BANK-0",
+          "ticker": "512800.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 0.915,
+          "bar": {
+            "open": 0.916,
+            "high": 0.917,
+            "low": 0.907,
+            "close": 0.915
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "c9eeb133698cb003f092a78f85cfbe680ef3c87697f246c4ac095113b8b7ec78"
+        },
+        {
+          "name": "Eastmoney",
+          "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.512800&klt=101&fqt=0&beg=20261116&end=20261119&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56&_=1795127686323-BANK-0",
+          "ticker": "512800.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 0.915,
+          "bar": {
+            "open": 0.916,
+            "high": 0.917,
+            "low": 0.907,
+            "close": 0.915
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "ec39705a0f7067f374fc3fc83bebf1aa53f5dd1420ccc698eeb1eb4297466165"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "BND",
       "date": "2026-11-17",
       "currency": "USD",
@@ -1626,6 +1794,90 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-19T02:35:25.720Z",
           "sha256": "f1efcd6f5bb15df29b0c531af1dbc28ecd5509d2557f462d20c4a65afa2d3f7f"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "CHINEXT",
+      "date": "2026-11-19",
+      "currency": "CNY",
+      "basisThrough": "2026-11-19",
+      "reviewedAt": "2026-11-19T22:34:46.323Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 2.308,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 2.5329999923706055,
+        "high": 2.3310000896453857,
+        "low": 2.2869999408721924,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 2.308,
+        "high": 2.331,
+        "low": 2.287,
+        "close": 2.308
+      },
+      "acceptedClose": 2.308,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/159915.SZ",
+          "ticker": "159915.SZ",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": null,
+          "bar": {
+            "open": 2.5329999923706055,
+            "high": 2.3310000896453857,
+            "low": 2.2869999408721924,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 2.5329999923706055,
+            "high": 2.3310000896453857,
+            "low": 2.2869999408721924,
+            "close": null
+          },
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "6aaaf789b2a9bc9963930c309336ec58bce3f90bc1ebd9ede0410a6d6d1a2771"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=sz159915%2Cday%2C2026-11-16%2C2026-11-19%2C640&_=1795127686323-CHINEXT-0",
+          "ticker": "159915.SZ",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 2.308,
+          "bar": {
+            "open": 2.308,
+            "high": 2.331,
+            "low": 2.287,
+            "close": 2.308
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "dbfc6bcaebae25dedb92cc59c1c26c886db2c1f1dc8a867be658e8d7f32183fc"
+        },
+        {
+          "name": "Eastmoney",
+          "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.159915&klt=101&fqt=0&beg=20261116&end=20261119&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56&_=1795127686323-CHINEXT-0",
+          "ticker": "159915.SZ",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 2.308,
+          "bar": {
+            "open": 2.308,
+            "high": 2.331,
+            "low": 2.287,
+            "close": 2.308
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "b45ca68d1c3527b63e93de2e14cececc635634eb6f7458bda0dff77cd97d5b30"
         }
       ],
       "automatic": true,
@@ -2290,6 +2542,90 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "HSI",
+      "date": "2026-11-19",
+      "currency": "HKD",
+      "basisThrough": "2026-11-19",
+      "reviewedAt": "2026-11-19T22:34:46.323Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 22.94,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 23.18000030517578,
+        "high": 23.18000030517578,
+        "low": 22.899999618530273,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 23.18,
+        "high": 23.18,
+        "low": 22.9,
+        "close": 22.94
+      },
+      "acceptedClose": 22.94,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/2800.HK",
+          "ticker": "2800.HK",
+          "currency": "HKD",
+          "date": "2026-11-19",
+          "value": null,
+          "bar": {
+            "open": 23.18000030517578,
+            "high": 23.18000030517578,
+            "low": 22.899999618530273,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 23.18000030517578,
+            "high": 23.18000030517578,
+            "low": 22.899999618530273,
+            "close": null
+          },
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "845d53ad9ce4463d6147eb0677f0c9a1cb9b0a06bb35fe6684a4c9868f7a1697"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=hk02800%2Cday%2C2026-11-16%2C2026-11-19%2C640&_=1795127686323-HSI-0",
+          "ticker": "2800.HK",
+          "currency": "HKD",
+          "date": "2026-11-19",
+          "value": 22.94,
+          "bar": {
+            "open": 23.18,
+            "high": 23.18,
+            "low": 22.9,
+            "close": 22.94
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "923918c5ae625f42943a8f529dd7543d9a98d6e3acebeda2b4f2b7cbfa98aca2"
+        },
+        {
+          "name": "Eastmoney",
+          "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=116.02800&klt=101&fqt=0&beg=20261116&end=20261119&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56&_=1795127686323-HSI-0",
+          "ticker": "2800.HK",
+          "currency": "HKD",
+          "date": "2026-11-19",
+          "value": 22.94,
+          "bar": {
+            "open": 23.18,
+            "high": 23.18,
+            "low": 22.9,
+            "close": 22.94
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "14ace45a32f5dc54674ab12086d4fa8acc6e54b2fa1e52d3f2bef83bdc69002c"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "HSTECH",
       "date": "2026-11-11",
       "currency": "HKD",
@@ -2684,6 +3020,90 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-19T02:35:25.720Z",
           "sha256": "84516cceee7a6c853434d729394372373ffb7395e5a08469946a02db71472abb"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "HSTECH",
+      "date": "2026-11-19",
+      "currency": "HKD",
+      "basisThrough": "2026-11-19",
+      "reviewedAt": "2026-11-19T22:34:46.323Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 3.566,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 3.628000020980835,
+        "high": 3.628000020980835,
+        "low": 3.559999942779541,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 3.628,
+        "high": 3.628,
+        "low": 3.56,
+        "close": 3.566
+      },
+      "acceptedClose": 3.566,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/3033.HK",
+          "ticker": "3033.HK",
+          "currency": "HKD",
+          "date": "2026-11-19",
+          "value": null,
+          "bar": {
+            "open": 3.628000020980835,
+            "high": 3.628000020980835,
+            "low": 3.559999942779541,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 3.628000020980835,
+            "high": 3.628000020980835,
+            "low": 3.559999942779541,
+            "close": null
+          },
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "69d4d8e6992d79051a917b61f10f621e0b792007df47298d137f61c473ab13d3"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=hk03033%2Cday%2C2026-11-16%2C2026-11-19%2C640&_=1795127686323-HSTECH-0",
+          "ticker": "3033.HK",
+          "currency": "HKD",
+          "date": "2026-11-19",
+          "value": 3.566,
+          "bar": {
+            "open": 3.628,
+            "high": 3.628,
+            "low": 3.56,
+            "close": 3.566
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "b65063ac662800ce42a1296fecf1d5d7ceb09116d4879307abf4cb684544b8cf"
+        },
+        {
+          "name": "Eastmoney",
+          "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=116.03033&klt=101&fqt=0&beg=20261116&end=20261119&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56&_=1795127686323-HSTECH-0",
+          "ticker": "3033.HK",
+          "currency": "HKD",
+          "date": "2026-11-19",
+          "value": 3.566,
+          "bar": {
+            "open": 3.628,
+            "high": 3.628,
+            "low": 3.56,
+            "close": 3.566
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "6a92372de36367f6066910e237d140d62055421a78a4c0819b833ea5bc85ef5e"
         }
       ],
       "automatic": true,
@@ -3634,6 +4054,90 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "SOEDIV",
+      "date": "2026-11-19",
+      "currency": "CNY",
+      "basisThrough": "2026-11-19",
+      "reviewedAt": "2026-11-19T22:34:46.323Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 1.298,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 1.2999999523162842,
+        "high": 1.3020000457763672,
+        "low": 1.2910000085830688,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 1.3,
+        "high": 1.302,
+        "low": 1.291,
+        "close": 1.298
+      },
+      "acceptedClose": 1.298,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/561580.SS",
+          "ticker": "561580.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": null,
+          "bar": {
+            "open": 1.2999999523162842,
+            "high": 1.3020000457763672,
+            "low": 1.2910000085830688,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 1.2999999523162842,
+            "high": 1.3020000457763672,
+            "low": 1.2910000085830688,
+            "close": null
+          },
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "c69a7b365b7464b79046cb3b72b270e51d62c4e0ccf0170fbfea185b8cc672ee"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=sh561580%2Cday%2C2026-11-16%2C2026-11-19%2C640&_=1795127686323-SOEDIV-0",
+          "ticker": "561580.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 1.298,
+          "bar": {
+            "open": 1.3,
+            "high": 1.302,
+            "low": 1.291,
+            "close": 1.298
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "24b6f40da5ca5040f11c078dda01ae4c02b2f3a3f6c2e2a67117fd8050737e7b"
+        },
+        {
+          "name": "Eastmoney",
+          "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.561580&klt=101&fqt=0&beg=20261116&end=20261119&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56&_=1795127686323-SOEDIV-0",
+          "ticker": "561580.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 1.298,
+          "bar": {
+            "open": 1.3,
+            "high": 1.302,
+            "low": 1.291,
+            "close": 1.298
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "bda0cd606b21a4b927850fa230b840ce09d3f5f035cc579cb8578ecd8f4b9503"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "SOXX",
       "date": "2026-11-17",
       "currency": "USD",
@@ -3970,6 +4474,90 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-18T02:13:49.996Z",
           "sha256": "99ebc1ca9f87e7665b584e856616723459cafb1bac30e576a76ef5aed7acef54"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "SSE",
+      "date": "2026-11-19",
+      "currency": "CNY",
+      "basisThrough": "2026-11-19",
+      "reviewedAt": "2026-11-19T22:34:46.323Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 3577.62,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 3583.120849609375,
+        "high": 3584.281494140625,
+        "low": 3547.939697265625,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 3583.12,
+        "high": 3584.28,
+        "low": 3547.94,
+        "close": 3577.62
+      },
+      "acceptedClose": 3577.62,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/000001.SS",
+          "ticker": "000001.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": null,
+          "bar": {
+            "open": 3583.120849609375,
+            "high": 3584.281494140625,
+            "low": 3547.939697265625,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 3583.120849609375,
+            "high": 3584.281494140625,
+            "low": 3547.939697265625,
+            "close": null
+          },
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "fc597e4f7780dacc073afeba2295e79e1d7190debc97e9729598a70113a04058"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=sh000001%2Cday%2C2026-11-16%2C2026-11-19%2C640&_=1795127686323-SSE-0",
+          "ticker": "000001.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 3577.62,
+          "bar": {
+            "open": 3583.12,
+            "high": 3584.28,
+            "low": 3547.94,
+            "close": 3577.62
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "14db7160529afb0c0bf0e049c86e9ef5196f71988d560ed950c8159ddf8705c6"
+        },
+        {
+          "name": "Eastmoney",
+          "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.000001&klt=101&fqt=0&beg=20261116&end=20261119&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56&_=1795127686323-SSE-0",
+          "ticker": "000001.SS",
+          "currency": "CNY",
+          "date": "2026-11-19",
+          "value": 3577.62,
+          "bar": {
+            "open": 3583.12,
+            "high": 3584.28,
+            "low": 3547.94,
+            "close": 3577.62
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-19T22:34:46.323Z",
+          "sha256": "57d71bc335945ad75f242d13177ff022ade51c4df2dc9420ec8941a373dd5d34"
         }
       ],
       "automatic": true,
