@@ -9,6 +9,7 @@ function github({privateRepo=true,corrupt=false,failPut=false}={}) {
   const writes=[];
   return {writes,fetch:async(url,options)=>{
     assert.equal(options.headers.Authorization,'Bearer server-secret');
+    assert.equal(options.redirect,'manual');
     if(url.endsWith('/private'))return Response.json({private:privateRepo});
     if(url.includes('/git/trees/'))return Response.json({tree:[{type:'blob',path:'investment-backups/'+id,size:200},{type:'blob',path:'README.md'}]});
     if(options.method==='PUT'){
@@ -35,4 +36,14 @@ test('GitHub write failures or corrupted readback never report a completed backu
   await assert.rejects(githubBackups(req('','POST'),env,{id,backup},github({failPut:true}).fetch),/授权失效/);
   await assert.rejects(githubBackups(req('','POST'),env,{id,backup},github({corrupt:true}).fetch),/回读校验失败/);
   await assert.rejects(githubBackups(req(),{...env,GITHUB_BACKUP_TOKEN:''},null,github().fetch),/尚未配置/);
+});
+test('GitHub redirects are rejected without forwarding the backup token',async()=>{
+  const calls=[];
+  const redirected=async(url,options)=>{
+    calls.push(url);
+    assert.equal(options.redirect,'manual');
+    return Response.redirect('https://redirect.example/');
+  };
+  await assert.rejects(githubBackups(req(),env,null,redirected),/重定向/);
+  assert.deepEqual(calls,['https://api.github.com/repos/owner/private']);
 });

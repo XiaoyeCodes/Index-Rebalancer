@@ -7,7 +7,9 @@ export async function githubBackups(req,env,payload,fetcher=fetch) {
   const api='https://api.github.com/repos/'+repo;
   const headers={Authorization:'Bearer '+env.GITHUB_BACKUP_TOKEN,'User-Agent':'Index-Rebalancer-Backups','X-GitHub-Api-Version':'2022-11-28',Accept:'application/vnd.github+json'};
   async function call(path,options={}) {
-    const response=await fetcher(api+path,{...options,headers:{...headers,...options.headers},redirect:'error',signal:AbortSignal.timeout(20000)});
+    // Workers support manual redirects. Keep the backup token on GitHub's API origin.
+    const response=await fetcher(api+path,{...options,headers:{...headers,...options.headers},redirect:'manual',signal:AbortSignal.timeout(20000)});
+    if(response.status>=300&&response.status<400)throw Error('GitHub 备份请求遇到重定向，请联系网站维护者。');
     if(!response.ok)throw Error(response.status===401||response.status===403?'GitHub备份授权失效，请联系网站维护者。':'GitHub备份暂时不可用（'+response.status+'）。');
     return response;
   }

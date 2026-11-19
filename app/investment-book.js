@@ -15,7 +15,8 @@ export const InvestmentData = (() => {
     const allowed = new Set(ids), s=input.state;
     const quantities = value => object(value) && Object.entries(value).every(([id,n])=>allowed.has(id)&&Number.isFinite(n)&&n>=0);
     for (const key of ['weights','holdings','beforeExample']) if(s[key]!=null&&!quantities(s[key]))bad('持仓或权重格式无效。');
-    if(s.weights && Object.values(s.weights).reduce((n,v)=>n+v,0)>100.00001)bad('模型权重合计不能超过100%。');
+    // The current model is autosaved while its weights are still being edited.
+    if(s.weights && Object.values(s.weights).some(weight=>weight>100))bad('单个标的的权重不能超过 100%。');
     for (const key of ['lastRebalance','lastBalanceCheckDate','lastExecutionDate']) if(s[key]!=null&&!date(s[key]))bad('计划日期无效。');
     if(s.contributionMonth!=null&&!period(s.contributionMonth))bad('定投期次无效。');
     if(s.start!=null&&!period(s.start))bad('回测开始日期无效。');

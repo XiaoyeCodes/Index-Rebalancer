@@ -4703,7 +4703,8 @@ const InvestmentData = (() => {
     const allowed = new Set(ids), s=input.state;
     const quantities = value => object(value) && Object.entries(value).every(([id,n])=>allowed.has(id)&&Number.isFinite(n)&&n>=0);
     for (const key of ['weights','holdings','beforeExample']) if(s[key]!=null&&!quantities(s[key]))bad('持仓或权重格式无效。');
-    if(s.weights && Object.values(s.weights).reduce((n,v)=>n+v,0)>100.00001)bad('模型权重合计不能超过100%。');
+    // The current model is autosaved while its weights are still being edited.
+    if(s.weights && Object.values(s.weights).some(weight=>weight>100))bad('单个标的的权重不能超过 100%。');
     for (const key of ['lastRebalance','lastBalanceCheckDate','lastExecutionDate']) if(s[key]!=null&&!date(s[key]))bad('计划日期无效。');
     if(s.contributionMonth!=null&&!period(s.contributionMonth))bad('定投期次无效。');
     if(s.start!=null&&!period(s.start))bad('回测开始日期无效。');
@@ -4787,8 +4788,9 @@ function installLocalInvestmentBook(book) {
 }
 function downloadInvestmentFile(value,name) {
   const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));
-  const link=document.createElement('a');link.href=url;link.download=name;link.click();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const link=document.createElement('a');link.href=url;link.download=name;link.hidden=true;
+  document.body.append(link);
+  try{link.click();}finally{link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 }
 function bindInvestmentData() {
   const sync=window.privateAccount?.sync,account=window.privateAccount;
@@ -4814,6 +4816,7 @@ function bindInvestmentData() {
   async function guarded(action) {
     if(working)return;
     working=true;
+    say('');
     document.querySelectorAll('[data-investment-action]').forEach(button=>button.disabled=true);
     try{await action();}catch(error){say(error.message||'操作未完成，请重试。');}
     finally{working=false;document.querySelectorAll('[data-investment-action]').forEach(button=>button.disabled=button.dataset.cloudOnly==='true'&&!sync);}
@@ -4852,7 +4855,7 @@ function bindInvestmentData() {
     let value;try{value=JSON.parse(await file.text());}catch{throw Error('请选择有效的 JSON 备份文件。');}
     const book=await importFile(value);open('restore',book);
   });
-  $('#investmentDataClear').onclick=()=>open('clear');
+  $('#investmentDataClear').onclick=()=>guarded(()=>open('clear'));
   $('#investmentDataCancel').onclick=()=>{if(!working)dialog.close();};
   dialog.addEventListener('cancel',event=>{if(working)event.preventDefault();});
   dialog.addEventListener('close',()=>{pending=null;$('#investmentDataPassword').value='';});

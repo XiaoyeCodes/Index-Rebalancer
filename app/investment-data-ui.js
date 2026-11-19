@@ -31,8 +31,9 @@ function installLocalInvestmentBook(book) {
 }
 function downloadInvestmentFile(value,name) {
   const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));
-  const link=document.createElement('a');link.href=url;link.download=name;link.click();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const link=document.createElement('a');link.href=url;link.download=name;link.hidden=true;
+  document.body.append(link);
+  try{link.click();}finally{link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 }
 function bindInvestmentData() {
   const sync=window.privateAccount?.sync,account=window.privateAccount;
@@ -58,6 +59,7 @@ function bindInvestmentData() {
   async function guarded(action) {
     if(working)return;
     working=true;
+    say('');
     document.querySelectorAll('[data-investment-action]').forEach(button=>button.disabled=true);
     try{await action();}catch(error){say(error.message||'操作未完成，请重试。');}
     finally{working=false;document.querySelectorAll('[data-investment-action]').forEach(button=>button.disabled=button.dataset.cloudOnly==='true'&&!sync);}
@@ -96,7 +98,7 @@ function bindInvestmentData() {
     let value;try{value=JSON.parse(await file.text());}catch{throw Error('请选择有效的 JSON 备份文件。');}
     const book=await importFile(value);open('restore',book);
   });
-  $('#investmentDataClear').onclick=()=>open('clear');
+  $('#investmentDataClear').onclick=()=>guarded(()=>open('clear'));
   $('#investmentDataCancel').onclick=()=>{if(!working)dialog.close();};
   dialog.addEventListener('cancel',event=>{if(working)event.preventDefault();});
   dialog.addEventListener('close',()=>{pending=null;$('#investmentDataPassword').value='';});
