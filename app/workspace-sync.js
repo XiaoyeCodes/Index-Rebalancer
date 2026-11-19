@@ -52,15 +52,18 @@ export async function workspaceSync(endpoint,seed) {
   const tokenBits=await crypto.subtle.deriveBits(parameters('access'),material,256);
   const token=Array.from(new Uint8Array(tokenBits),v=>v.toString(16).padStart(2,'0')).join('');
   const key=await crypto.subtle.deriveKey(parameters('content'),material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
-  async function seal(book) {
+  async function seal(value) {
     const iv=crypto.getRandomValues(new Uint8Array(12));
-    const cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(book))));
+    const cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(value))));
     const packed=new Uint8Array(12+cipher.length); packed.set(iv);packed.set(cipher,12);return b64(packed);
   }
-  async function open(blob) {
+  async function unseal(blob) {
     const packed=bytes(blob);
     const data=await crypto.subtle.decrypt({name:'AES-GCM',iv:packed.subarray(0,12)},key,packed.subarray(12));
-    const book=JSON.parse(new TextDecoder().decode(data));
+    return JSON.parse(new TextDecoder().decode(data));
+  }
+  async function open(blob) {
+    const book=await unseal(blob);
     if(!book.state || !book.templates)throw Error('共享账本格式无效');
     return book;
   }
@@ -177,14 +180,32 @@ export async function workspaceSync(endpoint,seed) {
     changed(){if(hooks){status('有本机修改，正在同步…');schedule();}},
     act(action){if(action==='init')initialize=true;else choice=action; schedule(0);},
     exportBackup,importBackup,replaceBook,
-    async createBackup(book=localBook()) {
-      const backup=await exportBackup(book),id=backup.createdAt.replace(/[-:.]/g,'')+'-'+crypto.randomUUID()+'.json';
+    async createBackup(book=localBook(),name='') {
+      name=name.trim();
+      if(name.length>30||/[\u0000-\u001f\u007f]/.test(name))throw Error('请输入不超过 30 个字符的单行备份名称。');
+      const backup=await exportBackup(book);
+      // The encrypted name goes in the ID so the list can be shown without fetching every backup.
+      const suffix=name?'.'+(await seal(name)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,''):'';
+      const id=backup.createdAt.replace(/[-:.]/g,'')+'-'+crypto.randomUUID()+suffix+'.json';
       const saved=await request('/backups','POST',{id,backup});
       const readback=await request('/backups/'+encodeURIComponent(id));
       if(!equal(await importBackup(readback),book))throw Error('备份回读校验失败，未确认备份成功。');
       return {...saved,backup};
     },
-    listBackups:()=>request('/backups'),
+    async listBackups() {
+      const {files}=await request('/backups');
+      return {files:await Promise.all(files.map(async file=>{
+        const id=file.id;
+        const createdAt=`${id.slice(0,4)}-${id.slice(4,6)}-${id.slice(6,8)}T${id.slice(9,11)}:${id.slice(11,13)}:${id.slice(13,15)}.${id.slice(15,18)}Z`;
+        const parts=id.split('.');
+        let name='';
+        if(parts.length===3){
+          const value=await unseal(parts[1].replaceAll('-','+').replaceAll('_','/')).catch(()=>null);
+          if(typeof value==='string')name=value;
+        }
+        return {...file,createdAt,name};
+      }))};
+    },
     getBackup:id=>request('/backups/'+encodeURIComponent(id)),
     download(previous){const raw=previous?localStorage.getItem(backupKey):JSON.stringify(localBook());if(!raw)return;const url=URL.createObjectURL(new Blob([raw],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='投资账本备份.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   };

@@ -1,4 +1,4 @@
-const namePattern=/^\d{8}T\d{9}Z-[0-9a-f-]{36}\.json$/;
+const namePattern=/^\d{8}T\d{9}Z-[0-9a-f-]{36}(?:\.[A-Za-z0-9_-]{42,160})?\.json$/;
 const envelopeValid=value=>value?.format==='heng-investment-backup'&&value.version===1&&typeof value.createdAt==='string'&&Number.isFinite(Date.parse(value.createdAt))&&typeof value.blob==='string'&&value.blob.length>=40&&value.blob.length<=1450000&&/^[A-Za-z0-9+/]+={0,2}$/.test(value.blob);
 const encode=value=>{const data=new TextEncoder().encode(value);let text='';for(let i=0;i<data.length;i+=8192)text+=String.fromCharCode(...data.subarray(i,i+8192));return btoa(text);};
 export async function githubBackups(req,env,payload,fetcher=fetch) {

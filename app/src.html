@@ -396,6 +396,15 @@
   </aside>
 </dialog>
 
+<dialog class="execution-dialog investment-data-dialog" id="backupNameDialog" aria-labelledby="backupNameTitle">
+  <form id="backupNameForm">
+    <h2 id="backupNameTitle">备份到 GitHub</h2>
+    <div class="field"><label for="backupName">备份名称（可选）</label><input id="backupName" type="text" maxlength="30" autocomplete="off" placeholder="例如：调整定投前" autofocus></div>
+    <p class="execution-intro">备份会自动记录创建日期和时间。</p>
+    <div class="execution-actions"><button type="button" class="btn" id="backupNameCancel">取消</button><button type="submit" class="btn primary">确认备份</button></div>
+  </form>
+</dialog>
+
 <dialog class="execution-dialog investment-data-dialog" id="investmentDataConfirm" aria-labelledby="investmentDataTitle" aria-describedby="investmentDataIntro">
   <form id="investmentDataForm">
     <h2 id="investmentDataTitle">清空投资数据？</h2>

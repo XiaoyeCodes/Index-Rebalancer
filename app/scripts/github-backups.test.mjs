@@ -5,13 +5,13 @@ const env={GITHUB_BACKUP_TOKEN:'server-secret',GITHUB_BACKUP_REPOSITORY:'owner/p
 const id='20261112T064305570Z-00000000-0000-4000-8000-000000000001.json';
 const backup={format:'heng-investment-backup',version:1,createdAt:'2026-11-12T06:43:05.570Z',blob:Buffer.alloc(60,42).toString('base64')};
 const req=(suffix='',method='GET')=>new Request('https://sync.example/workspace/backups'+suffix,{method});
-function github({privateRepo=true,corrupt=false,failPut=false}={}) {
+function github({privateRepo=true,corrupt=false,failPut=false,listedId=id}={}) {
   const writes=[];
   return {writes,fetch:async(url,options)=>{
     assert.equal(options.headers.Authorization,'Bearer server-secret');
     assert.equal(options.redirect,'manual');
     if(url.endsWith('/private'))return Response.json({private:privateRepo});
-    if(url.includes('/git/trees/'))return Response.json({tree:[{type:'blob',path:'investment-backups/'+id,size:200},{type:'blob',path:'README.md'}]});
+    if(url.includes('/git/trees/'))return Response.json({tree:[{type:'blob',path:'investment-backups/'+listedId,size:200},{type:'blob',path:'README.md'}]});
     if(options.method==='PUT'){
       writes.push(JSON.parse(options.body));
       return failPut?Response.json({}, {status:403}):Response.json({commit:{sha:'commit-sha'},content:{html_url:'https://github.com/owner/private/blob/investment-backups/investment-backups/'+id}},{status:201});
@@ -31,6 +31,13 @@ test('backup list excludes all unrelated repository files and rejects path trave
   assert.deepEqual(result.data.files,[{id,size:200}]);
   assert.equal((await githubBackups(req('/unrelated.json'),env,null,f.fetch)).status,400);
   assert.equal((await githubBackups(req('','POST'),env,{id:'../password.json',backup},f.fetch)).status,400);
+});
+test('backups with encrypted names can be written, listed and read by ID',async()=>{
+  const namedId=id.replace(/\.json$/,'.'+'A_'.repeat(80)+'.json');
+  const f=github({listedId:namedId});
+  assert.equal((await githubBackups(req('','POST'),env,{id:namedId,backup},f.fetch)).status,201);
+  assert.deepEqual((await githubBackups(req(),env,null,f.fetch)).data.files,[{id:namedId,size:200}]);
+  assert.deepEqual((await githubBackups(req('/'+namedId),env,null,f.fetch)).data,backup);
 });
 test('GitHub write failures or corrupted readback never report a completed backup',async()=>{
   await assert.rejects(githubBackups(req('','POST'),env,{id,backup},github({failPut:true}).fetch),/授权失效/);

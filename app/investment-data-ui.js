@@ -38,6 +38,12 @@ function downloadInvestmentFile(value,name) {
 function bindInvestmentData() {
   const sync=window.privateAccount?.sync,account=window.privateAccount;
   const dialog=$('#investmentDataConfirm'),form=$('#investmentDataForm'),message=$('#investmentDataMessage');
+  const backupDialog=$('#backupNameDialog'),backupName=$('#backupName');
+  const backupTime=new Intl.DateTimeFormat('zh-CN',{dateStyle:'medium',timeStyle:'medium',timeZone:'Asia/Shanghai',hourCycle:'h23'});
+  const backupLabel=(createdAt,name)=>{
+    const date=new Date(createdAt);
+    return `${name||'投资数据备份'} · ${Number.isFinite(+date)?backupTime.format(date)+' 北京时间':'日期未知'}`;
+  };
   let pending=null,working=false;
   const say=text=>{$('#investmentDataStatus').textContent=text;};
   const checked=value=>InvestmentData.validate(value,IDS);
@@ -64,13 +70,20 @@ function bindInvestmentData() {
     try{await action();}catch(error){say(error.message||'操作未完成，请重试。');}
     finally{working=false;document.querySelectorAll('[data-investment-action]').forEach(button=>button.disabled=button.dataset.cloudOnly==='true'&&!sync);}
   }
-  $('#cloudBackupCreate').onclick=()=>guarded(async()=>{
-    say('正在加密并保存到 GitHub…');
-    const saved=await sync.createBackup(currentInvestmentBook());
-    say('已备份到 GitHub，回读校验通过。');
-    $('#investmentBackups').hidden=true;
-    $('#lastInvestmentBackup').textContent='最近备份：'+new Date(saved.backup.createdAt).toLocaleString('zh-CN');
-  });
+  $('#cloudBackupCreate').onclick=()=>{if(!working)backupDialog.showModal();};
+  $('#backupNameCancel').onclick=()=>backupDialog.close();
+  $('#backupNameForm').onsubmit=event=>{
+    event.preventDefault();
+    return guarded(async()=>{
+      const name=backupName.value.trim();
+      backupDialog.close();say('正在加密并保存到 GitHub…');
+      const saved=await sync.createBackup(currentInvestmentBook(),name);
+      backupName.value='';
+      say('已备份到 GitHub，回读校验通过。');
+      $('#investmentBackups').hidden=true;
+      $('#lastInvestmentBackup').textContent='最近备份 '+backupLabel(saved.backup.createdAt,name);
+    });
+  };
   $('#investmentBackupDownload').onclick=()=>guarded(async()=>{
     const book=currentInvestmentBook(),value=sync?await sync.exportBackup(book):{...book};
     downloadInvestmentFile(value,'投资数据备份-'+todayStr()+'.json');say('已下载备份，包含持仓、投资记录与本月计划。');
@@ -81,8 +94,8 @@ function bindInvestmentData() {
     if(!files.length){say('还没有 GitHub 备份。');return;}
     for(const file of files){
       const row=document.createElement('div');row.className='investment-backup-row';
-      const label=document.createElement('span');const n=file.id;
-      label.textContent=`${n.slice(0,4)}-${n.slice(4,6)}-${n.slice(6,8)} ${n.slice(9,11)}:${n.slice(11,13)}:${n.slice(13,15)} UTC`;
+      const label=document.createElement('span');
+      label.textContent=backupLabel(file.createdAt,file.name);
       for(const [text,action] of [['恢复',async()=>{const raw=await sync.getBackup(file.id);const book=await importFile(raw);open('restore',book);}],['下载',async()=>downloadInvestmentFile(await sync.getBackup(file.id),file.id)]]){
         const button=document.createElement('button');button.type='button';button.className='btn sm';button.textContent=text;button.dataset.investmentAction='';
         button.onclick=()=>guarded(action);row.append(button);
