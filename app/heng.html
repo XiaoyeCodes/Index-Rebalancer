@@ -4254,7 +4254,7 @@ body:has(#assistant:not([hidden])) .data-status {display:none}
         </div>
       </div>
       <details class="callout analysis-note" id="verdictBox">
-        <summary>初始五个候选标的的组合分析</summary>
+        <summary>「我的初始想法」组合分析</summary>
         <div class="prose" id="verdictText"></div>
       </details>
       <p class="note">统计统一取最近约 20 年（<span id="from20"></span> 起），不足 20 年按可得历史计算。年化、波动与回撤按标的本币复权周收盘价；相关性统一换算美元后与 SPY 比较。周收盘回撤不含周内跌幅。带「含接续」的历史包含其他基金或指数，详见标的数据说明。风险分层由本工具人工设定，并非发行方评级。费率为人工核对的基金年费率，不随行情每日更新。</p>
@@ -5300,7 +5300,7 @@ const A = {
   '601088': { kind: 'stock', logo: 'shenhua', lot: 100, cn: '中国神华', cls: 'A股 · 煤炭与能源', cur: 'CNY', risk: 5, fee: null, color: '#93683D',
     hold: '中国神华 A 股，上海证券交易所代码 601088，业务涉及煤炭、发电、铁路及港航运输等。',
     role: '具有能源周期敞口，煤价、需求、政策及资本开支都会影响盈利和分红。历史股息不能直接当作未来固定收益。' },
-  QQQM: { logo: 'invesco', cn: '纳斯达克 100', cls: '美股 · 大盘成长', risk: 5, fee: 0.15, color: '#EB5934', mine: true,
+  QQQM: { logo: 'invesco', cn: '纳斯达克 100', cls: '美股 · 大盘成长', risk: 5, fee: 0.15, color: '#EB5934',
     hold: '跟踪纳斯达克 100 指数：在纳斯达克上市、市值最大的 100 家非金融公司。信息技术、通信服务、可选消费合计占大头，前十大持仓（英伟达、微软、苹果、亚马逊、博通、Meta、Alphabet 等）约占一半权重。与 QQQ 同指数，费率更低，适合长期持有。',
     role: '可作为高风险层的成长配置，与标普 500 的大公司持仓重合度较高，需合并考察集中度。科技股在历史熊市中曾有显著回撤；定投和再平衡不能消除市场风险。' },
   VGT: { logo: 'vanguard', cn: '先锋信息技术 ETF', cls: '美股 · 信息技术', risk: 5, fee: 0.09, color: '#8B3A46',
@@ -5309,10 +5309,10 @@ const A = {
   SOXX: { logo: 'ishares', cn: 'iShares 半导体 ETF', cls: '美股 · 半导体', risk: 5, fee: 0.33, color: '#59739B',
     hold: '跟踪 NYSE Semiconductor Index（纽约证券交易所半导体指数），投资于美国上市的半导体及半导体设备公司，覆盖芯片设计、制造与设备等产业链环节。由 iShares 管理，基金年费率 0.33%。',
     role: '属于单一行业的卫星配置，受芯片需求、资本开支、技术迭代及贸易政策影响。与 VGT、纳斯达克 100 及半导体个股可能重叠，集中度和周期性较强，需要控制组合中的总敞口。' },
-  IBIT: { logo: 'ishares', cn: '比特币现货', cls: '加密资产', risk: 6, fee: 0.25, color: '#E79525', mine: true,
+  IBIT: { logo: 'ishares', cn: '比特币现货', cls: '加密资产', risk: 6, fee: 0.25, color: '#E79525',
     hold: 'iShares 比特币信托，直接托管比特币现货，基金净值跟随比特币价格，没有分红。2024 年 1 月上市，可在普通美股账户中交易，省去交易所和钱包的托管问题。',
     role: '过去 {years:IBIT} 年复合增长最高，但年化波动约 {vol:IBIT}，经历过多次 -75% 以上的下跌，且与股票相关性低。这类资产最适合「小比例 + 阈值再平衡」：涨多了自动卖出锁定一部分收益，跌深了用定投补回。比例通常控制在个位数，并接受它让组合更颠簸。' },
-  SPY: { logo: 'statestreet', cn: '标普 500', cls: '美股 · 大盘', risk: 4, fee: 0.0945, color: '#345DE3', mine: true,
+  SPY: { logo: 'statestreet', cn: '标普 500', cls: '美股 · 大盘', risk: 4, fee: 0.0945, color: '#345DE3',
     hold: '跟踪标普 500 指数：美国约 500 家大型上市公司，按市值加权，覆盖全部 11 个行业，信息技术约占三成。SPY 流动性最好；同指数的 VOO、IVV 费率约 0.03%，长期定投可优先考虑。',
     role: '可作为组合的美股核心底仓，指数规则透明。它与 VTI 持仓和收益表现高度重合，分散配置时应避免重复计算敞口。' },
   VTI: { logo: 'vanguard', cn: '美国全市场', cls: '美股 · 全市场', risk: 4, fee: 0.03, color: '#527EBC',
@@ -5324,13 +5324,13 @@ const A = {
   VWO: { logo: 'vanguard', cn: '新兴市场', cls: '国际股票', risk: 4, fee: 0.06, color: '#AB57A2',
     hold: '跟踪富时新兴市场指数，主要是中国、印度、台湾、巴西、沙特等市场的大中盘股票。',
     role: '波动大、过去 20 年回报偏低，2008 年后用了近 10 年才回到前高。若已持有 VXUS（已含新兴市场），通常不必再单独配置。' },
-  SCHD: { logo: 'schwab', cn: '美国红利 100', cls: '美股 · 价值红利', risk: 3, fee: 0.06, color: '#229584', mine: true,
+  SCHD: { logo: 'schwab', cn: '美国红利 100', cls: '美股 · 价值红利', risk: 3, fee: 0.06, color: '#229584',
     hold: '跟踪道琼斯美国红利 100 指数：先筛选连续 10 年以上派息的公司，再按现金流负债比、净资产收益率、股息率和股息增长率综合打分选出 100 只。金融、能源、必需消费、医疗、工业权重较高。2011 年 10 月成立。',
     role: '它是股票基金，仍有明显市场风险；与标普 500 的同期相关性为 {corr:SCHD}。价值与红利风格可与成长风格搭配，但历史分红不代表未来固定收入。' },
   VNQ: { logo: 'vanguard', cn: '美国房地产信托', cls: 'REITs', risk: 4, fee: 0.13, color: '#9A6854',
     hold: '跟踪 MSCI 美国可投资市场房地产指数，主要持有各类 REITs：数据中心、通信塔、仓储物流、住宅、医疗地产等。分红率较高。',
     role: '对利率敏感，在金融危机及加息环境中均可能显著下跌；与股票有一定共同风险，可结合自身回撤承受能力考虑配置。' },
-  GLD: { logo: 'statestreet', cn: '黄金', cls: '大宗商品', risk: 3, fee: 0.40, color: '#D29827', mine: true,
+  GLD: { logo: 'statestreet', cn: '黄金', cls: '大宗商品', risk: 3, fee: 0.40, color: '#D29827',
     hold: 'SPDR 黄金信托，在伦敦金库托管实物金条，净值跟随金价，没有利息和分红。同类低费率产品：GLDM（0.10%）、IAUM（约 0.09%），长期定投更合适。',
     role: '组合里最有效的分散工具之一：与美股相关性接近 0，2008 年金融危机时上涨。但它不是低风险：2011–2015 年最大回撤 -45%，到 2020 年才回到前高。适合 10%–15% 左右的分散仓位。' },
   GLDM: { logo: 'statestreet', cn: 'SPDR 迷你黄金信托', cls: '大宗商品 · 实物黄金', risk: 3, fee: 0.10, color: '#BB983A',
@@ -5389,7 +5389,6 @@ function assetLogo(id) {
 }
 
 const IDS = Object.keys(A);
-const MINE = IDS.filter(id => A[id].mine);
 
 /* ---------------- price helpers ---------------- */
 const CUR = id => (A[id] && A[id].cur) || 'USD';
@@ -5471,7 +5470,7 @@ const PRESETS = [
   { key: 'balanced', name: '均衡', d: '股票约七成、债券与黄金约三成，少量比特币。适合 5–10 年不用这笔钱、能接受 -30% 左右下跌的人。', w: { SPY: 30, QQQM: 10, SCHD: 10, VXUS: 10, GLD: 15, BND: 22, IBIT: 3 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Y' } },
   { key: 'cnus', name: '中美均衡', d: '在均衡的基础上，把约四分之一的股票换成 A 股和港股、去掉比特币。人民币资产与美股相关性低，但 A 股和港股长期回报低于美股。适合资产和生活都在国内、想两边都配一些的人。', w: { SPY: 25, QQQM: 10, A500: 15, HSI: 5, SOEDIV: 5, GLD: 15, BND: 25 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Y' } },
   { key: 'bold', name: '激进', d: '成长股为主，比特币一成，债券仅作缓冲。适合 10 年以上不用钱、能承受腰斩的人。', w: { QQQM: 30, SPY: 25, VXUS: 10, SCHD: 5, VWO: 5, GLD: 10, IBIT: 10, BND: 5 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Q' } },
-  { key: 'mine', name: '我的初始想法', d: '你最初提出的五个标的：QQQM、比特币、标普 500、黄金、SCHD。没有债券，「低风险层」实际仍是股票和黄金。', w: { QQQM: 25, IBIT: 10, SPY: 30, GLD: 15, SCHD: 20 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Q' } },
+  { key: 'mine', name: '我的初始想法', d: '以标普 500、纳斯达克 100 和美国红利为主，搭配半导体、比特币和黄金。', w: { SCHD: 20, VOO: 35, QQQM: 30, IBIT: 5, SOXX: 5, GLD: 5 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Q' } },
   { key: 'growth-dca', name: '年轻进取型', d: 'VOO 40% · QQQM 40% · VGT 10% · SGOV 10%。以美股宽基和科技成长为主，保留超短期国债配置。', w: { VOO: 40, QQQM: 40, VGT: 10, SGOV: 10 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Y' } },
   { key: 'family-dca', name: '中产稳健家庭型', d: 'VOO 50% · QQQM 25% · SCHD 15% · SGOV 5% · GLDM 5%。以美股宽基为主，搭配成长、红利、超短债和黄金。', w: { VOO: 50, QQQM: 25, SCHD: 15, SGOV: 5, GLDM: 5 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Y' } },
   { key: 'income-dca', name: '大资金躺平收息型', d: 'VOO 40% · SCHD 35% · SGOV 15% · QQQM 10%。侧重美股宽基与红利，搭配超短期国债及科技成长配置。', w: { VOO: 40, SCHD: 35, SGOV: 15, QQQM: 10 }, rule: { mode: 'hybrid', abs: 5, rel: 30, period: 'Y' } },
@@ -5721,8 +5720,9 @@ function toggleFavorite(id) {
 function renderAssets() {
   renderAssetFilters();
   const tb = $('#assetTable tbody'); let rows = '';
+  const mine = PRESETS.find(p => p.key === 'mine').w;
   const row = id => { const st = ST[id], a = A[id], m = D.assets[id], on = S.weights[id] != null, favorite = S.favorites.includes(id);
-    return `<tr class="row" data-id="${id}" tabindex="0"><td><div class="tk">${assetLogo(id)}<div><b>${id}</b>${a.mine ? ' <span class="chip mine">你的候选</span>' : ''}${a.cur ? ` <span class="chip">${a.cur === 'CNY' ? '人民币' : '港币'}</span>` : ''}<span>${a.cn}${a.code ? ' · ' + a.code : ''} · ${a.cls}</span></div></div></td>
+    return `<tr class="row" data-id="${id}" tabindex="0"><td><div class="tk">${assetLogo(id)}<div><b>${id}</b>${Object.hasOwn(mine, id) ? ' <span class="chip mine">你的候选</span>' : ''}${a.cur ? ` <span class="chip">${a.cur === 'CNY' ? '人民币' : '港币'}</span>` : ''}<span>${a.cn}${a.code ? ' · ' + a.code : ''} · ${a.cls}</span></div></div></td>
       <td>${riskHtml(a.risk)}</td><td title="${m.proxy ? '含替代标的接续历史；详见数据说明' : '使用自身可得历史'}">${spark(id)}${m.proxy ? '<span class="small muted">含接续</span>' : ''}</td>
       <td class="r num ${st.cagr == null ? '' : st.cagr >= 0 ? 'pos' : 'neg'}">${cagrHtml(id)}</td><td class="r num">${fmtPct(st.vol)}</td><td class="r num neg">${fmtPct(st.mdd)}</td><td class="r num">${st.corr.toFixed(2)}</td><td class="r num">${a.kind === 'index' ? '<span class="muted" title="价格指数本身没有基金管理费">—</span>' : a.kind === 'stock' ? '<span class="muted" title="个股没有基金管理费，交易费用以券商为准">—</span>' : a.fee == null ? '<span class="muted">见公告</span>' : a.fee.toFixed(a.fee < 0.1 ? 4 : 2).replace(/0+$/, '').replace(/\.$/, '') + '%'}</td>
       <td class="sub" style="min-width:220px;max-width:320px;font-size:12px;line-height:1.5">${esc(a.hold.split('。')[0])}。</td>
@@ -5741,9 +5741,8 @@ function renderAssets() {
   $('#selCount').textContent = IDS.filter(id => S.weights[id] != null).length;
 }
 function renderVerdict() {
-  const s = ST;
   $('#verdictText').innerHTML = `
-    <p><b>总体可以，但缺一块真正的低风险资产。</b>五个标的里，QQQM、标普 500、SCHD 都是美股，与标普 500 的相关系数都在 ${(Math.floor(Math.min(s.QQQM.corr, s.SCHD.corr) * 100) / 100).toFixed(2)} 以上；黄金和 SCHD 也并不「低风险」，黄金历史最大回撤 ${fmtPct(s.GLD.mdd, 0)}，SCHD 是股票基金，2020 年也跌了约 30%。按这五个标的的一种配比（「我的初始想法」模板）按完整组合的共同历史回测，最大回撤为 <span class="num" id="mineMdd">—</span>。</p>
+    <p>这套组合的美股配置占 90%，比特币和黄金各占 5%。纳斯达克 100 和半导体 ETF 与标普 500 有持仓重叠，增加了科技股敞口。按六个标的的共同历史区间回测，组合的最大回撤为 <span class="num" id="mineMdd">—</span>。</p>
     <p><b>建议补充：</b>美国综合债 BND 或短债 SHY/SGOV 作为防守层，它们在股市大跌时通常持平或上涨，也是再平衡时「低位买股」的资金来源；想做全球分散可加 VXUS。标普 500 与 VTI 二选一即可，QQQM 与标普 500 大量重叠，比例不宜都高。比特币适合个位数比例，靠阈值再平衡定期止盈。</p>`;
 }
 function bindAssets() {
@@ -5880,7 +5879,7 @@ function updateSum() {
   $('#sumVal').textContent = s + '%'; $('#sumBox').classList.toggle('bad', s !== 100); $('#sumVal').title = s === 100 ? '' : '合计须为 100% 才能保存或回测';
   $('#runBtn').disabled = s !== 100;
   for (const id of ['#saveStrategyBtn', '#saveWeightsBtn']) { $(id).disabled = s !== 100; $(id).textContent = custom ? '保存修改' : '保存配置'; }
-  $('#weightSaveHint').textContent = s !== 100 ? `权重合计需为 100%，当前为 ${s}%。` : custom ? `正在编辑「${custom.name}」，保存后更新此模板。` : '保存当前目标权重与再平衡配置。';
+  $('#weightSaveHint').textContent = s !== 100 ? `权重合计需为 100%，当前为 ${s}%。` : custom ? `正在编辑「${custom.name}」，保存后更新此模板。` : '保存当前配置。要保留可再次选用的方案，请使用「新建模板」。';
   $('#quickStat').textContent = s === 100 ? '' : `合计须为 100%，当前 ${s}%`;
 }
 function strategySaveStatus(message) {
