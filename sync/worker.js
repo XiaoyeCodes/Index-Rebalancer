@@ -65,9 +65,9 @@ export default {
     }
     const authRoute=loginPaths.has(pathname);
     if(!authRoute&&pathname!=='/workspace'&&!/^\/workspace\/backups(?:\/[^/]+)?$/.test(pathname)) return answer({},404);
-    if(req.method==='OPTIONS') return new Response(null,{status:204,headers});
+    if(req.method==='OPTIONS') return new Response(null,{status:204,headers:{...headers,'Access-Control-Max-Age':'600'}});
     const guard=loginGuard(env);
-    const publicAuth=pathname==='/auth/login'||pathname==='/auth/visit';
+    const publicAuth=pathname==='/auth/login'||pathname==='/auth/login/v2'||pathname==='/auth/visit';
     const digest=publicAuth?null:await sessionDigest(req);
     if(!publicAuth&&(!digest||!(await guard.authorized(digest)))) return answer({},401);
     if(authRoute) return loginRequest(req,pathname,guard,digest,answer,readJSON);

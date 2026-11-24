@@ -29,4 +29,7 @@ for(const path of ['/auth/resume','/auth/history']) {
 }
 const login=await fetch(new URL('/auth/login',endpoint),{method:'OPTIONS',headers:{Origin:origin,'Access-Control-Request-Method':'POST'},signal:AbortSignal.timeout(15000)});
 assert.equal(login.status,204,'Pages should be able to reach the login service');
+const retryLogin=await fetch(new URL('/auth/login/v2',endpoint),{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(15000)});
+assert.equal(retryLogin.status,400,'The new login route must reject an empty submission before testing a password');
+assert.equal(retryLogin.headers.get('Access-Control-Allow-Origin'),origin);
 console.log('Verified Pages preflight and workspace, backup, and login-history access control.');

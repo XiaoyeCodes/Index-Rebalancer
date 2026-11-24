@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { loginStore } from './login-store.js';
+import { authenticateAttempt, hash } from './login-attempt.js';
 
 const minute=60000, day=24*60*minute;
 const client={device:'browser-1',ip:'192.0.2.1',agent:'Example agent'};
 
-function withStore(testBody) {
+async function withStore(testBody) {
   const db=new DatabaseSync(':memory:');
   const storage={sql:{exec(query,...values){
     if (query.startsWith('CREATE')) {db.exec(query);return;}
@@ -18,7 +19,7 @@ function withStore(testBody) {
     try {const result=action();db.exec('COMMIT');return result;}
     catch (error) {db.exec('ROLLBACK');throw error;}
   }};
-  try {testBody(loginStore(storage));}finally{db.close();}
+  try {await testBody(loginStore(storage));}finally{db.close();}
 }
 
 test('four failures per round trigger 10 minutes, then 30 minutes, then a day',()=>withStore(store=>{
@@ -74,4 +75,39 @@ test('sessions expire, can be revoked, and are invalidated by a password salt ch
   assert.equal(store.authorized(session.hash,session.salt,now+day),false);
   store.logout(session.hash);
   assert.equal(store.authorized(session.hash,session.salt,now+2),false);
+}));
+
+test('lost responses reuse the recorded outcome and never resurrect a logged-out session',()=>withStore(async store=>{
+  const proof=crypto.getRandomValues(new Uint8Array(32)),iv=crypto.getRandomValues(new Uint8Array(12));
+  const key=await crypto.subtle.importKey('raw',proof,'AES-GCM',false,['encrypt']);
+  const sealed=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new Uint8Array([1,2,3]));
+  const credentials={salt:'fixture',iv:Buffer.from(iv).toString('base64'),sealed:Buffer.from(sealed).toString('base64')};
+  let now=0;
+  const body={proof:Buffer.alloc(32).toString('base64'),salt:'fixture',remember:true,attemptId:crypto.randomUUID()};
+  const login=()=>authenticateAttempt(store,credentials,client,body,'login',++now);
+  assert.equal((await login()).status,401);
+  assert.equal((await login()).status,401);
+  assert.equal(store.history('login',now).length,1);
+  // Even if the ID is reused, a different password must be checked separately.
+  body.proof=Buffer.from(proof).toString('base64');
+  const success=await login(), repeat=await login();
+  assert.equal(success.status,200);
+  assert.deepEqual(repeat,success);
+  assert.equal(store.history('login',now).length,2);
+  const digest=await hash(success.body.token);
+  assert.ok(store.authorized(digest,'fixture',now));
+  store.logout(digest);
+  assert.equal((await login()).status,401);
+  body.attemptId=crypto.randomUUID();
+  assert.notEqual((await login()).body.token,success.body.token);
+  for(let i=0;i<4;i++){
+    body.proof=Buffer.alloc(32,i).toString('base64');
+    const result=await login();
+    assert.equal(result.status,i===3?429:401);
+    assert.equal((await login()).status,result.status);
+  }
+  body.attemptId=crypto.randomUUID();
+  assert.equal((await login()).status,429);
+  assert.equal((await login()).status,429);
+  assert.equal(store.history('login',now).filter(e=>e.outcome==='blocked').length,1);
 }));

@@ -13,7 +13,16 @@ export function loginStore(storage) {
     CREATE INDEX IF NOT EXISTS login_event_kind_id ON login_event(kind,id);
     CREATE INDEX IF NOT EXISTS login_event_at ON login_event(at);
     CREATE TABLE IF NOT EXISTS login_session (token TEXT PRIMARY KEY, salt TEXT, expires INTEGER);
-    CREATE INDEX IF NOT EXISTS login_session_expires ON login_session(expires);`);
+    CREATE INDEX IF NOT EXISTS login_session_expires ON login_session(expires);
+    CREATE TABLE IF NOT EXISTS login_receipt (id TEXT PRIMARY KEY, nonce TEXT, until INTEGER, expires INTEGER);
+    CREATE INDEX IF NOT EXISTS login_receipt_expires ON login_receipt(expires);`);
+
+  function saveReceipt(id, nonce, until, now) {
+    if (!id) return;
+    sql.exec('DELETE FROM login_receipt WHERE expires<=?',now);
+    const expires=Math.min(until||Infinity,now+5*60*1000);
+    sql.exec('INSERT INTO login_receipt(id,nonce,until,expires) VALUES(?,?,?,?)',id,nonce,until,expires);
+  }
 
   function limits(client, now) {
     return ['device:'+client.device, client.ip && 'ip:'+client.ip].map(subject => {
@@ -33,12 +42,18 @@ export function loginStore(storage) {
 
   return {
     visit(client, now) { event(client,'visit','opened',now); },
-    check(client, kind, now) {
+    receipt(id, now) {
+      return sql.exec('SELECT nonce,until FROM login_receipt WHERE id=? AND expires>?',id,now).toArray()[0];
+    },
+    check(client, kind, now, receiptId) {
       const records = limits(client,now), until = Math.max(...records.map(record=>record.until));
-      if (until>now) event(client,kind,'blocked',now,records,until);
+      if (until>now) storage.transactionSync(()=>{
+        event(client,kind,'blocked',now,records,until);
+        saveReceipt(receiptId,null,until,now);
+      });
       return until>now ? until : 0;
     },
-    fail(client, kind, now) {
+    fail(client, kind, now, receiptId) {
       return storage.transactionSync(()=>{
         const records = limits(client,now).map(record=>{
           if (!record.subject) return record;
@@ -51,17 +66,19 @@ export function loginStore(storage) {
         });
         const until = Math.max(...records.map(record=>record.until));
         event(client,kind,'failed',now,records,until);
+        saveReceipt(receiptId,null,until,now);
         sql.exec('DELETE FROM login_limit WHERE updated<=?',now-7*day);
         return until;
       });
     },
-    success(client, kind, now, session) {
+    success(client, kind, now, session, receiptId, nonce) {
       storage.transactionSync(()=>{
         for (const record of limits(client,now)) if (record.subject) sql.exec('DELETE FROM login_limit WHERE subject=?',record.subject);
         event(client,kind,'success',now);
         if (session) {
           sql.exec('DELETE FROM login_session WHERE expires<=? OR salt<>?',now,session.salt);
           sql.exec('INSERT INTO login_session(token,salt,expires) VALUES(?,?,?)',session.hash,session.salt,session.expires);
+          saveReceipt(receiptId,nonce,0,now);
         }
       });
     },
