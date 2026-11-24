@@ -12,6 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -46,10 +47,26 @@ jobs:
           PUBLISHED_SOURCE_COMMIT="$(git rev-parse HEAD)" node app/scripts/publish.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
+        id: upload
         with:
           path: dist
+      - name: Wait for the uploaded site to appear in the run's artifact list
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
+        run: |
+          test -n "$ARTIFACT_ID"
+          for attempt in {1..18}; do
+            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=github-pages" \
+                --jq '.artifacts[] | select(.expired == false) | .id' | grep -Fxq "$ARTIFACT_ID"; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::GitHub has not indexed the uploaded Pages artifact $ARTIFACT_ID"
+          exit 1
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
       - name: Verify the deployed market snapshot on the public website
         run: node app/scripts/site-freshness.mjs --verify

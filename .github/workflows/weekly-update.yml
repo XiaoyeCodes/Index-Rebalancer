@@ -56,6 +56,7 @@ jobs:
     needs: update
     if: needs.update.outputs.plan == 'update' || needs.update.outputs.plan == 'deploy'
     permissions:
+      actions: read
       contents: read
       pages: write
       id-token: write
