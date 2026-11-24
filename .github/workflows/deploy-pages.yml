@@ -12,7 +12,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: read
   pages: write
   id-token: write
@@ -50,23 +49,42 @@ jobs:
         id: upload
         with:
           path: dist
-      - name: Wait for the uploaded site to appear in the run's artifact list
+      - name: Deploy the uploaded artifact to GitHub Pages
+        id: deployment
+        uses: actions/github-script@v8
+        env:
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
+        with:
+          script: |
+            // The upload supplies the exact ID even when listing artifacts by name returns an empty list.
+            const artifactId = Number(process.env.ARTIFACT_ID)
+            if (!Number.isSafeInteger(artifactId) || artifactId <= 0) throw Error('Missing uploaded Pages artifact ID')
+            const { sourceCommit } = JSON.parse(require('node:fs').readFileSync('dist/data-status.json', 'utf8'))
+            const { data } = await github.request('POST /repos/{owner}/{repo}/pages/deployments', {
+              ...context.repo, artifact_id: artifactId, pages_build_version: sourceCommit, oidc_token: await core.getIDToken()
+            })
+            core.setOutput('page_url', data.page_url)
+            core.setOutput('deployment_id', data.id)
+      - name: Wait for Pages deployment
         env:
           GH_TOKEN: ${{ github.token }}
-          ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
+          DEPLOYMENT_ID: ${{ steps.deployment.outputs.deployment_id }}
         run: |
-          test -n "$ARTIFACT_ID"
-          for attempt in {1..18}; do
-            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=github-pages" \
-                --jq '.artifacts[] | select(.expired == false) | .id' | grep -Fxq "$ARTIFACT_ID"; then
-              exit 0
-            fi
+          for attempt in {1..48}; do
+            status=$(gh api "repos/$GITHUB_REPOSITORY/pages/deployments/$DEPLOYMENT_ID" --jq '.status') || status=unavailable
+            case "$status" in
+              succeed) exit 0 ;;
+              deployment_failed|deployment_content_failed|deployment_cancelled|deployment_lost) echo "::error::Pages reported $status"; exit 1 ;;
+            esac
             sleep 5
           done
-          echo "::error::GitHub has not indexed the uploaded Pages artifact $ARTIFACT_ID"
+          echo "::error::Timed out waiting for Pages deployment $DEPLOYMENT_ID"
           exit 1
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
       - name: Verify the deployed market snapshot on the public website
         run: node app/scripts/site-freshness.mjs --verify
+      - name: Cancel pending Pages deployment on cancellation
+        if: cancelled() && steps.deployment.outputs.deployment_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOYMENT_ID: ${{ steps.deployment.outputs.deployment_id }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/deployments/$DEPLOYMENT_ID/cancel"
