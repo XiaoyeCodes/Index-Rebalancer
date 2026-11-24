@@ -3,9 +3,10 @@ import { browserModel } from './browser-model.js';
 import { browserSession } from './browser-session.js';
 import { derivePagesKey } from './password-check.js';
 import { loadApplication } from './application-loader.js';
+import { loginTransport } from './login-transport.js';
 
 const access=JSON.parse(document.getElementById('access').textContent);
-const authURL=new URL('/auth/',access.syncEndpoint);
+const request=loginTransport(access.syncEndpoint);
 const bytes=value=>Uint8Array.from(atob(value),char=>char.charCodeAt(0));
 const {subtle}=crypto;
 const form=document.querySelector('form');
@@ -23,28 +24,12 @@ const device=(()=>{
   return id;
 })();
 
-async function request(action,{body,token,keepalive=false}={}) {
-  const headers={};
-  if (body) headers['Content-Type']='application/json';
-  if (token) headers.Authorization='Bearer '+token;
-  const response=await fetch(new URL(action,authURL),{
-    method:body?'POST':'GET',headers,body:body&&JSON.stringify(body),keepalive,
-    credentials:'omit',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000),
-  });
-  const data=await response.json().catch(()=>({}));
-  if (!response.ok) {
-    const error=Error(data.detail||(response.status===401?'登录已过期，请重新登录。':'登录服务暂时不可用，请稍后再试。'));
-    error.status=response.status;
-    error.retryAfter=data.retryAfter;
-    throw error;
-  }
-  return data;
-}
-
 async function authenticate(action,password,{remember,token}={}) {
   const raw=await derivePagesKey(access,password);
   try {
-    const data=await request(action,{token,body:{device,salt:access.salt,proof:btoa(String.fromCharCode(...raw)),remember}});
+    const data=await request(action==='login'?'login/v2':action,{token,
+      body:{device,salt:access.salt,proof:btoa(String.fromCharCode(...raw)),remember},
+      onRetry:()=>busy(true,'连接中断，正在重新连接登录服务…')});
     if (action==='login') data.key=await subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
     return data;
   } finally {raw.fill(0);}
@@ -103,14 +88,14 @@ function showCooldown(seconds) {
 form.onsubmit=async event=>{
   event.preventDefault();
   if (button.disabled) return;
-  const remember=form.remember.checked;
+  const remember=form.remember.checked,password=form.password.value;
   busy(true,'正在验证密码…');
   try {
-    const data=await authenticate('login',form.password.value,{remember});
+    const data=await authenticate('login',password,{remember});
     form.password.value='';
     await openApplication(data.key,data,remember);
   } catch(error) {
-    form.password.value='';
+    if (error.status===401 || error.status===429) form.password.value='';
     if (error.retryAfter) showCooldown(error.retryAfter);
     else busy(false,error.name==='OperationError'?'网页版本已更新，请刷新后重试。':error.message);
   }
@@ -121,11 +106,11 @@ async function restoreLogin() {
   try {
     const record=await session.load(access);
     if (!record) {busy(false);return;}
-    const envelope=await request('resume',{token:record.token});
+    const envelope=await request('resume',{token:record.token,onRetry:()=>busy(true,'正在重新连接以恢复登录…')});
     await openApplication(record.key,{...envelope,token:record.token},true,true);
   } catch(error) {
     if (error.status===401||error.name==='OperationError') await session.clear().catch(()=>{});
-    busy(false,error.status===401?'登录已过期，请重新登录。':'自动登录未完成，请刷新重试，或输入密码登录。');
+    busy(false,error.status===401?'登录已过期，请重新登录。':error.temporary?error.message:'自动登录未完成，请刷新重试，或输入密码登录。');
   }
 }
 

@@ -56,10 +56,14 @@ fs.writeFileSync(path.join(output,'application.bin'),encrypted);
 const {endpoint} = JSON.parse(fs.readFileSync(path.join(app,'sync-deployment.json'),'utf8'));
 if (endpoint && new URL(endpoint).protocol!=='https:') throw Error('Shared workspace requires HTTPS.');
 const envelope = {salt,iterations,syncEndpoint:endpoint,wrapped:wrapped.toString('base64'),appIv:iv.toString('base64'),appVersion,appEncoding:'gzip'};
-const loaderSource = fs.readFileSync(path.join(app,'application-loader.js'),'utf8');
-const loaderFile = 'assets/application-loader.'+createHash('sha256').update(loaderSource).digest('hex').slice(0,16)+'.js';
-fs.writeFileSync(path.join(output,loaderFile),loaderSource);
-let loginSource = fs.readFileSync(path.join(app,'pages-login.js'),'utf8').replace('./application-loader.js','./'+loaderFile);
+let loginSource = fs.readFileSync(path.join(app,'pages-login.js'),'utf8');
+for (const module of ['application-loader','login-transport']) {
+  const source=fs.readFileSync(path.join(app,module+'.js'),'utf8');
+  const version=createHash('sha256').update(source).digest('hex').slice(0,16);
+  const target='assets/'+module+'.'+version+'.js';
+  fs.writeFileSync(path.join(output,target),source);
+  loginSource=loginSource.replace('./'+module+'.js','./'+target);
+}
 for (const name of ['workspace-sync.js','password-check.js','browser-session.js']) {
   const version=createHash('sha256').update(fs.readFileSync(path.join(app,name))).digest('hex').slice(0,16);
   loginSource=loginSource.replace('./'+name,'./'+name+'?v='+version);

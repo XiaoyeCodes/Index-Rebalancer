@@ -29,7 +29,17 @@ for(const path of ['/auth/resume','/auth/history']) {
 }
 const login=await fetch(new URL('/auth/login',endpoint),{method:'OPTIONS',headers:{Origin:origin,'Access-Control-Request-Method':'POST'},signal:AbortSignal.timeout(15000)});
 assert.equal(login.status,204,'Pages should be able to reach the login service');
-const retryLogin=await fetch(new URL('/auth/login/v2',endpoint),{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(15000)});
-assert.equal(retryLogin.status,400,'The new login route must reject an empty submission before testing a password');
-assert.equal(retryLogin.headers.get('Access-Control-Allow-Origin'),origin);
+// Edge locations can briefly serve the previous Worker after deploy completes.
+for (let attempt=1; ; attempt++) {
+  const loginURL=new URL('/auth/login/v2',endpoint);
+  const retryLogin=await fetch(loginURL,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(15000)});
+  if (retryLogin.status===404 && attempt<12) {
+    await retryLogin.body?.cancel();
+    await new Promise(resolve=>setTimeout(resolve,5000));
+    continue;
+  }
+  assert.equal(retryLogin.status,400,'The new login route must reject an empty submission before testing a password');
+  assert.equal(retryLogin.headers.get('Access-Control-Allow-Origin'),origin);
+  break;
+}
 console.log('Verified Pages preflight and workspace, backup, and login-history access control.');
