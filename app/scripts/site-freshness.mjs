@@ -36,6 +36,21 @@ export function shellMatches(html,version) {
 
 const checkShell=async version=>shellMatches(await (await readPublic('')).text(),version);
 
+export async function publishedFilesMatch(manifest) {
+  if(!/^[0-9a-f]{64}$/.test(manifest.applicationSha256)||!await checkShell(manifest.applicationSha256))return false;
+  const response=await readPublic('application.bin',manifest.applicationSha256);
+  return createHash('sha256').update(new Uint8Array(await response.arrayBuffer())).digest('hex')===manifest.applicationSha256;
+}
+
+export async function currentPublication(snapshot,bytes,commit) {
+  const live=await readLive();
+  const hash=createHash('sha256').update(bytes).digest('hex');
+  if(live.sourceCommit!==commit||live.dataSha256!==hash||live.checkedAt!==snapshot.health.checkedAt||
+     ['CNY','HKD'].some(code=>live.fxDates?.[code]!==snapshot.fxAsOf?.[code])||
+     live.asOf!==snapshot.asOf||backupPlan(snapshot,live,{dataSha256:hash})!=='current')return false;
+  return publishedFilesMatch(live);
+}
+
 export function matchesDeployment(local,live) {
   return ['asOf','checkedAt','dataSha256','applicationSha256','sourceCommit'].every(key=>typeof local[key]==='string'&&local[key].length>0&&local[key]===live?.[key]);
 }
@@ -47,10 +62,7 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===fs.realpathSync(process.arg
     for(let attempt=0;attempt<12&&!verified;attempt++){
       if(attempt)await pause(10000);
       try{
-        if(matchesDeployment(target,await readLive())&&await checkShell(target.applicationSha256)){
-          const response=await readPublic('application.bin',target.applicationSha256);
-          verified=createHash('sha256').update(new Uint8Array(await response.arrayBuffer())).digest('hex')===target.applicationSha256;
-        }
+        verified=matchesDeployment(target,await readLive())&&await publishedFilesMatch(target);
       }catch(error){console.warn(error.message);}
     }
     if(!verified)throw Error('Pages did not serve the deployed market snapshot '+target.asOf+' at '+target.sourceCommit);

@@ -22,12 +22,20 @@ concurrency:
 
 jobs:
   deploy:
+    # The reporting job below owns the final workflow failure. The deployment's
+    # individual steps and verification output retain their actual results.
+    continue-on-error: true
+    outputs:
+      verified: ${{ steps.verify.outcome }}
+      started: ${{ steps.start.outputs.at }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - id: start
+        run: echo "at=$(date +%s%3N)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
         with:
           ref: main
@@ -75,6 +83,7 @@ jobs:
               })).data.status
             })
       - name: Verify the deployed market snapshot on the public website
+        id: verify
         run: node app/scripts/site-freshness.mjs --verify
       - name: Cancel pending Pages deployment on cancellation
         if: cancelled() && steps.deployment.outputs.deployment_id != ''
@@ -82,3 +91,25 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.deployment_id }}
         run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/deployments/$DEPLOYMENT_ID/cancel"
+
+  report:
+    needs: deploy
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - name: Report the first failure or confirm public recovery
+        env:
+          MARKET_STARTED_AT: ${{ needs.deploy.outputs.started }}
+          VERIFIED: ${{ needs.deploy.outputs.verified }}
+        run: |
+          if [ "$VERIFIED" = success ]; then
+            node app/scripts/market-incident.mjs verified
+          else
+            node app/scripts/market-incident.mjs pages
+          fi

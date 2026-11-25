@@ -27,6 +27,7 @@ jobs:
       contents: write
     outputs:
       plan: ${{ steps.check.outputs.plan }}
+      updated: ${{ steps.prices.outcome }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -50,13 +51,25 @@ jobs:
 
       - name: Update data, rebuild page, commit and push
         if: steps.check.outputs.plan == 'update'
-        run: node app/scripts/update-retry.mjs --git --refresh-checkout
+        id: prices
+        continue-on-error: true
+        run: |
+          echo "MARKET_STARTED_AT=$(date +%s%3N)" >> "$GITHUB_ENV"
+          timeout --kill-after=20s 28m node app/scripts/update-retry.mjs --git --refresh-checkout
+
+      - name: Record an exhausted update and notify once
+        if: steps.prices.outcome == 'failure'
+        run: node app/scripts/market-incident.mjs data
+
+      - name: Resolve an open incident if the published application verifies
+        if: steps.check.outputs.plan == 'current'
+        run: node app/scripts/market-incident.mjs verified
 
   publish:
     needs: update
-    if: needs.update.outputs.plan == 'update' || needs.update.outputs.plan == 'deploy'
+    if: needs.update.outputs.updated == 'success' || needs.update.outputs.plan == 'deploy'
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     uses: ./.github/workflows/deploy-pages.yml
