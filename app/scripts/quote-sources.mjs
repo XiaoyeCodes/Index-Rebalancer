@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {tradingDate} from './process.mjs';
-import {requestJSON} from './quote-http.mjs';
+import {nasdaqHistoryURL,requestJSON,requestQuoteResponse} from './quote-http.mjs';
 import Calendar from '../market-calendar.js';
 
 export const PRICE_FIELDS=['open','high','low','close'];
@@ -13,7 +13,6 @@ export const samePrice=(a,b,tolerance)=>Number.isFinite(a)&&a>0&&Number.isFinite
 export const sameBar=(a,b,tolerance)=>validBar(a)&&validBar(b)&&PRICE_FIELDS.every(key=>samePrice(a[key],b[key],tolerance));
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const number=value=>typeof value==='number'?value:Number(String(value??'').replace(/[$,]/g,''));
-const stocks=new Set(['NVDA','MSFT','TSLA','AAPL','AMZN','SPCX','AXP','BRK-B','GOOG']);
 const venues={NMS:'OQ',NGM:'OQ',NCM:'OQ',NAS:'OQ',NYQ:'N',NYSE:'N',PCX:'AM',ASE:'AM',BATS:'AM'};
 
 const nyClock=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
@@ -90,14 +89,13 @@ export async function fetchBars({id,ticker,raw,source,from,to,through,request=re
   through=through||priceBasisThrough(raw,to,now);
   let url,rows,body;
   if(source==='Nasdaq'){
-    const symbol=ticker==='BRK-B'?'BRK.B':ticker;
-    url=`https://api.nasdaq.com/api/quote/${encodeURIComponent(symbol)}/historical?assetclass=${stocks.has(id)?'stocks':'etf'}&limit=10000&fromdate=${from}&todate=${to}`;
+    url=nasdaqHistoryURL(ticker,from,to);
   }else if(source==='Tencent Finance')url=`https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=${codes.tencent},day,${from},${to},640`;
   else if(source==='CNBC'&&currency==='USD')url=`https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${encodeURIComponent(ticker.replace('-','.'))}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json`;
   else if(source==='Eastmoney'&&codes.eastmoney)url=`https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${codes.eastmoney}&klt=101&fqt=0&beg=${from.replaceAll('-','')}&end=${to.replaceAll('-','')}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56`;
   else throw Error(`Unsupported quote source ${source} for ${ticker}`);
   const freshUrl=new URL(url);freshUrl.searchParams.set('_',`${now}-${id}-${attempt}`);url=freshUrl.href;
-  body=await request(url,{fresh:true});
+  ({body,url}=await requestQuoteResponse(url,request,{fresh:true}));
   if(source==='Nasdaq'){
     if(normalizeSymbol(body.data?.symbol)!==normalizeSymbol(ticker))throw Error(`${id}: Nasdaq security mismatch`);
     const table=body.data?.tradesTable?.rows;

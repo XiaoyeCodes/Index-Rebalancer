@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {CHAINS,RAW_DIR,fileFor} from './assets.mjs';
 import {tradingDate,isClosed} from './process.mjs';
-import {requestJSON} from './quote-http.mjs';
+import {nasdaqHistoryURL,requestJSON,requestQuoteResponse} from './quote-http.mjs';
+import {normalizeSymbol} from './quote-sources.mjs';
 export {requestJSON} from './quote-http.mjs';
 export function compareCloses(primary, secondary, tolerance) {
   if(!primary.length) throw new Error('missing primary closing dates');
@@ -28,9 +29,10 @@ export async function verifySecondaryCloses({primary,url,parse,tolerance,request
   for(let attempt=0;attempt<=retryDelays.length;attempt++) {
     const requestUrl=new URL(url);
     if(attempt)requestUrl.searchParams.set('_',`${now}-${attempt}`);
-    const secondary=parse(await request(requestUrl.href,{fresh:attempt>0}));
+    const response=await requestQuoteResponse(requestUrl,request,{fresh:attempt>0});
+    const secondary=parse(response.body);
     try {
-      return {secondary,observations:compareCloses(primary,secondary,tolerance),url:requestUrl.href,attempts:attempt+1};
+      return {secondary,observations:compareCloses(primary,secondary,tolerance),url:response.url,attempts:attempt+1};
     } catch(error) {
       if(error.code!=='MISSING_SECONDARY_CLOSE'||attempt===retryDelays.length)throw error;
       log(`${label}: ${error.message}; retry ${attempt+2}/${retryDelays.length+1} in ${retryDelays[attempt]/1000}s`);
@@ -57,10 +59,11 @@ export async function crosscheck(data, {rawDir=RAW_DIR,request=requestJSON,now=D
           parse=response=>(response.data?.[code]?.day||[]).map(row=>({date:row[0],close:+row[2]}));
         } else {
           source='Nasdaq';
-          const symbol=ticker==='BRK-B'?'BRK.B':ticker;
-          const assetclass=['NVDA','MSFT','TSLA','AAPL','AMZN','SPCX','AXP','BRK-B','GOOG'].includes(id)?'stocks':'etf';
-          url=`https://api.nasdaq.com/api/quote/${encodeURIComponent(symbol)}/historical?assetclass=${assetclass}&limit=10&fromdate=${primary[0].date}&todate=${data.asOf}`;
-          parse=response=>(response.data?.tradesTable?.rows||[]).map(row=>({date:new Date(row.date+' 00:00:00 UTC').toISOString().slice(0,10),close:+row.close.replace(/[$,]/g,'')}));
+          url=nasdaqHistoryURL(ticker,primary[0].date,data.asOf,10);
+          parse=response=>{
+            if(normalizeSymbol(response.data?.symbol)!==normalizeSymbol(ticker))throw Error(`${id}: Nasdaq security mismatch`);
+            return (response.data?.tradesTable?.rows||[]).map(row=>({date:new Date(row.date+' 00:00:00 UTC').toISOString().slice(0,10),close:+row.close.replace(/[$,]/g,'')}));
+          };
         }
         // Listed US/HK prices are quoted to cents; mainland ETFs to 0.001 yuan.
         const tolerance=id==='SSE'?.006:/\.(SS|SZ|HK)$/.test(ticker)?.00051:.011;

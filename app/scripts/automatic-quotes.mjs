@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import {CHAINS,RAW_DIR,fileFor} from './assets.mjs';
 import {tradingDate,isClosed} from './process.mjs';
 import {reconcileRaw,resolutionScale} from './reconcile-history.mjs';
-import {requestJSON} from './quote-http.mjs';
+import {eastmoneyHistoryMirror,requestJSON} from './quote-http.mjs';
 import {PRICE_FIELDS,isAsian,currencyFor,toleranceFor,validBar,samePrice,sameBar,fetchBars,sourceObservation,primaryObservation,normalizeSymbol,priceBasisThrough} from './quote-sources.mjs';
 
 export const AUTOMATIC_FILE=new URL('../data/automatic-quote-resolutions.json',import.meta.url);
@@ -23,7 +23,8 @@ function sourceMatches(source,record) {
     const expected=(ticker.endsWith('.HK')?'116':ticker.endsWith('.SZ')?'0':'1')+'.'+(ticker.endsWith('.HK')?ticker.split('.')[0].padStart(5,'0'):ticker.split('.')[0]);
     identity=isAsian(ticker)&&url.searchParams.get('secid')===expected&&url.searchParams.get('fqt')==='0';
   }
-  return identity&&source.ticker===ticker&&source.currency===record.currency&&source.date===record.date&&sourceHosts[source.name]===url.hostname&&validBar(source.bar)&&samePrice(source.value,source.bar.close,1e-10);
+  const knownHost=sourceHosts[source.name]===url.hostname||(source.name==='Eastmoney'&&url.hostname===eastmoneyHistoryMirror);
+  return identity&&source.ticker===ticker&&source.currency===record.currency&&source.date===record.date&&knownHost&&validBar(source.bar)&&samePrice(source.value,source.bar.close,1e-10);
 }
 
 export function validateAutomaticArchive(archive) {

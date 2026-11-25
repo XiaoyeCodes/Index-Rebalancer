@@ -127,6 +127,25 @@ const latestProof=()=>({results:[{id:'MSFT',ticker:'MSFT',observations:[
   {date:'2026-11-12',primary:523,secondary:523,source:'Tencent Finance',verified:true,supportingSources:['Yahoo Finance','Tencent Finance']},
 ]}]});
 
+test('Nasdaq catalog misses retry the same historical range and record the responding catalog',async t=>{
+  const calls=[];
+  const report=await auditHistory(data,{rawDir:fixture(t),evidence:{records:[]},retryDelays:[],request:async href=>{
+    const url=new URL(href),symbol=decodeURIComponent(url.pathname.split('/')[3]);
+    if(symbol==='IBIT'){
+      calls.push(url);
+      if(url.searchParams.get('assetclass')==='etf')return {data:null,status:{rCode:400,bCodeMessage:[{code:1001}]}};
+    }
+    return response(symbol);
+  }});
+  assert.equal(report.failures.length,0);
+  const checked=report.results.find(r=>r.id==='IBIT');
+  assert.equal(checked.compared,3);
+  assert.deepEqual(calls.map(u=>u.searchParams.get('assetclass')),['etf','stocks']);
+  assert.equal(checked.url,calls[1].href);
+  calls[0].searchParams.set('assetclass','stocks');
+  assert.equal(calls[0].href,calls[1].href);
+});
+
 test('late long-history data can use a separately verified latest close without omitting the older audit',async t=>{
   const result=await run(t,body=>{body.data.tradesTable.rows.shift();body.data.totalRecords=2;},{recentVerification:latestProof()});
   assert.equal(result.report.failures.length,0);

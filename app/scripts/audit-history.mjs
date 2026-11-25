@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {CHAINS,RAW_DIR,fileFor} from './assets.mjs';
 import {tradingDate} from './process.mjs';
-import {requestJSON} from './crosscheck.mjs';
+import {nasdaqHistoryURL,requestJSON,requestQuoteResponse} from './quote-http.mjs';
 import {classifyDisagreement,loadResolutions} from './reconcile-history.mjs';
 
 function auditSnapshot(response,{symbol,id,primary,original,raw,data,evidence,url,attempts,recentVerification}) {
@@ -57,18 +57,18 @@ export async function auditHistory(data,{request=requestJSON,rawDir=RAW_DIR,evid
         const primary=new Map(raw.timestamp.map((t,i)=>[tradingDate(t,raw.meta.exchangeTimezoneName),q[i]]));
         const original=new Map(primary);
         for(const checked of raw.historicalReconciliations||[])original.set(checked.date,checked.sourceClose);
-        const symbol=ticker==='BRK-B'?'BRK.B':ticker,assetclass=['NVDA','MSFT','TSLA','AAPL','AMZN','SPCX','AXP','BRK-B','GOOG'].includes(id)?'stocks':'etf';
-        const url=`https://api.nasdaq.com/api/quote/${encodeURIComponent(symbol)}/historical?assetclass=${assetclass}&limit=10000&fromdate=2000-01-01&todate=${data.asOf}`;
+        const symbol=ticker==='BRK-B'?'BRK.B':ticker;
+        const url=nasdaqHistoryURL(ticker,'2000-01-01',data.asOf);
         for(let attempt=0;attempt<=retryDelays.length;attempt++) {
           const requestUrl=new URL(url);
           // Historical responses can also be cached under the wrong symbol/range.
           // Every attempt must identify the security and repeat the entire audit.
           requestUrl.searchParams.set('_',`${now}-${id}-${attempt}`);
           // requestJSON already handles bounded network retries.
-          const response=await request(requestUrl.href,{fresh:true});
+          const response=await requestQuoteResponse(requestUrl,request,{fresh:true});
           let result,error;
           try {
-            result=auditSnapshot(response,{symbol,id,primary,original,raw,data,evidence,url:requestUrl.href,attempts:attempt+1,recentVerification});
+            result=auditSnapshot(response.body,{symbol,id,primary,original,raw,data,evidence,url:response.url,attempts:attempt+1,recentVerification});
           } catch(e) {error=e;}
           if(!error&&!result.unresolvedDifferences.length) {results.push(result);break;}
           if(attempt===retryDelays.length) {

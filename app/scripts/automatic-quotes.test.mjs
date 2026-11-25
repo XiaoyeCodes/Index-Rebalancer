@@ -212,6 +212,18 @@ test('an incorrect secondary quote is retained as rejected evidence when Yahoo a
   validateAutomaticArchive(result.automatic);
 });
 
+test('Eastmoney mirror supplies one independent vote after a failed connection',async t=>{
+  const f=fixture(t);
+  flat(f,101);
+  const net=network(f,{eastmoney:(_count,url)=>new URL(url).hostname==='push2his.eastmoney.com'?Error('connection closed'):undefined});
+  const result=await run(f,net);
+  const record=result.newRecords[0];
+  assert.equal(record.acceptedClose,100);
+  assert.deepEqual(record.sources.map(s=>s.name),['Yahoo Finance','Tencent Finance','Eastmoney']);
+  assert.equal(new URL(record.sources.at(-1).url).hostname,'33.push2his.eastmoney.com');
+  validateAutomaticArchive(result.automatic);
+});
+
 test('source identity and currency validation reject a wrong symbol even when prices happen to match',async t=>{
   const f=fixture(t,'SPY');
   for(const scenario of ['symbol','currency']){
