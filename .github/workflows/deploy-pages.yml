@@ -60,26 +60,20 @@ jobs:
             const artifactId = Number(process.env.ARTIFACT_ID)
             if (!Number.isSafeInteger(artifactId) || artifactId <= 0) throw Error('Missing uploaded Pages artifact ID')
             const { sourceCommit } = JSON.parse(require('node:fs').readFileSync('dist/data-status.json', 'utf8'))
-            const { data } = await github.request('POST /repos/{owner}/{repo}/pages/deployments', {
-              ...context.repo, artifact_id: artifactId, pages_build_version: sourceCommit, oidc_token: await core.getIDToken()
+            const { deployPages } = await import(require('node:url').pathToFileURL(process.cwd()+'/app/scripts/pages-deployment.mjs'))
+            await deployPages({
+              submit: async () => {
+                const { data } = await github.request('POST /repos/{owner}/{repo}/pages/deployments', {
+                  ...context.repo, artifact_id: artifactId, pages_build_version: sourceCommit, oidc_token: await core.getIDToken()
+                })
+                core.setOutput('page_url', data.page_url)
+                core.setOutput('deployment_id', data.id)
+                return data.id
+              },
+              readStatus: async id => (await github.request('GET /repos/{owner}/{repo}/pages/deployments/{id}', {
+                ...context.repo, id
+              })).data.status
             })
-            core.setOutput('page_url', data.page_url)
-            core.setOutput('deployment_id', data.id)
-      - name: Wait for Pages deployment
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DEPLOYMENT_ID: ${{ steps.deployment.outputs.deployment_id }}
-        run: |
-          for attempt in {1..48}; do
-            status=$(gh api "repos/$GITHUB_REPOSITORY/pages/deployments/$DEPLOYMENT_ID" --jq '.status') || status=unavailable
-            case "$status" in
-              succeed) exit 0 ;;
-              deployment_failed|deployment_content_failed|deployment_cancelled|deployment_lost) echo "::error::Pages reported $status"; exit 1 ;;
-            esac
-            sleep 5
-          done
-          echo "::error::Timed out waiting for Pages deployment $DEPLOYMENT_ID"
-          exit 1
       - name: Verify the deployed market snapshot on the public website
         run: node app/scripts/site-freshness.mjs --verify
       - name: Cancel pending Pages deployment on cancellation
