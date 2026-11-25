@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import Calendar from '../market-calendar.js';
@@ -6,7 +7,7 @@ import Calendar from '../market-calendar.js';
 const site='https://xiaoyecodes.github.io/Index-Rebalancer/';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
-export function backupPlan(snapshot,live,{now=Date.now(),manual=false,dataSha256}={}) {
+export function backupPlan(snapshot,live,{now=Date.now(),manual=false,dataSha256,sourceCommit}={}) {
   const expected=Calendar.expectedUSDate(now);
   const fxExpected=[snapshot.asOf,Calendar.expectedFXDate(now)].sort()[0];
   const fxLate=['CNY','HKD'].some(code=>!(snapshot.fxAsOf?.[code]>=fxExpected));
@@ -14,7 +15,11 @@ export function backupPlan(snapshot,live,{now=Date.now(),manual=false,dataSha256
   const checked=Date.parse(live?.checkedAt);
   if(live?.asOf>snapshot.asOf&&Number.isFinite(checked))return 'current'; // A concurrent updater published first.
   const localTime=Date.parse(snapshot.health.checkedAt);
-  if(live?.asOf===snapshot.asOf&&(checked>localTime||(checked===localTime&&dataSha256===live.dataSha256)))return 'current';
+  if(live?.asOf===snapshot.asOf){
+    if(checked>localTime)return 'current';
+    if(checked===localTime&&dataSha256===live.dataSha256&&live.sourceCommit===sourceCommit&&
+       ['CNY','HKD'].every(code=>live.fxDates?.[code]===snapshot.fxAsOf[code]))return 'current';
+  }
   return 'deploy';
 }
 
@@ -47,7 +52,7 @@ export async function currentPublication(snapshot,bytes,commit) {
   const hash=createHash('sha256').update(bytes).digest('hex');
   if(live.sourceCommit!==commit||live.dataSha256!==hash||live.checkedAt!==snapshot.health.checkedAt||
      ['CNY','HKD'].some(code=>live.fxDates?.[code]!==snapshot.fxAsOf?.[code])||
-     live.asOf!==snapshot.asOf||backupPlan(snapshot,live,{dataSha256:hash})!=='current')return false;
+     live.asOf!==snapshot.asOf||backupPlan(snapshot,live,{dataSha256:hash,sourceCommit:commit})!=='current')return false;
   return publishedFilesMatch(live);
 }
 
@@ -72,9 +77,10 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===fs.realpathSync(process.arg
     const snapshot=JSON.parse(bytes),dataSha256=createHash('sha256').update(bytes).digest('hex');
     let live;
     try{live=await readLive();}catch(error){console.warn(error.message);}
-    let plan=backupPlan(snapshot,live,{dataSha256,manual:process.env.FORCE_UPDATE==='true'});
+    const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+    let plan=backupPlan(snapshot,live,{dataSha256,sourceCommit,manual:process.env.FORCE_UPDATE==='true'});
     if(plan==='current'){
-      try{if(!await checkShell(live.applicationSha256))plan='deploy';}
+      try{if(!await publishedFilesMatch(live))plan='deploy';}
       catch(error){console.warn(error.message);plan='deploy';}
     }
     const message=`Repository close ${snapshot.asOf}, website close ${live?.asOf||'unavailable'}, expected NYSE close ${Calendar.expectedUSDate()}, action ${plan}`;

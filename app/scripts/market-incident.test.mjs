@@ -37,6 +37,7 @@ test('independent workers claim one alert, keep retrying and rearm only after a 
   assert.deepEqual(parallel.map(r=>r.stdout.trim()).sort(),['alert','pending']);
   for(let i=2;i<9;i++)assert.equal(await record(failed('data',i)),'pending');
   assert.equal(await record(healthy(50,9)),'pending','publishing older data cannot clear a data outage');
+  assert.equal(await record(healthy(51,25)),'pending','a release must cover the most recent exhausted data attempt');
   assert.equal(await record(healthy(52,51),false),'pending','a failed public check cannot rearm notifications');
   assert.equal(await record(healthy(55,53)),'recovered');
   assert.equal(await record(failed('pages',5)),'superseded','a late result cannot reopen the recovered incident');

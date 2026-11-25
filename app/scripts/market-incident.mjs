@@ -20,7 +20,7 @@ export function marketTransition(state,event) {
   if(state.open){
     const result=state.owner===event.owner?'alert':'pending';
     // A later deployment must also cover any outstanding data failure.
-    if(event.stage==='data'&&!state.dataSince)return {result,next:{...state,dataSince:event.started}};
+    if(event.stage==='data'&&event.started>(state.dataSince||0))return {result,next:{...state,dataSince:event.started}};
     return {result};
   }
   return {result:'alert',next:{...state,open:true,owner:event.owner,openedAt:event.at,stage:event.stage,
