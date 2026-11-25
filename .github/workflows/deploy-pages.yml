@@ -29,7 +29,7 @@ jobs:
       verified: ${{ steps.verify.outcome }}
       started: ${{ steps.start.outputs.at }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -59,6 +59,7 @@ jobs:
           path: dist
       - name: Deploy the uploaded artifact to GitHub Pages
         id: deployment
+        continue-on-error: true
         uses: actions/github-script@v8
         env:
           ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
@@ -67,12 +68,15 @@ jobs:
             // The upload supplies the exact ID even when listing artifacts by name returns an empty list.
             const artifactId = Number(process.env.ARTIFACT_ID)
             if (!Number.isSafeInteger(artifactId) || artifactId <= 0) throw Error('Missing uploaded Pages artifact ID')
-            const { sourceCommit } = JSON.parse(require('node:fs').readFileSync('dist/data-status.json', 'utf8'))
-            const { deployPages } = await import(require('node:url').pathToFileURL(process.cwd()+'/app/scripts/pages-deployment.mjs'))
+            const target = JSON.parse(require('node:fs').readFileSync('dist/data-status.json', 'utf8'))
+            const { pathToFileURL } = require('node:url')
+            const { deployPages } = await import(pathToFileURL(process.cwd()+'/app/scripts/pages-deployment.mjs'))
+            const { servesDeployment } = await import(pathToFileURL(process.cwd()+'/app/scripts/site-freshness.mjs'))
             await deployPages({
+              isPublished: () => servesDeployment(target),
               submit: async () => {
                 const { data } = await github.request('POST /repos/{owner}/{repo}/pages/deployments', {
-                  ...context.repo, artifact_id: artifactId, pages_build_version: sourceCommit, oidc_token: await core.getIDToken()
+                  ...context.repo, artifact_id: artifactId, pages_build_version: target.sourceCommit, oidc_token: await core.getIDToken()
                 })
                 core.setOutput('page_url', data.page_url)
                 core.setOutput('deployment_id', data.id)
@@ -84,6 +88,7 @@ jobs:
             })
       - name: Verify the deployed market snapshot on the public website
         id: verify
+        if: steps.deployment.outcome == 'success' || steps.deployment.outcome == 'failure'
         run: node app/scripts/site-freshness.mjs --verify
       - name: Cancel pending Pages deployment on cancellation
         if: cancelled() && steps.deployment.outputs.deployment_id != ''

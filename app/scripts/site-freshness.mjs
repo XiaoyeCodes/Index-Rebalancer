@@ -60,6 +60,10 @@ export function matchesDeployment(local,live) {
   return ['asOf','checkedAt','dataSha256','applicationSha256','sourceCommit'].every(key=>typeof local[key]==='string'&&local[key].length>0&&local[key]===live?.[key]);
 }
 
+export async function servesDeployment(target) {
+  return matchesDeployment(target,await readLive())&&await publishedFilesMatch(target);
+}
+
 if(process.argv[1]&&fileURLToPath(import.meta.url)===fs.realpathSync(process.argv[1])){
   if(process.argv.includes('--verify')){
     const target=JSON.parse(fs.readFileSync('dist/data-status.json','utf8'));
@@ -67,7 +71,7 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===fs.realpathSync(process.arg
     for(let attempt=0;attempt<12&&!verified;attempt++){
       if(attempt)await pause(10000);
       try{
-        verified=matchesDeployment(target,await readLive())&&await publishedFilesMatch(target);
+        verified=await servesDeployment(target);
       }catch(error){console.warn(error.message);}
     }
     if(!verified)throw Error('Pages did not serve the deployed market snapshot '+target.asOf+' at '+target.sourceCommit);
