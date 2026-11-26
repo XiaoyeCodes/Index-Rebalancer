@@ -1084,6 +1084,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "AAPL",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 355.58,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 353.5874938964844,
+        "high": 356.75,
+        "low": 345.1300048828125,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 353.48,
+        "high": 356.75,
+        "low": 345.13,
+        "close": 355.58
+      },
+      "acceptedClose": 355.58,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL",
+          "ticker": "AAPL",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 353.5874938964844,
+            "high": 356.75,
+            "low": 345.1300048828125,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 353.5874938964844,
+            "high": 356.75,
+            "low": 345.1300048828125,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "3b0affac972b92c4e8ea97b0440d2a3f50aefa6bc8a034cecf3be55a00e20dfc"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usAAPL.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-AAPL-0",
+          "ticker": "AAPL",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 355.58,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 353.48,
+            "high": 356.75,
+            "low": 345.13,
+            "close": 355.58
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "749471744c4585d53fc09094f0012af14a04d1d7f483af486cbd6ad466cbcf7c"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=AAPL&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-AAPL-0",
+          "ticker": "AAPL",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 355.58,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:00:00.000-0500",
+          "bar": {
+            "open": 353.48,
+            "high": 356.75,
+            "low": 345.13,
+            "close": 355.58
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "69b6eee9f41b7e14ab809807fcc076bf6d6b747edc6b2102fe383ef246e7bbe5"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "AMZN",
       "date": "2026-11-17",
       "currency": "USD",
@@ -1346,6 +1434,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "AMZN",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 244.43,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 243.16000366210938,
+        "high": 246.5500030517578,
+        "low": 235.9600067138672,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 243.13,
+        "high": 246.56,
+        "low": 235.96,
+        "close": 244.43
+      },
+      "acceptedClose": 244.43,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AMZN",
+          "ticker": "AMZN",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 243.16000366210938,
+            "high": 246.5500030517578,
+            "low": 235.9600067138672,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 243.16000366210938,
+            "high": 246.5500030517578,
+            "low": 235.9600067138672,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "95cdf34470857bae20b3e00eea8a87a84ff587db6d487e774701c362d91266c5"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usAMZN.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-AMZN-0",
+          "ticker": "AMZN",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 244.43,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 243.13,
+            "high": 246.56,
+            "low": 235.96,
+            "close": 244.43
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "5ac6f7a5d8c0695cb4b6ba43b0b6a54a2c79bd3b0c83d0ccc6ed6329e0e604b8"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=AMZN&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-AMZN-0",
+          "ticker": "AMZN",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 244.43,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:15:00.000-0500",
+          "bar": {
+            "open": 243.13,
+            "high": 246.56,
+            "low": 235.96,
+            "close": 244.43
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "0daafc913772ded0e1bdf747d4c9e1f763171cf03fda422f1d9353410e93a826"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "AXP",
       "date": "2026-11-17",
       "currency": "USD",
@@ -1602,6 +1778,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "ed6267a466be31dd8501ba5b3feda500b3a2319dd4fc81434fe5f569c8b1e32d"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "AXP",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 312.39,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 304.1600036621094,
+        "high": 313.7300109863281,
+        "low": 302.3500061035156,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 304.16,
+        "high": 313.73,
+        "low": 302.35,
+        "close": 312.39
+      },
+      "acceptedClose": 312.39,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/AXP",
+          "ticker": "AXP",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 304.1600036621094,
+            "high": 313.7300109863281,
+            "low": 302.3500061035156,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 304.1600036621094,
+            "high": 313.7300109863281,
+            "low": 302.3500061035156,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "e96a7f33fc658e4ea433f912064fef26cce76afe3978f6354096516fb07b9c70"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usAXP.N%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-AXP-0",
+          "ticker": "AXP",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 312.39,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:03:52",
+          "bar": {
+            "open": 304.16,
+            "high": 313.73,
+            "low": 302.35,
+            "close": 312.39
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "0cdba9b986514f8418445ecc42075ee799a065ecec223544b1db891432a171b2"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=AXP&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-AXP-0",
+          "ticker": "AXP",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 312.39,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 304.16,
+            "high": 313.73,
+            "low": 302.35,
+            "close": 312.39
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "b84cc2865b78b1599bc8d6d4e7a9cd09192790d91fc394c8c5f888fec6826d00"
         }
       ],
       "automatic": true,
@@ -2690,6 +2954,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "BND",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 71.6,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 71.66000366210938,
+        "high": 71.79000091552734,
+        "low": 71.5801010131836,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 71.66,
+        "high": 71.79,
+        "low": 71.58,
+        "close": 71.6
+      },
+      "acceptedClose": 71.6,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/BND",
+          "ticker": "BND",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 71.66000366210938,
+            "high": 71.79000091552734,
+            "low": 71.5801010131836,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 71.66000366210938,
+            "high": 71.79000091552734,
+            "low": 71.5801010131836,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "361145d1902df339c53aad1578b66863d9cdf2707a37c6456bd4ecea2b7ff726"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usBND.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-BND-0",
+          "ticker": "BND",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 71.6,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 71.66,
+            "high": 71.79,
+            "low": 71.58,
+            "close": 71.6
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "a2b6238267843b256d779181f6e75c2111ec1d01d0970340b6721a90595d55c0"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=BND&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-BND-0",
+          "ticker": "BND",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 71.6,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:15:00.000-0500",
+          "bar": {
+            "open": 71.66,
+            "high": 71.79,
+            "low": 71.58,
+            "close": 71.6
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "0dfb4807d3f1c2924efc3e4b2b32f3c6aa7f997afc7d205c6cc5f8d61b27a64d"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "BRK-B",
       "date": "2026-11-17",
       "currency": "USD",
@@ -2946,6 +3298,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "eef5abc197220392f99699c6ec0b895bbb6c4a0eded6cc122db71afd3efa1c0d"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "BRK-B",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 579.32,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 576.7449951171875,
+        "high": 581.469970703125,
+        "low": 573.280029296875,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 576.75,
+        "high": 581.47,
+        "low": 573.28,
+        "close": 579.32
+      },
+      "acceptedClose": 579.32,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/BRK-B",
+          "ticker": "BRK-B",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 576.7449951171875,
+            "high": 581.469970703125,
+            "low": 573.280029296875,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 576.7449951171875,
+            "high": 581.469970703125,
+            "low": 573.280029296875,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "2d316dd4cadc350fced0d2c57630892e0a256e9b1848c9bd348e254cb94df1b5"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usBRK.B.N%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-BRK-B-0",
+          "ticker": "BRK-B",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 579.32,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:03:52",
+          "bar": {
+            "open": 576.75,
+            "high": 581.47,
+            "low": 573.28,
+            "close": 579.32
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "c7d4a5965c191ebcc109c7632f900d1d420403ba8e2f8bbd29712832f0819888"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=BRK.B&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-BRK-B-0",
+          "ticker": "BRK-B",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 579.32,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 576.75,
+            "high": 581.47,
+            "low": 573.28,
+            "close": 579.32
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "ef7eff434d814e94411544e49ecd6f2fa32e5cb8e7a9746f077a103f0b6c65bb"
         }
       ],
       "automatic": true,
@@ -4034,6 +4474,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "GLD",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 327.45,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 318.010009765625,
+        "high": 328.67999267578125,
+        "low": 313.9599914550781,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 318.01,
+        "high": 328.68,
+        "low": 313.96,
+        "close": 327.45
+      },
+      "acceptedClose": 327.45,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/GLD",
+          "ticker": "GLD",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 318.010009765625,
+            "high": 328.67999267578125,
+            "low": 313.9599914550781,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 318.010009765625,
+            "high": 328.67999267578125,
+            "low": 313.9599914550781,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "a6e3aaf753382a372c3e3b17355f1a2e884ec688f1c649bb47a545ea30be4a91"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usGLD.AM%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-GLD-0",
+          "ticker": "GLD",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 327.45,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:01",
+          "bar": {
+            "open": 318.01,
+            "high": 328.68,
+            "low": 313.96,
+            "close": 327.45
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "a5266cb2904d5d13a5c941060b601595fcf62496f193501442145f8b367b7db3"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=GLD&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-GLD-0",
+          "ticker": "GLD",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 327.45,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 318.01,
+            "high": 328.68,
+            "low": 313.96,
+            "close": 327.45
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "c59dc551ac02a7ef756c6a7e65e1c78b50b7a7c7c37164591fd50c2ead0b16b2"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "GLDM",
       "date": "2026-11-17",
       "currency": "USD",
@@ -4384,6 +4912,94 @@
       }
     },
     {
+      "id": "GLDM",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 70.69,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 68.63999938964844,
+        "high": 70.94000244140625,
+        "low": 67.77989959716797,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 68.64,
+        "high": 70.95,
+        "low": 67.78,
+        "close": 70.69
+      },
+      "acceptedClose": 70.69,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/GLDM",
+          "ticker": "GLDM",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 68.63999938964844,
+            "high": 70.94000244140625,
+            "low": 67.77989959716797,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 68.63999938964844,
+            "high": 70.94000244140625,
+            "low": 67.77989959716797,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "397e85167c1008de9fa15897ef648cf372175531c855c199239ba6040b86a557"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usGLDM.AM%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-GLDM-0",
+          "ticker": "GLDM",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 70.69,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:01",
+          "bar": {
+            "open": 68.64,
+            "high": 70.95,
+            "low": 67.78,
+            "close": 70.69
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "3424dcf73431c1686b6f91ec56799871a42fc0c537bc3a9e2bd56b16c3f97a45"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=GLDM&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-GLDM-0",
+          "ticker": "GLDM",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 70.69,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 68.64,
+            "high": 70.95,
+            "low": 67.78,
+            "close": 70.69
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "90209e1fb441f906e973dbadf2d0f6d0ce2bd5965cdac2038fbad263302b0160"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "GOOG",
       "date": "2026-11-17",
       "currency": "USD",
@@ -4640,6 +5256,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "fcf9e0d79b4f9d8364170f067d944cd001392b33cdb9f7ab46d858f67b1dedf3"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "GOOG",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 270.98,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 263.25,
+        "high": 271.6000061035156,
+        "low": 260.6919860839844,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 263.32,
+        "high": 271.6,
+        "low": 260.69,
+        "close": 270.98
+      },
+      "acceptedClose": 270.98,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/GOOG",
+          "ticker": "GOOG",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 263.25,
+            "high": 271.6000061035156,
+            "low": 260.6919860839844,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 263.25,
+            "high": 271.6000061035156,
+            "low": 260.6919860839844,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "5e37d16c232e8627ab4c1085c114bc7aa6354d512e5488686766666c71c4849c"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usGOOG.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-GOOG-0",
+          "ticker": "GOOG",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 270.98,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 263.32,
+            "high": 271.6,
+            "low": 260.69,
+            "close": 270.98
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "75ad71b87c49fbafcc58cfc5a11f8d3a80427c82f51103d893b19673de476ee7"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=GOOG&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-GOOG-0",
+          "ticker": "GOOG",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 270.98,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:00:00.000-0500",
+          "bar": {
+            "open": 263.32,
+            "high": 271.6,
+            "low": 260.69,
+            "close": 270.98
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "32a7f3cd46e33c1efeb73584e2abd870360fe12b61bf8bc4319686c5a61c34f5"
         }
       ],
       "automatic": true,
@@ -6548,6 +7252,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "IBIT",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 34.07,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 32.880001068115234,
+        "high": 34.135398864746094,
+        "low": 32.349998474121094,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 32.87,
+        "high": 34.14,
+        "low": 32.35,
+        "close": 34.07
+      },
+      "acceptedClose": 34.07,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/IBIT",
+          "ticker": "IBIT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 32.880001068115234,
+            "high": 34.135398864746094,
+            "low": 32.349998474121094,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 32.880001068115234,
+            "high": 34.135398864746094,
+            "low": 32.349998474121094,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "4e7356c275d4a30f70cfb68e1e3f8f5f4989d470121d247cc50b44869b0cbd26"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usIBIT.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-IBIT-0",
+          "ticker": "IBIT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 34.07,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 32.87,
+            "high": 34.14,
+            "low": 32.35,
+            "close": 34.07
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "f8c9e48ee917f8ed88177739c7fb9f88f288cc70b98171264bc8220d99db0dc4"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=IBIT&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-IBIT-0",
+          "ticker": "IBIT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 34.07,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:15:00.000-0500",
+          "bar": {
+            "open": 32.87,
+            "high": 34.14,
+            "low": 32.35,
+            "close": 34.07
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "0f5da6be68682def9516e887b50457c37c26a7fa1e4ca126ebe7ed9cdc5b371d"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "MSFT",
       "date": "2026-11-17",
       "currency": "USD",
@@ -6804,6 +7596,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "cb886268bd2a1426e3680f2122da04d392ce534a30eff0f945794acd98a9baaf"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "MSFT",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 489.93,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 485.4200134277344,
+        "high": 493.43701171875,
+        "low": 477.3900146484375,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 485.23,
+        "high": 493.44,
+        "low": 477.39,
+        "close": 489.93
+      },
+      "acceptedClose": 489.93,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/MSFT",
+          "ticker": "MSFT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 485.4200134277344,
+            "high": 493.43701171875,
+            "low": 477.3900146484375,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 485.4200134277344,
+            "high": 493.43701171875,
+            "low": 477.3900146484375,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "0e91ec6cdcca939fdf6402d344477339a62a8967f27a869396ff3ae3028f393f"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usMSFT.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-MSFT-0",
+          "ticker": "MSFT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 489.93,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 485.23,
+            "high": 493.44,
+            "low": 477.39,
+            "close": 489.93
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "a4e2774a842c44aaca01cf33dc4ecda1ca480d9a892403a629a092cc6a6d2e62"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=MSFT&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-MSFT-0",
+          "ticker": "MSFT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 489.93,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:00:00.000-0500",
+          "bar": {
+            "open": 485.23,
+            "high": 493.44,
+            "low": 477.39,
+            "close": 489.93
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "c72971c42a6ab2254fc229b8e99f2c8f962c6a828d027a1e300958fd6be52c6e"
         }
       ],
       "automatic": true,
@@ -7072,6 +7952,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "NVDA",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 149.3,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 144.02000427246094,
+        "high": 150.3699951171875,
+        "low": 141.1699981689453,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 144.06,
+        "high": 150.37,
+        "low": 141.17,
+        "close": 149.3
+      },
+      "acceptedClose": 149.3,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/NVDA",
+          "ticker": "NVDA",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 144.02000427246094,
+            "high": 150.3699951171875,
+            "low": 141.1699981689453,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 144.02000427246094,
+            "high": 150.3699951171875,
+            "low": 141.1699981689453,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "4fdd3fd97321ecf5c8a32ad4bf09da985657442ea3b9486d081c4f19d266e582"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usNVDA.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-NVDA-0",
+          "ticker": "NVDA",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 149.3,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 144.06,
+            "high": 150.37,
+            "low": 141.17,
+            "close": 149.3
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "7271acdba7dd0ba5786b523da9e82c441b28dab7deb355231f18d4ce86fa1f1e"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=NVDA&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-NVDA-0",
+          "ticker": "NVDA",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 149.3,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:00:00.000-0500",
+          "bar": {
+            "open": 144.06,
+            "high": 150.37,
+            "low": 141.17,
+            "close": 149.3
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "aaef30e12bea062d65843db0f9926c1c77aff94746fddad527aa593a09087491"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "QQQM",
       "date": "2026-11-17",
       "currency": "USD",
@@ -7328,6 +8296,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "f81443fb6c171d99c73d03903ffc26b764e25048d07e70bb8b0dee0ed88ea248"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "QQQM",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 261.05,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 254.04200744628906,
+        "high": 261.4200134277344,
+        "low": 250.26499938964844,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 254.1,
+        "high": 261.42,
+        "low": 250.27,
+        "close": 261.05
+      },
+      "acceptedClose": 261.05,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/QQQM",
+          "ticker": "QQQM",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 254.04200744628906,
+            "high": 261.4200134277344,
+            "low": 250.26499938964844,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 254.04200744628906,
+            "high": 261.4200134277344,
+            "low": 250.26499938964844,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "ac69a4c543180cff84025e7c5f64783444780f7304fe250f760ab7378961d384"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usQQQM.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-QQQM-0",
+          "ticker": "QQQM",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 261.05,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 254.1,
+            "high": 261.42,
+            "low": 250.27,
+            "close": 261.05
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "cc77179cbe64b2b7ef112dbbf097f52400e7793856960dd89cae93a62c1a9253"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=QQQM&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-QQQM-0",
+          "ticker": "QQQM",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 261.05,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:15:00.000-0500",
+          "bar": {
+            "open": 254.1,
+            "high": 261.42,
+            "low": 250.27,
+            "close": 261.05
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "94deb7bbca3897d1b8e9e8decd85d8c75c3e003cbd9761c3759e89fae4bc81c2"
         }
       ],
       "automatic": true,
@@ -7596,6 +8652,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "SCHD",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 35.29,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 34.779998779296875,
+        "high": 35.47999954223633,
+        "low": 34.65010070800781,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 34.78,
+        "high": 35.48,
+        "low": 34.65,
+        "close": 35.29
+      },
+      "acceptedClose": 35.29,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SCHD",
+          "ticker": "SCHD",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 34.779998779296875,
+            "high": 35.47999954223633,
+            "low": 34.65010070800781,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 34.779998779296875,
+            "high": 35.47999954223633,
+            "low": 34.65010070800781,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "0b1560c3f26ba4be727f4ad5a7a6fdfe0d15be49f9281ceea4393189a80ad36e"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSCHD.AM%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-SCHD-0",
+          "ticker": "SCHD",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 35.29,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:01",
+          "bar": {
+            "open": 34.78,
+            "high": 35.48,
+            "low": 34.65,
+            "close": 35.29
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "b329ebdcef22b3e6a1f7c0dd04d36d8bffe55f3b16a2d4518e46637012f4e08c"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=SCHD&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-SCHD-0",
+          "ticker": "SCHD",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 35.29,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 34.78,
+            "high": 35.48,
+            "low": 34.65,
+            "close": 35.29
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "06a097b8fe4f334e8ee493cf42f422efdab9db3878118e83b699fbbf054e5a17"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "SGOV",
       "date": "2026-11-17",
       "currency": "USD",
@@ -7858,6 +9002,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "SGOV",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 100.68,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 100.66999816894531,
+        "high": 100.68000030517578,
+        "low": 100.66999816894531,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 100.67,
+        "high": 100.68,
+        "low": 100.67,
+        "close": 100.68
+      },
+      "acceptedClose": 100.68,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SGOV",
+          "ticker": "SGOV",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 100.66999816894531,
+            "high": 100.68000030517578,
+            "low": 100.66999816894531,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 100.66999816894531,
+            "high": 100.68000030517578,
+            "low": 100.66999816894531,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "53fdf9d27a93405eef7ed27669ceb8bce519b8c393fba64913ce658c9e2fa41f"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSGOV.N%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-SGOV-0",
+          "ticker": "SGOV",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 100.68,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:03:52",
+          "bar": {
+            "open": 100.67,
+            "high": 100.68,
+            "low": 100.67,
+            "close": 100.68
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "fdb1ed1c877983e947175cf7715b62c6d7a984579adc8d190b298d26e1f7b885"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=SGOV&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-SGOV-0",
+          "ticker": "SGOV",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 100.68,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 100.67,
+            "high": 100.68,
+            "low": 100.67,
+            "close": 100.68
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "49ddde0041a8fc39e12019c36354ed39e8929f1cf45297859faf387b9d96707b"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "SHY",
       "date": "2026-11-17",
       "currency": "USD",
@@ -8114,6 +9346,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "bbf84ebdedf46bddbf8f402eaad0a6f2c1c79180b4cd4b80ac0c07677f0d20ae"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "SHY",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 81.64,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 81.69999694824219,
+        "high": 81.7300033569336,
+        "low": 81.62000274658203,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 81.7,
+        "high": 81.73,
+        "low": 81.62,
+        "close": 81.64
+      },
+      "acceptedClose": 81.64,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SHY",
+          "ticker": "SHY",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 81.69999694824219,
+            "high": 81.7300033569336,
+            "low": 81.62000274658203,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 81.69999694824219,
+            "high": 81.7300033569336,
+            "low": 81.62000274658203,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "c20691a74955eca8e8d60e1ad171fae6702c8b29f5a584b5f93632e8375db9e7"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSHY.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-SHY-0",
+          "ticker": "SHY",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 81.64,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 81.7,
+            "high": 81.73,
+            "low": 81.62,
+            "close": 81.64
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "1d87c3afb18d5e18bb4373b0c469c68315af446657a048950510b9f753f8ff6e"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=SHY&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-SHY-0",
+          "ticker": "SHY",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 81.64,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:15:00.000-0500",
+          "bar": {
+            "open": 81.7,
+            "high": 81.73,
+            "low": 81.62,
+            "close": 81.64
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "13fa119ad6d1bfa9f5072b9bc271234f6572db9dbc6fe06bdb0c82668b6586d3"
         }
       ],
       "automatic": true,
@@ -9144,6 +10464,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "SOXX",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 127.98,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 121.20999908447266,
+        "high": 128.08999633789062,
+        "low": 118.18000030517578,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 121.21,
+        "high": 128.09,
+        "low": 118.18,
+        "close": 127.98
+      },
+      "acceptedClose": 127.98,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SOXX",
+          "ticker": "SOXX",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 121.20999908447266,
+            "high": 128.08999633789062,
+            "low": 118.18000030517578,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 121.20999908447266,
+            "high": 128.08999633789062,
+            "low": 118.18000030517578,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "da522b5a644cd664792535ed8e98ea9ae7964cef59351a1debe7e8553fff5a4c"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSOXX.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-SOXX-0",
+          "ticker": "SOXX",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 127.98,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 121.21,
+            "high": 128.09,
+            "low": 118.18,
+            "close": 127.98
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "1c341f0eae1b134ca2c4e07e6d4a401d747a3e56a145d2b5c3e9ea4d5639d324"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=SOXX&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-SOXX-0",
+          "ticker": "SOXX",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 127.98,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:15:00.000-0500",
+          "bar": {
+            "open": 121.21,
+            "high": 128.09,
+            "low": 118.18,
+            "close": 127.98
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "c9ef153d0ceba65da98ace3777be0c4f69561d9da25b0f42f391ab80a456c5a0"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "SPCX",
       "date": "2026-11-17",
       "currency": "USD",
@@ -9406,6 +10814,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "SPCX",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 127.44,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 118.45500183105469,
+        "high": 128.18299865722656,
+        "low": 113.93000030517578,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 118.47,
+        "high": 128.45,
+        "low": 112.93,
+        "close": 127.44
+      },
+      "acceptedClose": 127.44,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPCX",
+          "ticker": "SPCX",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 118.45500183105469,
+            "high": 128.18299865722656,
+            "low": 113.93000030517578,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 118.45500183105469,
+            "high": 128.18299865722656,
+            "low": 113.93000030517578,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "ced860e3fe4323f45bac445f99b55ba9a91e685b1ab2a8c7d6e69bbbbe49dce3"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSPCX.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-SPCX-0",
+          "ticker": "SPCX",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 127.44,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 118.47,
+            "high": 128.45,
+            "low": 112.93,
+            "close": 127.44
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "dbaf180ff650a0aa02b89eeff01883c94fc2f1f30cb743d1f65fe67eecaa5eb9"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=SPCX&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-SPCX-0",
+          "ticker": "SPCX",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 127.44,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:00:00.000-0500",
+          "bar": {
+            "open": 118.47,
+            "high": 128.45,
+            "low": 112.93,
+            "close": 127.44
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "9931af9461100390d5cb644eacd538cfc97342a3e15a047961205dedc1f29bf8"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "SPY",
       "date": "2026-11-17",
       "currency": "USD",
@@ -9662,6 +11158,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "d0260e016e7b5b9be28ddd6c424ee1d703b3e54cb3be40f0f8e9069be71e2ef4"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "SPY",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 716.7,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 703.2000122070312,
+        "high": 718.4299926757812,
+        "low": 695.4500122070312,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 703.2,
+        "high": 718.43,
+        "low": 695.45,
+        "close": 716.7
+      },
+      "acceptedClose": 716.7,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPY",
+          "ticker": "SPY",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 703.2000122070312,
+            "high": 718.4299926757812,
+            "low": 695.4500122070312,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 703.2000122070312,
+            "high": 718.4299926757812,
+            "low": 695.4500122070312,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "b4d363242ed8579dd3c88681301ffe8c2dfd2885771afc849c5ecb1c943c699e"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usSPY.AM%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-SPY-0",
+          "ticker": "SPY",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 716.7,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:01",
+          "bar": {
+            "open": 703.2,
+            "high": 718.43,
+            "low": 695.45,
+            "close": 716.7
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "b8d652735633b9d38e47abefb363a12d72070713b7a61bfc0a1d55047a5bb05a"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=SPY&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-SPY-0",
+          "ticker": "SPY",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 716.7,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 703.2,
+            "high": 718.43,
+            "low": 695.45,
+            "close": 716.7
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "dc2be9a672ef7d380fc4ece25c3730ac4e2c051a9b41abd81d84b70dfccaebea"
         }
       ],
       "automatic": true,
@@ -10350,6 +11934,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "TLT",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 82.24,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 82.36799621582031,
+        "high": 82.80999755859375,
+        "low": 82.16999816894531,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 82.37,
+        "high": 82.81,
+        "low": 82.17,
+        "close": 82.24
+      },
+      "acceptedClose": 82.24,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/TLT",
+          "ticker": "TLT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 82.36799621582031,
+            "high": 82.80999755859375,
+            "low": 82.16999816894531,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 82.36799621582031,
+            "high": 82.80999755859375,
+            "low": 82.16999816894531,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "c71c76731f9199fd776f61a90358b5d264c4736a30ad4de20a01117d17bb6b00"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usTLT.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-TLT-0",
+          "ticker": "TLT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 82.24,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 82.37,
+            "high": 82.81,
+            "low": 82.17,
+            "close": 82.24
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "9a67adc4293a5b7bcc487859a6b34bae9756e92af336d9b1d69b39e55ab0b97f"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=TLT&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-TLT-0",
+          "ticker": "TLT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 82.24,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:15:00.000-0500",
+          "bar": {
+            "open": 82.37,
+            "high": 82.81,
+            "low": 82.17,
+            "close": 82.24
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "f129f4778717e40beec993d8e0fb97fbdc376f7db667ed87b82c60ce58a924b0"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "TSLA",
       "date": "2026-11-17",
       "currency": "USD",
@@ -10606,6 +12278,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "b93599a8759924cf23c3c2c86cebf756d24afc04fd3ca52de078e1f117e28258"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "TSLA",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 380.14,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 370.2300109863281,
+        "high": 383.7298889160156,
+        "low": 357.6400146484375,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 370.52,
+        "high": 383.73,
+        "low": 357.64,
+        "close": 380.14
+      },
+      "acceptedClose": 380.14,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/TSLA",
+          "ticker": "TSLA",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 370.2300109863281,
+            "high": 383.7298889160156,
+            "low": 357.6400146484375,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 370.2300109863281,
+            "high": 383.7298889160156,
+            "low": 357.6400146484375,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "19ce24fcec540102a0a3f769a791bece4b0b0a44550effc0f34067855ec470fa"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usTSLA.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-TSLA-0",
+          "ticker": "TSLA",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 380.14,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 370.52,
+            "high": 383.73,
+            "low": 357.64,
+            "close": 380.14
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "bffa257f29f367e6c4222d23f96e9ebc4e7752db4addd95c2ddf3f8479584ea1"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=TSLA&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-TSLA-0",
+          "ticker": "TSLA",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 380.14,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:00:00.000-0500",
+          "bar": {
+            "open": 370.52,
+            "high": 383.73,
+            "low": 357.64,
+            "close": 380.14
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "b90a79af90b4e6984ea2aea41f1ba8af0442160696995e848dca53be7b66d864"
         }
       ],
       "automatic": true,
@@ -10874,6 +12634,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "VGT",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 102.56,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 99.5,
+        "high": 102.66999816894531,
+        "low": 97.8125991821289,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 99.5,
+        "high": 102.67,
+        "low": 97.81,
+        "close": 102.56
+      },
+      "acceptedClose": 102.56,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VGT",
+          "ticker": "VGT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 99.5,
+            "high": 102.66999816894531,
+            "low": 97.8125991821289,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 99.5,
+            "high": 102.66999816894531,
+            "low": 97.8125991821289,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "28f8fb4d8a56a86cc4f718b682bb852b781d3595d5494f4f51a6ad885a0a6ee9"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVGT.AM%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-VGT-0",
+          "ticker": "VGT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 102.56,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:01",
+          "bar": {
+            "open": 99.5,
+            "high": 102.67,
+            "low": 97.81,
+            "close": 102.56
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "b74d447ee42de5665519f735026c4c4aa724cb3160ef78a469c569f3dcd0e671"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=VGT&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-VGT-0",
+          "ticker": "VGT",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 102.56,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 99.5,
+            "high": 102.67,
+            "low": 97.81,
+            "close": 102.56
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "71983fcc718b93cd5127aa39a3e1cd0f83a11986ca1e7e9ddb692cc15f674c03"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "VNQ",
       "date": "2026-11-17",
       "currency": "USD",
@@ -11130,6 +12978,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "19916c4a3731ce686004fad0a752e812bd1d1ee3e28897ea1ee47f783ee0df4b"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "VNQ",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 95.66,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 94.70500183105469,
+        "high": 96.26000213623047,
+        "low": 94.2699966430664,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 94.71,
+        "high": 96.26,
+        "low": 94.26,
+        "close": 95.66
+      },
+      "acceptedClose": 95.66,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VNQ",
+          "ticker": "VNQ",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 94.70500183105469,
+            "high": 96.26000213623047,
+            "low": 94.2699966430664,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 94.70500183105469,
+            "high": 96.26000213623047,
+            "low": 94.2699966430664,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "a5a606e444082fa1e7a99d3bbafe5c334f3de4944629202aaf535f5a4ab74920"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVNQ.AM%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-VNQ-0",
+          "ticker": "VNQ",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 95.66,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:01",
+          "bar": {
+            "open": 94.71,
+            "high": 96.26,
+            "low": 94.26,
+            "close": 95.66
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "1e1b18fd59922a9402c2fe5ca0490067c17bfb44dccee489f0c08d88030be920"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=VNQ&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-VNQ-0",
+          "ticker": "VNQ",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 95.66,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 94.71,
+            "high": 96.26,
+            "low": 94.26,
+            "close": 95.66
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "48494e916e6829441d55df1ab8a460e64bee96826cf61bbf67427fd9b1d8a42a"
         }
       ],
       "automatic": true,
@@ -11398,6 +13334,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "VOO",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 658.87,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 646.3499755859375,
+        "high": 660.3699951171875,
+        "low": 639.260009765625,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 646.35,
+        "high": 660.37,
+        "low": 639.26,
+        "close": 658.87
+      },
+      "acceptedClose": 658.87,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VOO",
+          "ticker": "VOO",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 646.3499755859375,
+            "high": 660.3699951171875,
+            "low": 639.260009765625,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 646.3499755859375,
+            "high": 660.3699951171875,
+            "low": 639.260009765625,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "cb4bf4395a0cc7a9e97975ca8facf00a7c2b836a129598b86aeffae09f54c28a"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVOO.AM%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-VOO-0",
+          "ticker": "VOO",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 658.87,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:01",
+          "bar": {
+            "open": 646.35,
+            "high": 660.37,
+            "low": 639.26,
+            "close": 658.87
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "9a2d5f7e0422911a61537ba307f923f6c18314fca8c829a60e68bcc615cd5684"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=VOO&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-VOO-0",
+          "ticker": "VOO",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 658.87,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 646.35,
+            "high": 660.37,
+            "low": 639.26,
+            "close": 658.87
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "21782b86d63de7076b64eb5e0a97e9b8da8d6db9f75c9f75ce3bd7328fb26f43"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "VTI",
       "date": "2026-11-17",
       "currency": "USD",
@@ -11654,6 +13678,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "487e454d3b0c1cb01d346fa6d79c0466c9c2d58e4bf3316da155dcad3d992ac2"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "VTI",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 353.2,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 346.4049987792969,
+        "high": 354.17999267578125,
+        "low": 342.7300109863281,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 346.41,
+        "high": 354.18,
+        "low": 342.7,
+        "close": 353.2
+      },
+      "acceptedClose": 353.2,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VTI",
+          "ticker": "VTI",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 346.4049987792969,
+            "high": 354.17999267578125,
+            "low": 342.7300109863281,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 346.4049987792969,
+            "high": 354.17999267578125,
+            "low": 342.7300109863281,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "6ba25e60062e2a6b6055e20f71ac182e5ab095429cc1f6af40800ee718f58bd5"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVTI.AM%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-VTI-0",
+          "ticker": "VTI",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 353.2,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:01",
+          "bar": {
+            "open": 346.41,
+            "high": 354.18,
+            "low": 342.7,
+            "close": 353.2
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "a4c0cfb0672f72b9464a1dd74d37757dc77c6c7cf3c68c72484503bb065d662d"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=VTI&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-VTI-0",
+          "ticker": "VTI",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 353.2,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 346.41,
+            "high": 354.18,
+            "low": 342.7,
+            "close": 353.2
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "06baba0cc50e66c4d1eca947539358600b20bd7e0f108063f24d8a0e96be4ab9"
         }
       ],
       "automatic": true,
@@ -11922,6 +14034,94 @@
       "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
     },
     {
+      "id": "VWO",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 52.78,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 51.42499923706055,
+        "high": 52.84000015258789,
+        "low": 51.084999084472656,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 51.43,
+        "high": 52.84,
+        "low": 51.09,
+        "close": 52.78
+      },
+      "acceptedClose": 52.78,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VWO",
+          "ticker": "VWO",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 51.42499923706055,
+            "high": 52.84000015258789,
+            "low": 51.084999084472656,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 51.42499923706055,
+            "high": 52.84000015258789,
+            "low": 51.084999084472656,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "8ebca4d631c0cd737623986db273c0feeab00ee729bd94175067bdbe39ba9a55"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVWO.AM%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-VWO-0",
+          "ticker": "VWO",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 52.78,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:01",
+          "bar": {
+            "open": 51.43,
+            "high": 52.84,
+            "low": 51.09,
+            "close": 52.78
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "173a4afa18cd9102ffeec43c40a0954dd039e52886a8b58a75baf1339a59b12a"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=VWO&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-VWO-0",
+          "ticker": "VWO",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 52.78,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:10:00.000-0500",
+          "bar": {
+            "open": 51.43,
+            "high": 52.84,
+            "low": 51.09,
+            "close": 52.78
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "71f4d78a166ea2aafbfa67f97d57f0136a52d28efc11d048d38442334b1734c4"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
       "id": "VXUS",
       "date": "2026-11-17",
       "currency": "USD",
@@ -12178,6 +14378,94 @@
           "splitFactor": 1,
           "checkedAt": "2026-11-24T01:04:46.476Z",
           "sha256": "814ca4d77362eb63052e812a185ae255a621b499863bea8ac643462064a4df93"
+        }
+      ],
+      "automatic": true,
+      "finding": "Automatically verified same-security, same-currency, same-date market prices; replacements require two independent non-primary OHLC sources."
+    },
+    {
+      "id": "VXUS",
+      "date": "2026-11-25",
+      "currency": "USD",
+      "basisThrough": "2026-11-25",
+      "reviewedAt": "2026-11-26T01:04:49.278Z",
+      "action": "fill-primary",
+      "originalPrimaryClose": null,
+      "originalSecondaryClose": 78.02,
+      "originalSecondarySource": "Tencent Finance",
+      "originalPrimaryFields": {
+        "open": 76.54199981689453,
+        "high": 78.07499694824219,
+        "low": 76.02999877929688,
+        "close": null
+      },
+      "acceptedFields": {
+        "open": 76.61,
+        "high": 78.08,
+        "low": 76.03,
+        "close": 78.02
+      },
+      "acceptedClose": 78.02,
+      "sources": [
+        {
+          "name": "Yahoo Finance",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/VXUS",
+          "ticker": "VXUS",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": null,
+          "bar": {
+            "open": 76.54199981689453,
+            "high": 78.07499694824219,
+            "low": 76.02999877929688,
+            "close": null
+          },
+          "canonicalBar": {
+            "open": 76.54199981689453,
+            "high": 78.07499694824219,
+            "low": 76.02999877929688,
+            "close": null
+          },
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "978aed3d0ef394f771d8b9fc5ff67bcc69deccb58089c3b1653337f21d0f4f7e"
+        },
+        {
+          "name": "Tencent Finance",
+          "url": "https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=usVXUS.OQ%2Cday%2C2026-11-20%2C2026-11-25%2C640&_=1795655089278-VXUS-0",
+          "ticker": "VXUS",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 78.02,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25 16:00:02",
+          "bar": {
+            "open": 76.61,
+            "high": 78.08,
+            "low": 76.03,
+            "close": 78.02
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "46ee66f941bc9a8d5d396d39029c6a434159d9afa001274d707e72e9a8f05e87"
+        },
+        {
+          "name": "CNBC",
+          "url": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=VXUS&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&_=1795655089278-VXUS-0",
+          "ticker": "VXUS",
+          "currency": "USD",
+          "date": "2026-11-25",
+          "value": 78.02,
+          "quoteKind": "regular-session close",
+          "sessionTime": "2026-11-25T16:15:00.000-0500",
+          "bar": {
+            "open": 76.61,
+            "high": 78.08,
+            "low": 76.03,
+            "close": 78.02
+          },
+          "splitFactor": 1,
+          "checkedAt": "2026-11-26T01:04:49.278Z",
+          "sha256": "be4ec109d2972406f8968d9aeab5715ae1d07e746b7e10d334b1ff9caa09dc74"
         }
       ],
       "automatic": true,
